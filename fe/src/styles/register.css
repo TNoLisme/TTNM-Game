@@ -1,0 +1,75 @@
+/* E:\code\TTNM\TTNM-Game\fe\styles\register.css */
+.register-container {
+    width: 350px;
+    margin: 60px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    font-family: Arial, sans-serif;
+}
+
+.register-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.register-container label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+    color: #555;
+}
+
+.register-container input,
+.register-container select {
+    /* Thêm select */
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+.register-container button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.register-container button:hover {
+    background-color: #218838;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+    font-size: 13px;
+    text-align: center;
+    /* Thêm căn giữa cho đẹp */
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.login-link a {
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}

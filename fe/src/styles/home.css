@@ -1,0 +1,81 @@
+/* Toàn trang */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #1976d2;
+    color: white;
+}
+
+.navbar span {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.logout-btn {
+    background-color: #e53935;
+    border: none;
+    padding: 5px 10px;
+    color: white;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.logout-btn:hover {
+    background-color: #c62828;
+}
+
+/* Container chính */
+.container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 600px;
+    margin: 30px auto;
+}
+
+/* Game buttons */
+.game-menu {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.game-menu li button {
+    padding: 15px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #4caf50;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.game-menu li button:hover {
+    background-color: #45a049;
+}
+
+/* Responsive nhỏ */
+@media (max-width: 500px) {
+    .game-menu {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

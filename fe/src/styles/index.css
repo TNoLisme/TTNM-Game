@@ -1,0 +1,72 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 600px;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+p {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+/* Định kiểu cho khu vực chứa hai nút ban đầu */
+.initial-actions {
+    margin-top: 25px;
+    /* Dùng flexbox để căn giữa các nút nếu cần nhiều hơn 1 hàng */
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    /* Khoảng cách giữa 2 nút */
+}
+
+.initial-actions button {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 120px;
+    transition: background-color 0.3s ease;
+}
+
+#login-button {
+    background-color: #007bff;
+    /* Màu xanh dương */
+    color: white;
+}
+
+#login-button:hover {
+    background-color: #0056b3;
+}
+
+#register-button {
+    background-color: #28a745;
+    /* Màu xanh lá cây */
+    color: white;
+}
+
+#register-button:hover {
+    background-color: #218838;
+}
