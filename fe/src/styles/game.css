@@ -1,0 +1,76 @@
+/* Toàn trang */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #1976d2;
+    color: white;
+}
+
+.navbar span {
+    font-weight: bold;
+    font-size: 1.2em;
+    flex-grow: 1;
+    /* Cho phép tiêu đề căng giữa */
+    text-align: center;
+}
+
+/* Nút Đăng xuất */
+.logout-btn {
+    background-color: #e53935;
+    border: none;
+    padding: 8px 12px;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-left: 10px;
+}
+
+.logout-btn:hover {
+    background-color: #c62828;
+}
+
+/* Nút Quay lại */
+.back-btn {
+    background-color: #00bcd4;
+    /* Màu xanh ngọc */
+    border: none;
+    padding: 8px 12px;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    /* Đặt ở góc trái */
+    order: -1;
+}
+
+.back-btn:hover {
+    background-color: #0097a7;
+}
+
+/* Container chính */
+.container {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 800px;
+    margin: 50px auto;
+}
+
+.container h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
