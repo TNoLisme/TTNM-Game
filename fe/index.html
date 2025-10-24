@@ -1,27 +1,39 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <title>EmoGarden - Trang chủ</title>
-    <link rel="stylesheet" href="style(nga).css" />
-  </head>
-  <body>
-    <header>
-      <div class="logo">
-        <img src="logo.png" alt="Logo" />
-      </div>
-      <div class="buttons">
-        <a href="login.html">Đăng nhập</a>
-        <a href="register.html">Đăng ký</a>
-      </div>
-    </header>
 
-    <main>
-      <div class="welcome">WELCOME<br />TO<br />EMOGARDEN</div>
-      <div class="image">
-        <!-- Dùng ảnh bạn gửi lên -->
-        <img src="images_nga/index_image.png" alt="Game Time" />
-      </div>
-    </main>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EmoGarden - Trang chủ</title>
+  <link rel="stylesheet" href="/src/styles/index.css" />
+</head>
+
+<body>
+  <header>
+    <div class="logo-container">
+      <img src="/assets/images/logo.png" alt="Logo" class="logo-image" />
+      <span class="logo-text">EmoGarden</span>
+    </div>
+
+    <div class="header-buttons">
+      <button id="login-button" class="btn btn-primary">Đăng nhập</button>
+      <button id="register-button" class="btn btn-secondary">Đăng ký</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="welcome-section">
+      <div class="welcome-text">WELCOME</div>
+      <div class="welcome-text">TO</div>
+      <div class="welcome-text emogarden-text">EMOGARDEN</div>
+    </div>
+
+    <div class="image-section">
+      <img src="/assets/images/index_image.png" alt="Game Time" />
+    </div>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
 </html>

@@ -1,72 +1,160 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
     margin: 0;
-    padding: 0;
+    background-color: #fff;
+}
+
+header {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    /* Căn giữa tất cả các thành phần theo chiều dọc */
+    padding: 10px 40px;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    width: 100%;
+    box-sizing: border-box;
+    /* Tăng nhẹ chiều cao tối thiểu của header để chứa nút lớn */
+    min-height: 60px;
+}
+
+/* --- LOGO --- */
+.logo-container {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: #333;
+    /* Giữ font size bình thường, không quá lớn */
+    font-size: 18px;
+}
+
+/* KHẮC PHỤC LỖI LOGO BỊ BÓP VÀ TRAN CHỮ */
+.logo-image {
+    /* Đặt kích thước cố định để ảnh hiển thị full */
+    width: 100px;
+    /* BỎ object-fit: contain (đã dùng contain ở lần trước) nếu logo bị thừa khoảng trắng. 
+       Nếu ảnh logo có kích thước vuông, hãy dùng object-fit: cover hoặc bỏ hẳn.
+       Để khắc phục, ta chỉ cần set kích thước W/H đủ lớn và margin: */
+    margin-right: 8px;
+    object-fit: cover;
+    /* Hoặc 'contain' tùy vào thiết kế gốc của file ảnh */
+    /* Quan trọng: đảm bảo ảnh không bị bóp méo */
+}
+
+.logo-text {
+    /* Căn chỉnh text logo */
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+/* --- HEADER BUTTONS (BTN) --- */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* KHẮC PHỤC LỖI CHỮ NÚT BỊ TRÀN */
+.btn {
+    /* Tăng padding và đảm bảo đủ không gian */
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s;
+    outline: none;
+    /* NGĂN CHẶN CHỮ BỊ NGẮT DÒNG */
+    white-space: nowrap;
+    /* Quan trọng: Thiết lập chiều cao và căn chỉnh text bên trong */
+    height: 40px;
+    line-height: 1.2;
+    /* Đảm bảo text không bị xô xuống */
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
 }
 
-.container {
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    width: 90%;
-    max-width: 600px;
+/* Nút Đăng nhập (Màu tím đặc) */
+.btn-primary {
+    background-color: #c28bf2;
+    color: #fff;
+    border: 1px solid #c28bf2;
 }
 
-h1 {
-    color: #333;
-    margin-bottom: 10px;
+/* Nút Đăng ký (Màu trắng, viền tím) */
+.btn-secondary {
+    background-color: #fff;
+    color: #c28bf2;
+    border: 1px solid #c28bf2;
 }
 
-p {
-    color: #666;
-    margin-bottom: 25px;
-}
-
-/* Định kiểu cho khu vực chứa hai nút ban đầu */
-.initial-actions {
-    margin-top: 25px;
-    /* Dùng flexbox để căn giữa các nút nếu cần nhiều hơn 1 hàng */
+/* ... Các style auth-container và auth-box giữ nguyên ... */
+/* ==== 2. MAIN CONTENT (Giữ style bố cục Trang chủ) ==== */
+main {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    /* Khoảng cách giữa 2 nút */
+    align-items: center;
+    padding: 50px 40px;
+    gap: 40px;
 }
 
-.initial-actions button {
-    padding: 12px 30px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    min-width: 120px;
-    transition: background-color 0.3s ease;
+/* --- WELCOME TEXT --- */
+.welcome-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-shrink: 0;
 }
 
-#login-button {
-    background-color: #007bff;
-    /* Màu xanh dương */
-    color: white;
+.welcome-text {
+    font-size: 55px;
+    font-weight: 800;
+    color: #c28bf2;
+    line-height: 1.1;
+    text-transform: uppercase;
+    margin-bottom: 5px;
 }
 
-#login-button:hover {
-    background-color: #0056b3;
+.emogarden-text {
+    font-size: 55px;
 }
 
-#register-button {
-    background-color: #28a745;
-    /* Màu xanh lá cây */
-    color: white;
+/* --- IMAGE SECTION --- */
+.image-section img {
+    max-width: 650px;
+    height: auto;
+    border: 1px solid #ddd;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-#register-button:hover {
-    background-color: #218838;
+/* ==== Responsive ==== */
+@media (max-width: 1100px) {
+    main {
+        flex-direction: column;
+        text-align: center;
+        gap: 30px;
+    }
+
+    .welcome-section {
+        align-items: center;
+    }
+
+    .welcome-text {
+        font-size: 45px;
+    }
+
+    .image-section img {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    header {
+        padding: 10px 20px;
+    }
+
+    .welcome-text {
+        font-size: 35px;
+    }
 }

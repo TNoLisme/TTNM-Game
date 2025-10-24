@@ -2,54 +2,83 @@
 <html lang="vi">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Đăng ký TTNM</title>
-    <link rel="stylesheet" href="../styles/register.css">
+    <meta charset="UTF-8" />
+    <title>Đăng ký - EmoGarden</title>
+    <link rel="stylesheet" href="../styles/register.css" />
 </head>
 
 <body>
-
-    <div class="register-container">
-        <h2>Đăng ký</h2>
-
-        <label for="reg-username">Username</label>
-        <input type="text" id="reg-username" placeholder="Username" />
-
-        <label for="reg-email">Email</label>
-        <input type="email" id="reg-email" placeholder="Email" />
-
-        <label for="reg-password">Password</label>
-        <input type="password" id="reg-password" placeholder="Mật khẩu" />
-
-        <label for="reg-confirm-password">Confirm Password</label>
-        <input type="password" id="reg-confirm-password" placeholder="Xác nhận mật khẩu" />
-
-        <label for="reg-fullname">Full Name</label>
-        <input type="text" id="reg-fullname" placeholder="Họ và tên" />
-
-        <label for="reg-birthdate">Birth Date</label>
-        <input type="date" id="reg-birthdate" />
-
-        <label for="reg-phone">Phone</label>
-        <input type="text" id="reg-phone" placeholder="Số điện thoại" />
-
-        <label for="reg-address">Address</label>
-        <input type="text" id="reg-address" placeholder="Địa chỉ" />
-
-
-
-        <button id="register-button">Đăng ký</button>
-
-        <div id="reg-error-message" class="error">
+    <header>
+        <div class="logo">
+            <img src="../../assets/images/logo.png" alt="Logo" />
+            <span>EmoGarden</span>
         </div>
+        <div class="buttons">
+            <a href="../index.html">Trang chủ</a>
+            <a href="login.html">Đăng nhập</a>
+        </div>
+    </header>
 
-        <div class="login-link">
-            <p>Bạn đã có tài khoản?</p>
-            <a href="login.html">Đăng nhập ngay</a>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-image">
+                <img src="../../assets/images/login_image.png" alt="Minh họa đăng ký" />
+            </div>
+
+            <div class="auth-form">
+                <h2>Tạo tài khoản</h2>
+                <form action="#" method="post">
+                    <div class="form-group">
+                        <label for="fullname">Họ và tên</label>
+                        <input id="fullname" name="fullname" type="text" placeholder="Nhập họ và tên" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gender">Giới tính</label>
+                        <select id="gender" name="gender" required>
+                            <option value="" disabled selected>Chọn giới tính</option>
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="birthdate">Ngày sinh</label>
+                        <input id="birthdate" name="birthdate" type="date" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại</label>
+                        <input id="phone" name="phone" type="tel" placeholder="Nhập số điện thoại" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" placeholder="Nhập email" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-username">Tên đăng nhập</label>
+                        <input id="reg-username" name="username" type="text" placeholder="Tạo tên đăng nhập" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-password">Mật khẩu</label>
+                        <input id="reg-password" name="password" type="password" placeholder="Tạo mật khẩu" required />
+                    </div>
+
+                    <button type="submit">Đăng ký</button>
+                </form>
+
+                <div class="extra-links">
+                    <a href="login.html">Đã có tài khoản? Đăng nhập</a>
+                </div>
+
+                <div class="auth-footer">© 2025 EmoGarden. All rights reserved.</div>
+            </div>
         </div>
     </div>
-
-    <script src="../components/register.js"></script>
 </body>
 
 </html>
