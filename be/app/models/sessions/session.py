@@ -1,54 +1,35 @@
-from uuid import UUID
-from datetime import datetime
-from typing import Dict, Optional
+from sqlalchemy import Column, UUID, TIMESTAMP, String, Integer, Enum, JSON, ARRAY
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, DOUBLE_PRECISION
+from sqlalchemy.orm import relationship
+from uuid import uuid4
+import enum
+from ..base import Base
 
-class Session:
-    """
-    Entity lưu trữ thông tin phiên chơi
-    """
+class SessionStateEnum(enum.Enum):
+    playing = "playing"
+    pause = "pause"
+    end = "end"
 
-    def __init__(
-        self,
-        session_id: UUID,
-        user_id: UUID,
-        game_id: UUID,
-        start_time: datetime,
-        end_time: Optional[datetime] = None,
-        state: str = "playing",
-        score: int = 0,
-        answers: Optional[Dict[str, str]] = None,
-        emotion_errors: Optional[Dict[str, int]] = None
-    ):
-        self._session_id = session_id
-        self._user_id = user_id
-        self._game_id = game_id
-        self._start_time = start_time
-        self._end_time = end_time
-        self._state = state
-        self._score = score
-        self._answers = answers or {}
-        self._emotion_errors = emotion_errors or {}
+class Session(Base):
+    __tablename__ = "sessions"
 
-    def start_session(self, user_id: UUID, game_id: UUID) -> None:
-        """
-        Bắt đầu phiên chơi mới
-        """
-        pass
+    session_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"))
+    game_id = Column(UUID(as_uuid=True), ForeignKey("games.game_id"))
+    start_time = Column(TIMESTAMP, nullable=False)
+    end_time = Column(TIMESTAMP)
+    state = Column(Enum(SessionStateEnum), nullable=False)
+    score = Column(Integer, nullable=False, default=0)
+    emotion_errors = Column(JSON, nullable=False, default={})
+    max_errors = Column(Integer, nullable=False)
+    level_threshold = Column(Integer, nullable=False)
+    ratio = Column(ARRAY(DOUBLE_PRECISION), nullable=False, default=[])
+    time_limit = Column(Integer, nullable=False)
+    question_ids = Column(ARRAY(PG_UUID(as_uuid=True)), nullable=False, default=[])
 
-    def end_session(self) -> None:
-        """
-        Kết thúc phiên chơi, lưu trạng thái
-        """
-        pass
-
-    def save_state(self, session_state: "Session") -> None:
-        """
-        Lưu trạng thái phiên
-        """
-        pass
-
-    def load_state(self, session_id: UUID) -> dict:
-        """
-        Tải trạng thái phiên theo session_id
-        """
-        pass
+    # Relationships
+    user = relationship("User", back_populates="sessions")
+    game = relationship("Game", back_populates="sessions")
+    session_questions = relationship("SessionQuestions", back_populates="session")
+    session_history = relationship("SessionHistory", back_populates="session")
+    game_history = relationship("GameHistory", back_populates="session")

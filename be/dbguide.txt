@@ -1,0 +1,58 @@
+TẠO MÔI TRƯỜNG ẢO
+cd E:\code\TTNM\TTNM-Game\be
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+
+Sau khi kích hoạt thành công, dòng lệnh sẽ hiển thị như:
+(.venv) PS E:\code\TTNM\TTNM-Game\be>
+
+2️⃣ CÀI ĐẶT THƯ VIỆN TỪ FILE REQUIREMENTS.TXT
+pip install -r requirements.txt
+
+3️⃣ KIỂM TRA KẾT NỐI SQL SERVER
+Đảm bảo SQL Server đang chạy:
+Mở SQL Server Configuration Manager
+Bật (Start) hai service sau:
+SQL Server (THINHSQL)
+SQL Server Browser
+
+Sau đó kiểm tra kết nối:
+python app/database.py
+
+
+Nếu hiển thị:
+✅ Kết nối SQL Server thành công! -> ok
+
+4️⃣ KIỂM TRA CẤU HÌNH ALEMBIC
+alembic check
+Nếu không có lỗi, nghĩa là Alembic đã được thiết lập đúng.
+
+5️⃣ TẠO MIGRATION MỚI (KHI CÓ THAY ĐỔI MODEL)
+alembic revision --autogenerate -m "Tên_migration"
+Ví dụ
+alembic revision --autogenerate -m "Thêm bảng users"
+
+6️⃣ ÁP DỤNG MIGRATION (TẠO HOẶC CẬP NHẬT BẢNG)
+alembic upgrade head
+Lệnh này sẽ tự động tạo hoặc cập nhật các bảng trong SQL Server.
+
+7️⃣ XEM LỊCH SỬ MIGRATION
+alembic history
+
+8️⃣ XOÁ TOÀN BỘ BẢNG (QUAY LẠI PHIÊN BẢN BAN ĐẦU)
+alembic downgrade base
+
+9️⃣ CẤU HÌNH FILE .env
+
+sửa file .env trong thư mục be (cùng cấp với app/) bằng url sql của mng
+
+DATABASE_URL=mssql+pyodbc:///?odbc_connect=DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost\THINHSQL;DATABASE=TTNM;UID=sa;PWD=yuiyL23021726
+
+🔟 CHẠY SERVER BACKEND
+Sau khi migrations đã được áp dụng:
+uvicorn app.main:app --reload
+
+
+Mở trình duyệt và truy cập:
+http://127.0.0.1:8000
