@@ -1,0 +1,4 @@
+run fe: cd đến fe và npm run dev
+sau đó truy cập link nó cung cấp
+
+run be: uvicorn app.main:app --reload

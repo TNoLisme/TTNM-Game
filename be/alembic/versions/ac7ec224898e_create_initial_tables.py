@@ -236,16 +236,21 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_table("reports")
+    # Xóa các bảng phụ thuộc trước
+    op.drop_table("session_questions")
+    op.drop_table("session_history")
     op.drop_table("game_history")
     op.drop_table("child_progress")
-    op.drop_table("session_questions")
-    op.drop_table("sessions")
-    op.drop_table("session_history")  # Thêm dòng này
-    op.drop_table("emotion_concepts")
-    op.drop_table("game_data_contents")
-    op.drop_table("game_data")
+    op.drop_table("reports")
+
+    # Xóa các bảng trung gian và liên quan
     op.drop_table("question_answer_options")
+    op.drop_table("game_data_contents")
+
+    # Xóa các bảng chính
+    op.drop_table("sessions")
+    op.drop_table("emotion_concepts")
+    op.drop_table("game_data")
     op.drop_table("questions")
     op.drop_table("game_content")
     op.drop_table("games")
