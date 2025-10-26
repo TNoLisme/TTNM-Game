@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from models.analytics import Report as ReportModel
-from mapper.report_mapper import ReportMapper
-from domain.analytics.report import Report
+from app.models.analytics import Report as ReportModel
+from app.mapper.report_mapper import ReportMapper
+from app.domain.analytics.report import Report
 from .base_repo import BaseRepository
 
 class ReportRepository(BaseRepository[ReportModel, Report]):

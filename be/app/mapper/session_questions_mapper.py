@@ -1,9 +1,9 @@
 from uuid import UUID
 from datetime import datetime
-from models.sessions.session_questions import SessionQuestions as SessionQuestionsModel
-from domain.sessions.session_questions import SessionQuestions
-from mapper.questions_mapper import QuestionsMapper
-from schemas.sessions.session_questions_schema import SessionQuestionsSchema  # Giả định schema
+from app.models.sessions.session_questions import SessionQuestions as SessionQuestionsModel
+from app.domain.sessions.session_questions import SessionQuestions
+from app.mapper.questions_mapper import QuestionsMapper
+from app.schemas.sessions.session_questions_schema import SessionQuestionsSchema  # Giả định schema
 
 class SessionQuestionsMapper:
     @staticmethod

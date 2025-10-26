@@ -19,4 +19,4 @@ class GameDataSchema:
         created_at: datetime = Field(default_factory=lambda: datetime(2025, 10, 25, 16, 20))
 
     class Config:
-        orm_mode = True
+        from_attributes = True

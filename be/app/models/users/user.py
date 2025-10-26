@@ -1,12 +1,8 @@
-from sqlalchemy import Column, UUID, String, Enum
+from sqlalchemy import Column, String, Enum, UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
-import enum
 from ..base import Base
-
-class RoleEnum(enum.Enum):
-    child = "child"
-    admin = "admin"
+from app.domain.enum import RoleEnum
 
 class User(Base):
     __tablename__ = "users"
@@ -15,7 +11,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
-    role = Column(Enum(RoleEnum), nullable=False)
+    role = Column(Enum(RoleEnum, native_enum=False), nullable=False)
     name = Column(String(100), nullable=False)
 
     # Relationships

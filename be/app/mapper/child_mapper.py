@@ -1,27 +1,39 @@
 from uuid import UUID
 from datetime import datetime
-from models.users.child import Child as ChildModel
-from domain.users.child import Child, RoleEnum, ReportTypeEnum
-from mapper.child_progress_mapper import ChildProgressMapper
-from schemas.users.user_schema import UserSchema  # Giả định schema
-
+from app.models.users.child import Child as ChildModel
+from app.domain.users.child import Child
+from app.mapper.child_progress_mapper import ChildProgressMapper
+from app.schemas.users.user_schema import UserSchema  # Giả định schema
+from app.domain.enum import ReportTypeEnum, RoleEnum
 class ChildMapper:
     @staticmethod
     def to_domain(child_model: ChildModel) -> Child:
         """Chuyển đổi từ model sang domain entity."""
         if not child_model:
             return None
+        role_value = (
+            child_model.role.value
+            if isinstance(child_model.role, RoleEnum)
+            else str(child_model.role)
+        )
+        report_pref_value = (
+            child_model.report_preferences.value
+            if isinstance(child_model.report_preferences, ReportTypeEnum)
+            else str(child_model.report_preferences)
+            if child_model.report_preferences else None
+        )
+
         return Child(
             user_id=child_model.user_id,
             username=child_model.username,
             email=child_model.email,
             password=child_model.password,
-            role=RoleEnum(child_model.role),
+            role=RoleEnum(role_value),
             name=child_model.name,
             age=child_model.age,
-            progress=[ChildProgressMapper.to_domain(p) for p in child_model.progress],  # Placeholder
+            progress=[ChildProgressMapper.to_domain(p) for p in child_model.progress] if child_model.progress else [],
             last_played=child_model.last_played,
-            report_preferences=ReportTypeEnum(child_model.report_preferences) if child_model.report_preferences else None,
+            report_preferences=ReportTypeEnum(report_pref_value) if report_pref_value else None,
             created_at=child_model.created_at,
             last_login=child_model.last_login
         )

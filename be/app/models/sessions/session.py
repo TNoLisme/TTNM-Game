@@ -1,9 +1,10 @@
-from sqlalchemy import Column, UUID, TIMESTAMP, String, Integer, Enum, JSON, ARRAY
+from sqlalchemy import Column, UUID, TIMESTAMP, String, Integer, Enum, JSON, ARRAY, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, DOUBLE_PRECISION
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 import enum
 from ..base import Base
+from app.models.users.user import User
 
 class SessionStateEnum(enum.Enum):
     playing = "playing"

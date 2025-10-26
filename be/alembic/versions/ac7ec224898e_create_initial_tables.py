@@ -171,6 +171,23 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["question_id"], ["questions.question_id"], name="fk_session_questions_question_id")
     )
 
+    # Tạo bảng session_history
+    op.create_table(
+        "session_history",
+        sa.Column("session_history_id", mssqlUUID(), nullable=False, server_default=sa.text("NEWID()")),
+        sa.Column("child_id", mssqlUUID(), nullable=False),
+        sa.Column("game_id", mssqlUUID(), nullable=False),
+        sa.Column("session_id", mssqlUUID(), nullable=False),
+        sa.Column("level", sa.Integer(), nullable=False),
+        sa.Column("start_time", DATETIME2(), nullable=False),
+        sa.Column("end_time", DATETIME2(), nullable=True),
+        sa.Column("score", sa.Integer(), nullable=False),
+        sa.PrimaryKeyConstraint("session_history_id"),
+        sa.ForeignKeyConstraint(["child_id"], ["children.user_id"], name="fk_session_history_child_id"),
+        sa.ForeignKeyConstraint(["game_id"], ["games.game_id"], name="fk_session_history_game_id"),
+        sa.ForeignKeyConstraint(["session_id"], ["sessions.session_id"], name="fk_session_history_session_id")
+    )
+
     # Tạo bảng child_progress
     op.create_table(
         "child_progress",
@@ -224,6 +241,7 @@ def downgrade() -> None:
     op.drop_table("child_progress")
     op.drop_table("session_questions")
     op.drop_table("sessions")
+    op.drop_table("session_history")  # Thêm dòng này
     op.drop_table("emotion_concepts")
     op.drop_table("game_data_contents")
     op.drop_table("game_data")

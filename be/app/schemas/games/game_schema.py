@@ -1,6 +1,6 @@
 from uuid import UUID
 from pydantic import BaseModel, Field, validator
-from ..enum import GameTypeEnum
+from ...domain.enum import GameTypeEnum
 
 class GameSchema(BaseModel):
 

@@ -2,10 +2,9 @@ from uuid import UUID
 from pydantic import BaseModel, Field, EmailStr, validator
 from typing import Optional, List
 from datetime import datetime
-from ..enum import RoleEnum, ReportTypeEnum
+from app.domain.enum import RoleEnum, ReportTypeEnum  # ✅ đồng bộ enum
 
-class UserSchema(BaseModel):
-    
+class UserSchema:
 
     class UserRequest(BaseModel):
         username: str = Field(..., min_length=3, max_length=50)
@@ -20,12 +19,18 @@ class UserSchema(BaseModel):
                 raise ValueError("password must contain at least one special character")
             return v
 
+        class Config:
+            use_enum_values = True
+
     class UserResponse(BaseModel):
         user_id: UUID
         username: str
         email: str
         role: RoleEnum
         name: str
+
+        class Config:
+            use_enum_values = True
 
     class ChildRequest(UserRequest):
         age: int = Field(..., ge=0, le=18)
@@ -45,8 +50,14 @@ class UserSchema(BaseModel):
         created_at: datetime = Field(default_factory=lambda: datetime(2025, 10, 25, 14, 45))
         last_login: datetime = Field(default_factory=lambda: datetime(2025, 10, 25, 14, 45))
 
+        class Config:
+            use_enum_values = True
+
     class AdminRequest(UserRequest):
         pass
 
     class AdminResponse(UserResponse):
-        all_child: Optional[List["UserSchema.ChildResponse"]] = None    
+        all_child: Optional[List["UserSchema.ChildResponse"]] = None
+
+        class Config:
+            use_enum_values = True

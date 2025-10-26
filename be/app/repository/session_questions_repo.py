@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from models.sessions import SessionQuestions as SessionQuestionsModel
-from mapper.session_questions_mapper import SessionQuestionsMapper
-from domain.sessions.session_questions import SessionQuestions
+from app.models.sessions import SessionQuestions as SessionQuestionsModel
+from app.mapper.session_questions_mapper import SessionQuestionsMapper
+from app.domain.sessions.session_questions import SessionQuestions
 from .base_repo import BaseRepository
 
 class SessionQuestionsRepository(BaseRepository[SessionQuestionsModel, SessionQuestions]):

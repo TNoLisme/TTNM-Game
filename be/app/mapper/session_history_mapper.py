@@ -1,8 +1,8 @@
 from uuid import UUID
 from datetime import datetime
-from models.analytics.session_history import SessionHistory as SessionHistoryModel
-from domain.analytics.session_history import SessionHistory
-from schemas.analytics.session_history_schema import SessionHistorySchema  # Giả định schema
+from app.models.analytics.session_history import SessionHistory as SessionHistoryModel
+from app.domain.analytics.session_history import SessionHistory
+from app.schemas.analytics.session_history_schema import SessionHistorySchema  # Giả định schema
 
 class SessionHistoryMapper:
     @staticmethod

@@ -2,15 +2,12 @@ from uuid import UUID
 from typing import List
 from datetime import datetime
 import enum
-from domain.users.user import User, RoleEnum
-from domain.analytics.child_progress import ChildProgress
-from domain.sessions.session import Session
+from app.domain.users.user import User
+from app.domain.enum import RoleEnum
+from app.domain.analytics.child_progress import ChildProgress
+from app.domain.sessions.session import Session
 import enum
-
-class ReportTypeEnum(enum.Enum):
-    daily = "daily"
-    weekly = "weekly"
-    monthly = "monthly"
+from app.domain.enum import ReportTypeEnum
 
 class Child(User):
     def __init__(self, user_id: UUID, username: str, email: str, password: str, role: RoleEnum, name: str,

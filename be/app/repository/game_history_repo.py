@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from models.analytics import GameHistory as GameHistoryModel
-from mapper.game_history_mapper import GameHistoryMapper
-from domain.analytics.game_history import GameHistory
+from app.models.analytics import GameHistory as GameHistoryModel
+from app.mapper.game_history_mapper import GameHistoryMapper
+from app.domain.analytics.game_history import GameHistory
 from .base_repo import BaseRepository
 
 class GameHistoryRepository(BaseRepository[GameHistoryModel, GameHistory]):

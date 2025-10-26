@@ -1,9 +1,9 @@
 from uuid import UUID
-from domain.users.user import User
-from repository.users_repo import UserRepository
+from app.domain.users.user import User
+from app.repository.users_repo import UsersRepository
 
 class UsersService:
-    def __init__(self, user_repo: UserRepository):
+    def __init__(self, user_repo: UsersRepository):
         self.repo = user_repo
 
     def create_user(self, data: dict) -> dict:

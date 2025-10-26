@@ -1,7 +1,7 @@
 from uuid import UUID
-from models.sessions.emotion_concept import EmotionConcept as EmotionConceptModel
-from domain.sessions.emotion_concept import EmotionConcept
-from schemas.sessions.emotion_concept_schema import EmotionConceptSchema  # Giả định schema
+from app.models.sessions.emotion_concept import EmotionConcept as EmotionConceptModel
+from app.domain.sessions.emotion_concept import EmotionConcept
+from app.schemas.sessions.emotion_concept_schema import EmotionConceptSchema  # Giả định schema
 
 class EmotionConceptsMapper:
     @staticmethod

@@ -1,9 +1,9 @@
 from uuid import UUID
 from datetime import datetime
-from models.games.game_data import GameData as GameDataModel
-from domain.games.game_data import GameData
-from mapper.game_contents_mapper import GameContentsMapper
-from schemas.games.game_data_schema import GameDataSchema  # Cập nhật từ schema mới
+from app.models.games.game_data import GameData as GameDataModel
+from app.domain.games.game_data import GameData
+from app.mapper.game_contents_mapper import GameContentsMapper
+from app.schemas.games.game_data_schema import GameDataSchema  # Cập nhật từ schema mới
 from typing import List, Dict
 
 class GameDataMapper:

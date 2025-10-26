@@ -1,9 +1,9 @@
 from uuid import UUID
 from datetime import datetime
 from sqlalchemy.orm import Session
-from models.users import Child as ChildModel
-from mapper.child_mapper import ChildMapper
-from domain.users.child import Child
+from app.models.users import Child as ChildModel
+from app.mapper.child_mapper import ChildMapper
+from app.domain.users.child import Child
 from .base_repo import BaseRepository
 
 class ChildRepository(BaseRepository[ChildModel, Child]):

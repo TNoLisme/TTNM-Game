@@ -1,8 +1,8 @@
 from uuid import UUID
 from datetime import datetime
-from models.games.game import Game as GameModel
-from domain.games.game import Game, GameClick, GameCV, GameRecognizeEmotion, GameSituationEmotion, GameFaceBuilder, GameWhoIsWho, GameExpressEmotion, GameSituationExpress
-from schemas.games.game_schema import GameSchema  # Giả định schema
+from app.models.games.game import Game as GameModel
+from app.domain.games.game import Game, GameClick, GameCV, GameRecognizeEmotion, GameSituationEmotion, GameFaceBuilder, GameWhoIsWho, GameExpressEmotion, GameSituationExpress
+from app.schemas.games.game_schema import GameSchema  # Giả định schema
 from typing import Optional
 
 class GamesMapper:

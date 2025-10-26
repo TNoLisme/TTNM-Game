@@ -2,8 +2,9 @@ from uuid import UUID
 from pydantic import BaseModel, Field, validator
 from typing import List, Dict, Optional
 from datetime import datetime
-from games.question_schema import QuestionSchema
-from ..enum import SessionStateEnum
+from app.schemas.games.question_schema import QuestionSchema
+
+from ...domain.enum import SessionStateEnum
 
 class SessionSchema(BaseModel):
 

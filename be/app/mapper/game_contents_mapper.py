@@ -1,7 +1,7 @@
 from uuid import UUID
-from models.games.game_content import GameContent as GameContentModel
-from domain.games.game_content import GameContent
-from schemas.games.game_contents_schema import GameContentsSchema  # Giả định schema
+from app.models.games.game_content import GameContent as GameContentModel
+from app.domain.games.game_content import GameContent
+from app.schemas.games.game_contents_schema import GameContentsSchema  # Giả định schema
 
 class GameContentsMapper:
     @staticmethod

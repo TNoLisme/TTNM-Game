@@ -1,8 +1,8 @@
 from uuid import UUID
 from datetime import datetime
-from models.analytics.report import Report as ReportModel
-from domain.analytics.report import Report, ReportTypeEnum
-from schemas.analytics.report_schema import ReportSchema  # Giả định schema
+from app.models.analytics.report import Report as ReportModel
+from app.domain.analytics.report import Report, ReportTypeEnum
+from app.schemas.analytics.report_schema import ReportSchema  # Giả định schema
 
 class ReportMapper:
     @staticmethod
