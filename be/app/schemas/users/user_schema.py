@@ -1,64 +1,7 @@
+
+            
 from uuid import UUID
-from pydantic import BaseModel, Field, EmailStr, validator
-from typing import Optional, List
-from datetime import datetime
-from app.domain.enum import RoleEnum, ReportTypeEnum, GenderEnum  # Thêm GenderEnum
 
-class UserSchema:
-    class UserRequest(BaseModel):
-        username: str = Field(..., min_length=3, max_length=50)
-        email: EmailStr
-        password: str = Field(..., min_length=8)
-        role: RoleEnum
-        name: str = Field(..., max_length=100)
-
-        @validator("password")
-        def password_must_contain_special(cls, v):
-            if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
-                raise ValueError("password must contain at least one special character")
-            return v
-
-        class Config:
-            use_enum_values = True
-
-    class UserResponse(BaseModel):
-        user_id: UUID
-        username: str
-        email: str
-        role: RoleEnum
-        name: str
-
-        class Config:
-            use_enum_values = True
-
-    class ChildRequest(UserRequest):
-        age: int = Field(..., ge=0, le=18)
-        report_preferences: Optional[ReportTypeEnum] = None
-        gender: GenderEnum  # Thêm
-        date_of_birth: datetime  # Thêm, sử dụng datetime thay vì date cho linh hoạt
-        phone_number: str = Field(..., min_length=10, max_length=20)  # Thêm
-
-        @validator("age")
-        def age_must_be_valid(cls, v):
-            if v < 0 or v > 18:
-                raise ValueError("age must be greater than 0")
-            return v
-
-        class Config:
-            use_enum_values = True
-
-    class ChildResponse(UserResponse):
-        age: int
-        progress: Optional[List[dict]] = None
-        last_played: Optional[datetime] = None
-        report_preferences: Optional[ReportTypeEnum] = None
-        created_at: datetime = Field(default_factory=lambda: datetime(2025, 10, 25, 14, 45))
-        last_login: Optional[datetime] = None
-        gender: GenderEnum  # Thêm
-        date_of_birth: datetime  # Thêm
-        phone_number: str  # Thêm
-
-        class Config:from uuid import UUID
 from pydantic import BaseModel, Field, EmailStr, validator
 from typing import Optional, List
 from datetime import datetime

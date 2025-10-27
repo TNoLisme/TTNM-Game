@@ -69,5 +69,6 @@ class UsersRepository(BaseRepository[UserModel, UserDomain]):
             .filter(self.model_class.username == username) \
             .filter(self.model_class.password == password) \
             .first()
+        print(f"Queried user with username: {username}, password: {password}, found: {user_model}")
         return self.mapper_class.to_domain(user_model)
     

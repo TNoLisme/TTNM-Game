@@ -69,3 +69,18 @@ class UsersService:
         self.child_repo.save(child)
         print("Tạo child thành công ở đây.")
         return {"status": "success", "message": f"Child created", "user_id": str(child.user_id)}
+    
+    def login(self, username: str, password: str) -> dict:
+        """Kiểm tra đăng nhập dựa trên username và password."""
+        user = self.user_repo.get_by_username_and_password(username, password)
+        if user:
+            return {
+                "success": True,
+                "message": "Đăng nhập thành công",
+                "user": {
+                    "username": user.username,
+                    "fullName": user.name,
+                    "accountType": user.role.value
+                }
+            }
+        return {"success": False, "message": "Sai tên đăng nhập hoặc mật khẩu."}

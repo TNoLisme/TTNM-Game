@@ -4,6 +4,7 @@ from app.schemas.users.user_schema import UserSchema
 from app.repository.users_repo import UsersRepository
 from app.repository.child_repo import ChildRepository
 from app.database import get_db
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -42,3 +43,23 @@ async def register(user: UserSchema.ChildRequest, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Lỗi server: {str(e)}")
 
     return {"status": "success", "message": "Đăng ký thành công", "data": {"user_id": result.get("user_id")}}
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+@router.post("/login")
+async def login(request: LoginRequest, db=Depends(get_db)):
+    print(f"Received login request for username: {request.username}, password: {request.password}")
+    
+    user_repo = UsersRepository(db)
+    child_repo = ChildRepository(db)
+    service = UsersService(user_repo, child_repo)
+
+    result = service.login(request.username, request.password)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    return result
