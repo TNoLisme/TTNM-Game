@@ -4,6 +4,7 @@ from uuid import uuid4
 from ..base import Base
 from app.domain.enum import RoleEnum
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -13,6 +14,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     role = Column(Enum(RoleEnum, native_enum=False), nullable=False)
     name = Column(String(100), nullable=False)
+
 
     # Relationships
     sessions = relationship("Session", back_populates="user")

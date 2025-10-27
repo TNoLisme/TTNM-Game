@@ -8,7 +8,7 @@ Create Date: 2025-10-25 19:21:16.472962
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.mssql import NVARCHAR, DATETIME2, UNIQUEIDENTIFIER as mssqlUUID
+from sqlalchemy.dialects.mssql import NVARCHAR, DATETIME2, UNIQUEIDENTIFIER as mssqlUUID, DATE
 
 # revision identifiers, used by Alembic.
 revision: str = 'ac7ec224898e'
@@ -41,6 +41,9 @@ def upgrade() -> None:
         sa.Column("report_preferences", sa.Enum("daily", "weekly", "monthly", name="report_type_enum"), nullable=True),
         sa.Column("created_at", DATETIME2(), nullable=False),
         sa.Column("last_login", DATETIME2(), nullable=True),
+        sa.Column("gender", sa.Enum("male", "female", "other", name="gender_enum"), nullable=False),  # Thêm cột gender
+        sa.Column("date_of_birth", DATE, nullable=False),  # Thêm cột date_of_birth
+        sa.Column("phone_number", NVARCHAR(20), nullable=False, unique=True),  # Thêm cột phone_number
         sa.PrimaryKeyConstraint("user_id"),
         sa.ForeignKeyConstraint(["user_id"], ["users.user_id"], name="fk_children_user_id")
     )
