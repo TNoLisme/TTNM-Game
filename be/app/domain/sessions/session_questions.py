@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import Dict
 from typing import List
 from datetime import datetime
-from domain.games.question import Question
+from app.domain.games.question import Question
 
 class SessionQuestions:
     def __init__(self, id: UUID, session_id: UUID, question: Question, user_answer: Dict,

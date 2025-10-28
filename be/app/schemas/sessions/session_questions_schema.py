@@ -2,7 +2,8 @@ from uuid import UUID
 from pydantic import BaseModel, Field, validator
 from typing import Dict
 from datetime import datetime
-from games.question_schema import QuestionSchema
+from app.schemas.games.question_schema import QuestionSchema
+
 
 class SessionQuestionsSchema(BaseModel):
     class SessionQuestionsRequest(BaseModel):

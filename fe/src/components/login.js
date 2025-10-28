@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:8000';
 
 const showError = (message) => {
     document.querySelector('#error-message').textContent = message || '';
@@ -11,7 +11,7 @@ const redirectToHome = (user) => {
 };
 
 const handleLogin = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Ngăn hành vi submit mặc định
     showError('');
 
     const username = document.querySelector('#username').value.trim();
@@ -21,16 +21,8 @@ const handleLogin = async (e) => {
         return showError('Vui lòng nhập đầy đủ Username và Password.');
     }
 
-    // Mock admin
-    if (username === 'admin' && password === 'admin') {
-        redirectToHome({ username, fullName: 'Admin', accountType: 'admin' });
-        return;
-    } else {
-        return showError('Sai tên đăng nhập hoặc mật khẩu.');
-    }
-
     try {
-        const res = await fetch(`${API_URL}/login`, {
+        const res = await fetch(`${API_URL}/login`, { // Sử dụng endpoint /auth/login
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -50,5 +42,8 @@ const handleLogin = async (e) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('#login-button')?.addEventListener('click', handleLogin);
+    const loginForm = document.querySelector('#login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin); // Gắn sự kiện submit vào form
+    }
 });

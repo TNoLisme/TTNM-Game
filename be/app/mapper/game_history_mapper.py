@@ -1,7 +1,7 @@
 from uuid import UUID
-from models.analytics.game_history import GameHistory as GameHistoryModel
-from domain.analytics.game_history import GameHistory
-from schemas.analytics.game_history_schema import GameHistorySchema  # Giả định schema
+from app.models.analytics.game_history import GameHistory as GameHistoryModel
+from app.domain.analytics.game_history import GameHistory
+from app.schemas.analytics.game_history_schema import GameHistorySchema  # Giả định schema
 
 class GameHistoryMapper:
     @staticmethod

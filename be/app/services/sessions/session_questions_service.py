@@ -1,6 +1,6 @@
 from uuid import UUID
-from domain.sessions.session_questions import SessionQuestions
-from repository.session_questions_repo import SessionQuestionsRepository
+from app.domain.sessions.session_questions import SessionQuestions
+from app.repository.session_questions_repo import SessionQuestionsRepository
 
 class SessionQuestionsService:
     def __init__(self, session_questions_repo: SessionQuestionsRepository):

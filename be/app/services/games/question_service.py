@@ -1,10 +1,10 @@
 from uuid import UUID
 from .base_game_service import BaseGameService
-from domain.games.question import Question
-from repository.questions_repo import QuestionRepository
+from app.domain.games.question import Question
+from app.repository.questions_repo import QuestionsRepository
 
 class QuestionService(BaseGameService):
-    def __init__(self, question_repo: QuestionRepository):
+    def __init__(self, question_repo: QuestionsRepository):
         super().__init__(question_repo)
 
     def create(self, data: dict) -> dict:

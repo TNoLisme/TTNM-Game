@@ -1,6 +1,6 @@
 from uuid import UUID
-from domain.analytics.game_history import GameHistory
-from repository.game_history_repo import GameHistoryRepository
+from app.domain.analytics.game_history import GameHistory
+from app.repository.game_history_repo import GameHistoryRepository
 
 class GameHistoryService:
     def __init__(self, game_history_repo: GameHistoryRepository):

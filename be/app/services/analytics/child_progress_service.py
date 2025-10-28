@@ -1,8 +1,8 @@
 from uuid import UUID
 from datetime import datetime
-from repository.child_progress_repo import ChildProgressRepository
+from app.repository.child_progress_repo import ChildProgressRepository
 
-class AnalyticsService:
+class ChildProgressService:
     def __init__(self, child_progress_repo: ChildProgressRepository):
         self.repo = child_progress_repo
 

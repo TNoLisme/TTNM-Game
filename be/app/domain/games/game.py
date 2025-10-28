@@ -2,7 +2,10 @@ from abc import ABC, abstractmethod
 from uuid import UUID
 from typing import Optional
 from datetime import datetime
-from domain.sessions.session import Session
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.domain.sessions.session import Session
+
 class Game(ABC):
     def __init__(self, game_id: UUID, game_type: str, name: str, level: int, difficulty_level: int,
                  max_errors: int, level_threshold: int, time_limit: int):

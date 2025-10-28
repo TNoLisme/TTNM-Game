@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import List
-from domain.games.game_content import GameContent
+from app.domain.games.game_content import GameContent
 
 class Question:
     def __init__(self, question_id: UUID, game_id: UUID, level: int, content: GameContent, answer_options: List[GameContent], correct_answer: str):

@@ -1,11 +1,11 @@
 from uuid import UUID
 from datetime import datetime
 from .base_game_service import BaseGameService
-from domain.games.game import Game
-from repository.games_repo import GameRepository
+from app.domain.games.game import Game
+from app.repository.games_repo import GamesRepository
 
 class GameService(BaseGameService):
-    def __init__(self, game_repo: GameRepository):
+    def __init__(self, game_repo: GamesRepository):
         super().__init__(game_repo)
 
     def create(self, data: dict) -> dict:

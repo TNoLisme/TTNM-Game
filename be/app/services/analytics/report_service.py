@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime
-from domain.analytics.report import Report
-from repository.report_repo import ReportRepository
+from app.domain.analytics.report import Report
+from app.repository.report_repo import ReportRepository
 
 class ReportService:
     def __init__(self, report_repo: ReportRepository):

@@ -1,9 +1,9 @@
 from uuid import UUID
 from datetime import datetime
 from sqlalchemy.orm import Session
-from models.analytics import SessionHistory as SessionHistoryModel
-from mapper.session_history_mapper import SessionHistoryMapper
-from domain.analytics.session_history import SessionHistory
+from app.models.analytics import SessionHistory as SessionHistoryModel
+from app.mapper.session_history_mapper import SessionHistoryMapper
+from app.domain.analytics.session_history import SessionHistory
 from .base_repo import BaseRepository
 
 class SessionHistoryRepository(BaseRepository[SessionHistoryModel, SessionHistory]):

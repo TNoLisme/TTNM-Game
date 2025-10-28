@@ -1,6 +1,6 @@
 from uuid import UUID
-from domain.analytics.session_history import SessionHistory
-from repository.session_history_repo import SessionHistoryRepository
+from app.domain.analytics.session_history import SessionHistory
+from app.repository.session_history_repo import SessionHistoryRepository
 
 class SessionHistoryService:
     def __init__(self, session_history_repo: SessionHistoryRepository):

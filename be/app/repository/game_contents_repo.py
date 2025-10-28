@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from models.games import GameContent as GameContentModel
-from mapper.game_contents_mapper import GameContentsMapper
-from domain.games.game_content import GameContent
+from app.models.games import GameContent as GameContentModel
+from app.mapper.game_contents_mapper import GameContentsMapper
+from app.domain.games.game_content import GameContent
 from .base_repo import BaseRepository
 
 class GameContentsRepository(BaseRepository[GameContentModel, GameContent]):

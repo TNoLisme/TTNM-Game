@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from models.analytics import ChildProgress as ChildProgressModel
-from mapper.child_progress_mapper import ChildProgressMapper
-from domain.analytics.child_progress import ChildProgress
+from app.models.analytics import ChildProgress as ChildProgressModel
+from app.mapper.child_progress_mapper import ChildProgressMapper
+from app.domain.analytics.child_progress import ChildProgress
 from .base_repo import BaseRepository
 
 class ChildProgressRepository(BaseRepository[ChildProgressModel, ChildProgress]):

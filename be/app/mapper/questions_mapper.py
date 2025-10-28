@@ -1,8 +1,8 @@
 from uuid import UUID
-from models.games.question import Question as QuestionModel
-from domain.games.question import Question
-from mapper.game_contents_mapper import GameContentsMapper
-from schemas.games.question_schema import QuestionSchema  # Giả định schema
+from app.models.games.question import Question as QuestionModel
+from app.domain.games.question import Question
+from app.mapper.game_contents_mapper import GameContentsMapper
+from app.schemas.games.question_schema import QuestionSchema  # Giả định schema
 
 class QuestionsMapper:
     @staticmethod

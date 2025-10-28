@@ -1,10 +1,10 @@
 from uuid import UUID
 from datetime import datetime
-from domain.sessions.session import Session
-from repository.sessions_repo import SessionRepository
+from app.domain.sessions.session import Session
+from app.repository.sessions_repo import SessionsRepository
 
 class SessionsService:
-    def __init__(self, session_repo: SessionRepository):
+    def __init__(self, session_repo: SessionsRepository):
         self.repo = session_repo
 
     def start_session(self, data: dict) -> dict:
