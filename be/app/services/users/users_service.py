@@ -59,10 +59,10 @@ class UsersService:
             user_id=str(user_id),
             age=data.get("age"),
             last_played=None,
-            report_preferences=ReportTypeEnum(data.get("report_preferences")) if data.get("report_preferences") else None,
+            report_preferences=data.get("report_preferences"),
             created_at=datetime.utcnow(),
             last_login=None,
-            gender=GenderEnum(data.get("gender")) if data.get("gender") else None,
+            gender=data.get("gender"),
             date_of_birth=data.get("date_of_birth"),
             phone_number=data.get("phone_number")
         )

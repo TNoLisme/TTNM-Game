@@ -22,7 +22,7 @@ async def register(user: UserSchema.ChildRequest, db=Depends(get_db)):
             "password": user.password,
             "name": user.name,
             "age": user.age,
-            "report_preferences": user.report_preferences,
+            "report_preferences": user.report_preferences if user.report_preferences else None,
             "gender": user.gender,
             "date_of_birth": user.date_of_birth,
             "phone_number": user.phone_number,

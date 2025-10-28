@@ -12,19 +12,12 @@ class UsersMapper:
         if not user_model:
             return None
 
-        # Xử lý an toàn khi role có thể là string hoặc Enum
-        role_value = (
-            user_model.role.value
-            if isinstance(user_model.role, RoleEnum)
-            else str(user_model.role)
-        )
-
         return UserDomain(
             user_id=user_model.user_id,
             username=user_model.username,
             email=user_model.email,
             password=user_model.password,
-            role=RoleEnum(role_value),
+            role=user_model.role,
             name=user_model.name
         )
 
@@ -51,6 +44,6 @@ class UsersMapper:
             user_id=user_model.user_id,
             username=user_model.username,
             email=user_model.email,
-            role=str(user_model.role.value if isinstance(user_model.role, RoleEnum) else user_model.role),
+            role=user_model.role,
             name=user_model.name
         )

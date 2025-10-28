@@ -12,28 +12,17 @@ class ChildMapper:
         """Chuyển đổi từ model sang domain entity."""
         if not child_model:
             return None
-        report_pref_value = (
-            child_model.report_preferences.value
-            if isinstance(child_model.report_preferences, ReportTypeEnum)
-            else str(child_model.report_preferences)
-            if child_model.report_preferences else None
-        )
-        gender_value = (
-            child_model.gender.value
-            if isinstance(child_model.gender, GenderEnum)
-            else str(child_model.gender)
-            if child_model.gender else None
-        )
+
 
         return Child(
             user_id=str(child_model.user_id),
             age=child_model.age,
             progress=[ChildProgressMapper.to_domain(p) for p in child_model.progress] if child_model.progress else [],
             last_played=child_model.last_played,
-            report_preferences=ReportTypeEnum(report_pref_value) if report_pref_value else None,
+            report_preferences=child_model.report_preferences,
             created_at=child_model.created_at,
             last_login=child_model.last_login,
-            gender=GenderEnum(gender_value) if gender_value else None,
+            gender=child_model.gender,
             date_of_birth=child_model.date_of_birth,
             phone_number=child_model.phone_number
         )
@@ -47,13 +36,12 @@ class ChildMapper:
             user_id=UUID(child_domain.user_id),
             age=child_domain.age,
             last_played=child_domain.last_played,
-            report_preferences=child_domain.report_preferences.value if child_domain.report_preferences else None,
+            report_preferences=child_domain.report_preferences,
             created_at=child_domain.created_at,
             last_login=child_domain.last_login,
-            gender=child_domain.gender.value if child_domain.gender else None,
+            gender=child_domain.gender,
             date_of_birth=child_domain.date_of_birth,
-            phone_number=child_domain.phone_number,
-            progress=child_domain.progress
+            phone_number=child_domain.phone_number
         )
 
     @staticmethod

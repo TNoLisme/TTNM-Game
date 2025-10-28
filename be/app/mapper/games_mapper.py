@@ -14,7 +14,7 @@ class GamesMapper:
         if game_model.game_type == "GameClick":
             return GameClick(
                 game_id=game_model.game_id,
-                game_type=game_model.game_type.value,
+                game_type=game_model.game_type,
                 name=game_model.name,
                 level=game_model.level,
                 difficulty_level=game_model.difficulty_level,
@@ -27,7 +27,7 @@ class GamesMapper:
         elif game_model.game_type == "GameCV":
             return GameCV(
                 game_id=game_model.game_id,
-                game_type=game_model.game_type.value,
+                game_type=game_model.game_type,
                 name=game_model.name,
                 level=game_model.level,
                 difficulty_level=game_model.difficulty_level,

@@ -4,16 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "preview": "vite preview"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "vite": "^7.1.10"
+    "rollup": "^4.52.5",
+    "vite": "^7.1.12"
   }
-  
 }

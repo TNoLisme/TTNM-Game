@@ -12,6 +12,10 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"], 
     allow_headers=["*"],
 )
+@app.get("/") # <--- Định nghĩa route gốc
+def read_root():
+    return {"Hello": "World"}
+
 
 app.include_router(user_router)
 

@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 from app.models.analytics.report import Report as ReportModel
-from app.domain.analytics.report import Report, ReportTypeEnum
+from app.domain.analytics.report import Report
 from app.schemas.analytics.report_schema import ReportSchema  # Giả định schema
 
 class ReportMapper:
@@ -13,7 +13,7 @@ class ReportMapper:
         return Report(
             report_id=report_model.report_id,
             child_id=report_model.child_id,
-            report_type=ReportTypeEnum(report_model.report_type),
+            report_type=report_model.report_type,
             generated_at=report_model.generated_at,
             summary=report_model.summary,
             data=report_model.data
