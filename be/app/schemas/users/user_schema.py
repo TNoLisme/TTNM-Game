@@ -82,3 +82,17 @@ class UserSchema:
 
         class Config:
             use_enum_values = True
+
+    class ForgotPasswordRequest(BaseModel):
+        email: EmailStr
+
+    class ResetPasswordRequest(BaseModel):
+        email: EmailStr
+        otp: str = Field(..., min_length=6, max_length=6)  # OTP 6 chữ số
+        new_password: str = Field(..., min_length=8)
+
+        @validator("new_password")
+        def password_must_contain_special(cls, v):
+            if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
+                raise ValueError("password must contain at least one special character")
+            return v
