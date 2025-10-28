@@ -2,7 +2,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from typing import Dict
 from datetime import datetime
-from ..enum import ReportTypeEnum
+from ...domain.enum import ReportTypeEnum
 
 class ReportSchema(BaseModel):
 

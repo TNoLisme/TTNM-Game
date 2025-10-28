@@ -1,28 +1,35 @@
+
 from uuid import UUID
 from typing import List
 from datetime import datetime
 import enum
-from domain.users.user import User, RoleEnum
-from domain.analytics.child_progress import ChildProgress
-from domain.sessions.session import Session
+from app.domain.users.user import User
+from app.domain.enum import RoleEnum
+from app.domain.analytics.child_progress import ChildProgress
+from app.domain.sessions.session import Session
 import enum
+from datetime import date
+from app.domain.enum import ReportTypeEnum, GenderEnum
 
-class ReportTypeEnum(enum.Enum):
-    daily = "daily"
-    weekly = "weekly"
-    monthly = "monthly"
 
 class Child(User):
-    def __init__(self, user_id: UUID, username: str, email: str, password: str, role: RoleEnum, name: str,
-                 age: int, progress: List[ChildProgress], last_played: datetime, report_preferences: ReportTypeEnum,
-                 created_at: datetime, last_login: datetime):
-        super().__init__(user_id, username, email, password, role, name)
+    def __init__(self, user_id: str, age: int, last_played: date, report_preferences: ReportTypeEnum,
+                 created_at: date, last_login: date, gender: GenderEnum, date_of_birth: date, phone_number: str, progress: List['ChildProgress'] = None):
+        self.user_id = user_id
         self.age = age
-        self.progress = progress
         self.last_played = last_played
         self.report_preferences = report_preferences
         self.created_at = created_at
         self.last_login = last_login
+        self.gender = gender
+        self.date_of_birth = date_of_birth
+        self.phone_number = phone_number
+        self.progress = progress or []
+
+    def validate(self):
+        if not self.user_id or not self.phone_number:
+            raise ValueError("User ID and phone number are required")
+    
 
     def update_progress(self, session: Session) -> None:
         """Cập nhật tiến trình chơi."""

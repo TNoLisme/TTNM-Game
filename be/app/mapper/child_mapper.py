@@ -1,9 +1,10 @@
 from uuid import UUID
 from datetime import datetime
-from models.users.child import Child as ChildModel
-from domain.users.child import Child, RoleEnum, ReportTypeEnum
-from mapper.child_progress_mapper import ChildProgressMapper
-from schemas.users.user_schema import UserSchema  # Giả định schema
+from app.models.users.child import Child as ChildModel
+from app.domain.users.child import Child
+from app.mapper.child_progress_mapper import ChildProgressMapper
+from app.schemas.users.user_schema import UserSchema  # Sửa import
+from app.domain.enum import ReportTypeEnum, RoleEnum, GenderEnum
 
 class ChildMapper:
     @staticmethod
@@ -11,19 +12,19 @@ class ChildMapper:
         """Chuyển đổi từ model sang domain entity."""
         if not child_model:
             return None
+
+
         return Child(
-            user_id=child_model.user_id,
-            username=child_model.username,
-            email=child_model.email,
-            password=child_model.password,
-            role=RoleEnum(child_model.role),
-            name=child_model.name,
+            user_id=str(child_model.user_id),
             age=child_model.age,
-            progress=[ChildProgressMapper.to_domain(p) for p in child_model.progress],  # Placeholder
+            progress=[ChildProgressMapper.to_domain(p) for p in child_model.progress] if child_model.progress else [],
             last_played=child_model.last_played,
-            report_preferences=ReportTypeEnum(child_model.report_preferences) if child_model.report_preferences else None,
+            report_preferences=child_model.report_preferences,
             created_at=child_model.created_at,
-            last_login=child_model.last_login
+            last_login=child_model.last_login,
+            gender=child_model.gender,
+            date_of_birth=child_model.date_of_birth,
+            phone_number=child_model.phone_number
         )
 
     @staticmethod
@@ -32,12 +33,15 @@ class ChildMapper:
         if not child_domain:
             return None
         return ChildModel(
-            user_id=child_domain.user_id,
+            user_id=UUID(child_domain.user_id),
             age=child_domain.age,
             last_played=child_domain.last_played,
-            report_preferences=child_domain.report_preferences.value if child_domain.report_preferences else None,
+            report_preferences=child_domain.report_preferences,
             created_at=child_domain.created_at,
-            last_login=child_domain.last_login
+            last_login=child_domain.last_login,
+            gender=child_domain.gender,
+            date_of_birth=child_domain.date_of_birth,
+            phone_number=child_domain.phone_number
         )
 
     @staticmethod
@@ -52,9 +56,12 @@ class ChildMapper:
             role=child_model.role,
             name=child_model.name,
             age=child_model.age,
-            progress=None,  # Giả định cần mapper riêng cho progress
+            progress=[ChildProgressMapper.to_response(p) for p in child_model.progress] if child_model.progress else None,
             last_played=child_model.last_played,
             report_preferences=child_model.report_preferences,
             created_at=child_model.created_at or datetime(2025, 10, 25, 16, 8),
-            last_login=child_model.last_login or datetime(2025, 10, 25, 16, 8)
+            last_login=child_model.last_login or datetime(2025, 10, 25, 16, 8),
+            gender=child_model.gender,
+            date_of_birth=child_model.date_of_birth,
+            phone_number=child_model.phone_number
         )

@@ -36,6 +36,5 @@ class BaseRepository(ABC, Generic[T, D]):
             return True
         return False
 
-    @abstractmethod
     def get_all(self) -> List[D]:
         pass  # Abstract method to be implemented by specific repositories if needed

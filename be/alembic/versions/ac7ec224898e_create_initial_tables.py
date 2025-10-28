@@ -8,7 +8,7 @@ Create Date: 2025-10-25 19:21:16.472962
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.mssql import NVARCHAR, DATETIME2, UNIQUEIDENTIFIER as mssqlUUID
+from sqlalchemy.dialects.mssql import NVARCHAR, DATETIME2, UNIQUEIDENTIFIER as mssqlUUID, DATE
 
 # revision identifiers, used by Alembic.
 revision: str = 'ac7ec224898e'
@@ -41,6 +41,9 @@ def upgrade() -> None:
         sa.Column("report_preferences", sa.Enum("daily", "weekly", "monthly", name="report_type_enum"), nullable=True),
         sa.Column("created_at", DATETIME2(), nullable=False),
         sa.Column("last_login", DATETIME2(), nullable=True),
+        sa.Column("gender", sa.Enum("male", "female", "other", name="gender_enum"), nullable=False),  # Thêm cột gender
+        sa.Column("date_of_birth", DATE, nullable=False),  # Thêm cột date_of_birth
+        sa.Column("phone_number", NVARCHAR(20), nullable=False, unique=True),  # Thêm cột phone_number
         sa.PrimaryKeyConstraint("user_id"),
         sa.ForeignKeyConstraint(["user_id"], ["users.user_id"], name="fk_children_user_id")
     )
@@ -171,6 +174,23 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["question_id"], ["questions.question_id"], name="fk_session_questions_question_id")
     )
 
+    # Tạo bảng session_history
+    op.create_table(
+        "session_history",
+        sa.Column("session_history_id", mssqlUUID(), nullable=False, server_default=sa.text("NEWID()")),
+        sa.Column("child_id", mssqlUUID(), nullable=False),
+        sa.Column("game_id", mssqlUUID(), nullable=False),
+        sa.Column("session_id", mssqlUUID(), nullable=False),
+        sa.Column("level", sa.Integer(), nullable=False),
+        sa.Column("start_time", DATETIME2(), nullable=False),
+        sa.Column("end_time", DATETIME2(), nullable=True),
+        sa.Column("score", sa.Integer(), nullable=False),
+        sa.PrimaryKeyConstraint("session_history_id"),
+        sa.ForeignKeyConstraint(["child_id"], ["children.user_id"], name="fk_session_history_child_id"),
+        sa.ForeignKeyConstraint(["game_id"], ["games.game_id"], name="fk_session_history_game_id"),
+        sa.ForeignKeyConstraint(["session_id"], ["sessions.session_id"], name="fk_session_history_session_id")
+    )
+
     # Tạo bảng child_progress
     op.create_table(
         "child_progress",
@@ -219,15 +239,21 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_table("reports")
+    # Xóa các bảng phụ thuộc trước
+    op.drop_table("session_questions")
+    op.drop_table("session_history")
     op.drop_table("game_history")
     op.drop_table("child_progress")
-    op.drop_table("session_questions")
+    op.drop_table("reports")
+
+    # Xóa các bảng trung gian và liên quan
+    op.drop_table("question_answer_options")
+    op.drop_table("game_data_contents")
+
+    # Xóa các bảng chính
     op.drop_table("sessions")
     op.drop_table("emotion_concepts")
-    op.drop_table("game_data_contents")
     op.drop_table("game_data")
-    op.drop_table("question_answer_options")
     op.drop_table("questions")
     op.drop_table("game_content")
     op.drop_table("games")

@@ -1,8 +1,8 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from models.games import Question as QuestionModel
-from mapper.questions_mapper import QuestionsMapper
-from domain.games.question import Question
+from app.models.games import Question as QuestionModel
+from app.mapper.questions_mapper import QuestionsMapper
+from app.domain.games.question import Question
 import random
 from .base_repo import BaseRepository
 

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:8000';
 
 const showError = (message) => {
     document.querySelector('#error-message').textContent = message || '';
@@ -11,7 +11,7 @@ const redirectToHome = (user) => {
 };
 
 const handleLogin = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Ngăn hành vi submit mặc định
     showError('');
 
     const username = document.querySelector('#username').value.trim();
@@ -21,21 +21,12 @@ const handleLogin = async (e) => {
         return showError('Vui lòng nhập đầy đủ Username và Password.');
     }
 
-    // Mock admin
-    if (username === 'admin' && password === 'admin') {
-        redirectToHome({ username, fullName: 'Admin', accountType: 'admin' });
-        return;
-    } else {
-        return showError('Sai tên đăng nhập hoặc mật khẩu.');
-    }
-
     try {
-        const res = await fetch(`${API_URL}/login`, {
+        const res = await fetch(`${API_URL}/login`, {  // Thêm /users
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
-
         const data = await res.json();
 
         if (res.ok && data.success) {
@@ -50,5 +41,35 @@ const handleLogin = async (e) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('#login-button')?.addEventListener('click', handleLogin);
+    const loginForm = document.querySelector('#login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin); // Gắn sự kiện submit vào form
+    }
+
+    // Thêm cho quên mật khẩu
+    const forgotLink = document.getElementById('forgot-password-link');
+    if (forgotLink) {
+        forgotLink.addEventListener('click', handleForgotPassword);
+        console.log('Forgot link attached');  // Debug: In ra nếu load OK
+    } else {
+        console.error('Forgot link not found - check ID in HTML');  // Debug nếu id sai
+    }
 });
+
+// Thêm vào login.js
+async function handleForgotPassword() {
+    const email = prompt('Nhập email:');
+    if (email) {
+        const response = await fetch('http://127.0.0.1:8000/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message + ' (OTP in BE console)');  // Copy OTP từ console server
+        } else {
+            alert('Lỗi: ' + data.detail);
+        }
+    }
+}

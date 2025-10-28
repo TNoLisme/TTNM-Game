@@ -1,10 +1,10 @@
 from uuid import UUID
 from datetime import datetime
 from sqlalchemy.orm import Session
-from models.sessions import Session as SessionModel
-from mapper.sessions_mapper import SessionsMapper
-from domain.sessions.session import Session, SessionStateEnum
-from repository.questions_repo import QuestionsRepository
+from app.models.sessions import Session as SessionModel
+from app.mapper.sessions_mapper import SessionsMapper
+from app.domain.sessions.session import Session, SessionStateEnum
+from app.repository.questions_repo import QuestionsRepository
 from .base_repo import BaseRepository
 
 class SessionsRepository(BaseRepository[SessionModel, Session]):

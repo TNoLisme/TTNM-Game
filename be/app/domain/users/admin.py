@@ -1,7 +1,8 @@
 from uuid import UUID
 from typing import List
-from domain.users.user import User, RoleEnum
-from domain.users.child import Child
+from app.domain.users.user import User
+from app.domain.enum import RoleEnum
+from app.domain.users.child import Child
 import enum
 
 class Admin(User):

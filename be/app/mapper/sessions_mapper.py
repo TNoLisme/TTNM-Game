@@ -1,9 +1,9 @@
 from uuid import UUID
 from datetime import datetime
-from models.sessions.session import Session as SessionModel
-from domain.sessions.session import Session, SessionStateEnum
-from mapper.questions_mapper import QuestionsMapper
-from schemas.sessions.session_schema import SessionSchema  # Giả định schema
+from app.models.sessions.session import Session as SessionModel
+from app.domain.sessions.session import Session, SessionStateEnum
+from app.mapper.questions_mapper import QuestionsMapper
+from app.schemas.sessions.session_schema import SessionSchema  # Giả định schema
 from typing import List
 
 class SessionsMapper:
@@ -18,7 +18,7 @@ class SessionsMapper:
             user_id=session_model.user_id,
             game_id=session_model.game_id,
             start_time=session_model.start_time,
-            state=SessionStateEnum(session_model.state),
+            state=session_model.state,
             score=session_model.score,
             emotion_errors=session_model.emotion_errors,
             max_errors=session_model.max_errors,

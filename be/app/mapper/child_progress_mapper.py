@@ -1,8 +1,8 @@
 from uuid import UUID
 from datetime import datetime
-from models.analytics.child_progress import ChildProgress as ChildProgressModel
-from domain.analytics.child_progress import ChildProgress
-from schemas.analytics.child_progress_schema import ChildProgressSchema  # Giả định schema
+from app.models.analytics.child_progress import ChildProgress as ChildProgressModel
+from app.domain.analytics.child_progress import ChildProgress
+from app.schemas.analytics.child_progress_schema import ChildProgressSchema  # Giả định schema
 
 class ChildProgressMapper:
     @staticmethod

@@ -1,8 +1,8 @@
 from uuid import UUID
 from datetime import datetime
-from models.games.game import Game as GameModel
-from domain.games.game import Game, GameClick, GameCV, GameRecognizeEmotion, GameSituationEmotion, GameFaceBuilder, GameWhoIsWho, GameExpressEmotion, GameSituationExpress
-from schemas.games.game_schema import GameSchema  # Giả định schema
+from app.models.games.game import Game as GameModel
+from app.domain.games.game import Game, GameClick, GameCV, GameRecognizeEmotion, GameSituationEmotion, GameFaceBuilder, GameWhoIsWho, GameExpressEmotion, GameSituationExpress
+from app.schemas.games.game_schema import GameSchema  # Giả định schema
 from typing import Optional
 
 class GamesMapper:
@@ -14,7 +14,7 @@ class GamesMapper:
         if game_model.game_type == "GameClick":
             return GameClick(
                 game_id=game_model.game_id,
-                game_type=game_model.game_type.value,
+                game_type=game_model.game_type,
                 name=game_model.name,
                 level=game_model.level,
                 difficulty_level=game_model.difficulty_level,
@@ -27,7 +27,7 @@ class GamesMapper:
         elif game_model.game_type == "GameCV":
             return GameCV(
                 game_id=game_model.game_id,
-                game_type=game_model.game_type.value,
+                game_type=game_model.game_type,
                 name=game_model.name,
                 level=game_model.level,
                 difficulty_level=game_model.difficulty_level,

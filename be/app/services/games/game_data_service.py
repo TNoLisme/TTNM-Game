@@ -1,8 +1,8 @@
 from uuid import UUID
 from typing import List, Dict
-from repository.game_data_repo import GameDataRepository
-from domain.games.game_data import GameData
-from schemas.games.game_data_schema import GameDataSchema
+from app.repository.game_data_repo import GameDataRepository
+from app.domain.games.game_data import GameData
+from app.schemas.games.game_data_schema import GameDataSchema
 
 class GameDataService:
     def __init__(self, game_data_repo: GameDataRepository):

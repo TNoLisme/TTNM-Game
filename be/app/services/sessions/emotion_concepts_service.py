@@ -1,9 +1,9 @@
 from uuid import UUID
-from domain.sessions.emotion_concept import EmotionConcept
-from repository.emotion_concepts_repo import EmotionConceptsRepository
+from app.domain.sessions.emotion_concept import EmotionConcept
+from app.repository.emotion_concepts_repo import GameContentsRepository
 
 class EmotionConceptsService:
-    def __init__(self, emotion_concepts_repo: EmotionConceptsRepository):
+    def __init__(self, emotion_concepts_repo: GameContentsRepository):
         self.repo = emotion_concepts_repo
 
     def create_concept(self, data: dict) -> dict:

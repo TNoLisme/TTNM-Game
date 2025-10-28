@@ -1,13 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from base import Base  # Import từ base.py
+from app.base import Base  # Import từ base.py
 from dotenv import load_dotenv
 import os
 
 # Load biến môi trường
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL_SQLSERVER")
 
 # Tạo engine kết nối CSDL
 engine = create_engine(DATABASE_URL)
