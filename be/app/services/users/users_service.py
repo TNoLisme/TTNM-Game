@@ -6,6 +6,18 @@ from app.repository.child_repo import ChildRepository
 from app.domain.enum import RoleEnum, GenderEnum, ReportTypeEnum
 from datetime import datetime
 from app.schemas.users.user_schema import UserSchema
+import time  # Thêm cho expiry
+import random  # Thêm cho OTP
+import string  # Thêm cho OTP
+import smtplib  # Thêm cho gửi email
+from email.mime.text import MIMEText  # Thêm cho message email
+from dotenv import load_dotenv  # Thêm để load .env
+import os  # Thêm cho os.getenv
+
+load_dotenv()  # Load .env ngay đầu file
+
+# Global dict tạm thời cho OTP (cho demo, mất khi server restart)
+otp_storage = {}
 
 class UsersService:
     def __init__(self, user_repo: UsersRepository, child_repo: ChildRepository):
@@ -84,3 +96,60 @@ class UsersService:
                 }
             }
         return {"success": False, "message": "Sai tên đăng nhập hoặc mật khẩu."}
+    
+        # Thêm mới cho quên mật khẩu (gửi email thật)
+    def forgot_password(self, data: dict) -> dict:
+        email = data.get("email")
+        user = self.user_repo.get_by_email(email)
+        if not user:
+            return {"status": "failed", "message": "Email not found"}
+
+        # Tạo OTP random 6 chữ số
+        otp = ''.join(random.choices(string.digits, k=6))
+        expiry = time.time() + 600  # 10 phút (600 giây)
+
+        # Lưu tạm vào global dict (key: email)
+        otp_storage[email] = {'otp': otp, 'expiry': expiry}
+        print(f"[DEMO] OTP generated for {email}: {otp} (expires at {expiry})")  # Giữ print cho demo
+
+        # Gửi email thật qua Gmail
+        try:
+            msg = MIMEText(f"Xin chào {user.name},\n\nMã OTP của bạn là: {otp}\n\nMã này hết hạn sau 10 phút.\n\nTrân trọng,\nEmoGarden Team")
+            msg['Subject'] = 'Mã OTP Đặt Lại Mật Khẩu - EmoGarden'
+            msg['From'] = os.getenv("EMAIL_USER")
+            msg['To'] = email
+
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+                server.send_message(msg)
+            print(f"[EMAIL] OTP sent to {email} successfully")  # Log thành công
+        except Exception as e:
+            print(f"[EMAIL ERROR] Failed to send OTP to {email}: {e}")
+            return {"status": "failed", "message": "Gửi OTP thất bại, thử lại sau"}
+
+        return {"status": "success", "message": "OTP đã gửi đến email của bạn"}
+
+    def reset_password(self, data: dict) -> dict:
+        email = data.get("email")
+        otp = data.get("otp")
+        new_password = data.get("new_password")
+
+        # Lấy OTP từ global dict
+        stored = otp_storage.get(email)
+        if not stored:
+            return {"status": "failed", "message": "No OTP found for this email. Request new one."}
+
+        # Verify OTP và expiry
+        if stored['otp'] != otp or time.time() > stored['expiry']:
+            del otp_storage[email]  # Xóa nếu sai
+            return {"status": "failed", "message": "Invalid or expired OTP"}
+
+        # Cập nhật password (plain text, dùng repo update)
+        user = self.user_repo.get_by_email(email)
+        if user:
+            user.password = new_password  # Plain text
+            self.user_repo.update_user(user)  # Gọi update_user hiện có
+            del otp_storage[email]  # Xóa OTP sau khi thành công
+            return {"status": "success", "message": "Password reset successfully"}
+        return {"status": "failed", "message": "User not found"}

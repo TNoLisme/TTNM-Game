@@ -22,12 +22,11 @@ const handleLogin = async (e) => {
     }
 
     try {
-        const res = await fetch(`${API_URL}/login`, { // Sử dụng endpoint /auth/login
+        const res = await fetch(`${API_URL}/login`, {  // Thêm /users
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
-
         const data = await res.json();
 
         if (res.ok && data.success) {
@@ -46,4 +45,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin); // Gắn sự kiện submit vào form
     }
+
+    // Thêm cho quên mật khẩu
+    const forgotLink = document.getElementById('forgot-password-link');
+    if (forgotLink) {
+        forgotLink.addEventListener('click', handleForgotPassword);
+        console.log('Forgot link attached');  // Debug: In ra nếu load OK
+    } else {
+        console.error('Forgot link not found - check ID in HTML');  // Debug nếu id sai
+    }
 });
+
+// Thêm vào login.js
+async function handleForgotPassword() {
+    const email = prompt('Nhập email:');
+    if (email) {
+        const response = await fetch('http://127.0.0.1:8000/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message + ' (OTP in BE console)');  // Copy OTP từ console server
+        } else {
+            alert('Lỗi: ' + data.detail);
+        }
+    }
+}

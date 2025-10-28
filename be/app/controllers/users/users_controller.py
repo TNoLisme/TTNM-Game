@@ -63,3 +63,42 @@ async def login(request: LoginRequest, db=Depends(get_db)):
         raise HTTPException(status_code=400, detail=result["message"])
     
     return result
+
+# Thêm mới cho quên mật khẩu
+@router.post("/forgot-password")  # Đổi router thành user_router
+async def forgot_password(request: UserSchema.ForgotPasswordRequest, db=Depends(get_db)):
+    user_repo = UsersRepository(db)
+    child_repo = ChildRepository(db)
+    service = UsersService(user_repo, child_repo)
+
+    try:
+        result = service.forgot_password(request.dict())
+        if result.get("status") != "success":
+            raise HTTPException(status_code=400, detail=result.get("message", "Gửi OTP thất bại"))
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        import traceback
+        print("⚠️ Exception in forgot_password:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Lỗi server: {str(e)}")
+
+@router.post("/reset-password")  # Đổi router thành user_router
+async def reset_password(request: UserSchema.ResetPasswordRequest, db=Depends(get_db)):
+    user_repo = UsersRepository(db)
+    child_repo = ChildRepository(db)
+    service = UsersService(user_repo, child_repo)
+
+    try:
+        result = service.reset_password(request.dict())
+        if result.get("status") != "success":
+            raise HTTPException(status_code=400, detail=result.get("message", "Đặt lại mật khẩu thất bại"))
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        import traceback
+        print("⚠️ Exception in reset_password:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Lỗi server: {str(e)}")
