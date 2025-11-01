@@ -6,7 +6,7 @@ from app.repository.child_repo import ChildRepository
 from app.database import get_db
 from pydantic import BaseModel
 
-router = APIRouter()
+router = APIRouter(prefix="/users", tags=["users"])  # Thêm prefix="/users" để endpoint là /users/forgot-password
 
 @router.post("/register")
 async def register(user: UserSchema.ChildRequest, db=Depends(get_db)):
@@ -22,7 +22,7 @@ async def register(user: UserSchema.ChildRequest, db=Depends(get_db)):
             "password": user.password,
             "name": user.name,
             "age": user.age,
-            "report_preferences": user.report_preferences if user.report_preferences else None,
+            "report_preferences": user.report_preferences,
             "gender": user.gender,
             "date_of_birth": user.date_of_birth,
             "phone_number": user.phone_number,
@@ -48,7 +48,6 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-
 @router.post("/login")
 async def login(request: LoginRequest, db=Depends(get_db)):
     print(f"Received login request for username: {request.username}, password: {request.password}")
@@ -65,7 +64,7 @@ async def login(request: LoginRequest, db=Depends(get_db)):
     return result
 
 # Thêm mới cho quên mật khẩu
-@router.post("/forgot-password")  # Đổi router thành user_router
+@router.post("/forgot-password")
 async def forgot_password(request: UserSchema.ForgotPasswordRequest, db=Depends(get_db)):
     user_repo = UsersRepository(db)
     child_repo = ChildRepository(db)
@@ -84,7 +83,7 @@ async def forgot_password(request: UserSchema.ForgotPasswordRequest, db=Depends(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Lỗi server: {str(e)}")
 
-@router.post("/reset-password")  # Đổi router thành user_router
+@router.post("/reset-password")
 async def reset_password(request: UserSchema.ResetPasswordRequest, db=Depends(get_db)):
     user_repo = UsersRepository(db)
     child_repo = ChildRepository(db)

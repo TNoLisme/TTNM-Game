@@ -55,9 +55,8 @@ class UsersRepository(BaseRepository[UserModel, UserDomain]):
         return self.mapper_class.to_domain(user_model)
 
     def get_by_email(self, email: str) -> Optional[UserDomain]:
-        """Lấy User dựa trên email."""
-        user_model = self.db_session.query(self.model_class).filter_by(email=email).first()
-        return self.mapper_class.to_domain(user_model)
+        user_model = self.db_session.query(self.model_class).filter(self.model_class.email.ilike(email.strip().lower())).first()  # ilike ignore case, strip space
+        return self.mapper_class.to_domain(user_model) if user_model else None
 
     def get_all_users(self) -> List[UserDomain]:
         """Lấy tất cả các User."""

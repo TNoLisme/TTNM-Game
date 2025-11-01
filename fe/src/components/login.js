@@ -1,3 +1,4 @@
+// fe/src/components/login.js
 const API_URL = 'http://localhost:8000';
 
 const showError = (message) => {
@@ -11,7 +12,7 @@ const redirectToHome = (user) => {
 };
 
 const handleLogin = async (e) => {
-    e.preventDefault(); // Ngăn hành vi submit mặc định
+    e.preventDefault();
     showError('');
 
     const username = document.querySelector('#username').value.trim();
@@ -22,7 +23,7 @@ const handleLogin = async (e) => {
     }
 
     try {
-        const res = await fetch(`${API_URL}/login`, {  // Thêm /users
+        const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -43,33 +44,103 @@ const handleLogin = async (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.querySelector('#login-form');
     if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin); // Gắn sự kiện submit vào form
+        loginForm.addEventListener('submit', handleLogin);
     }
 
-    // Thêm cho quên mật khẩu
     const forgotLink = document.getElementById('forgot-password-link');
     if (forgotLink) {
-        forgotLink.addEventListener('click', handleForgotPassword);
-        console.log('Forgot link attached');  // Debug: In ra nếu load OK
+        forgotLink.addEventListener('click', openForgotModal);
+        console.log('Forgot link attached');
     } else {
-        console.error('Forgot link not found - check ID in HTML');  // Debug nếu id sai
+        console.error('Forgot link not found');
     }
 });
 
-// Thêm vào login.js
-async function handleForgotPassword() {
-    const email = prompt('Nhập email:');
-    if (email) {
-        const response = await fetch('http://127.0.0.1:8000/forgot-password', {
+// ============ QUÊN MẬT KHẨU (GỌP 1 BƯỚC) ============
+function openForgotModal(e) {
+    e.preventDefault();
+    const modal = document.getElementById('forgot-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('otp-pass-section').style.display = 'none';
+        document.getElementById('reset-error').textContent = '';
+        document.getElementById('forgot-email').value = '';
+    }
+}
+
+function closeForgotModal() {
+    const modal = document.getElementById('forgot-modal');
+    if (modal) modal.style.display = 'none';
+    document.getElementById('otp-pass-section').style.display = 'none';
+    document.getElementById('reset-error').textContent = '';
+}
+
+// GỬI OTP → HIỆN FORM NHẬP OTP + PASS
+async function sendOTP() {
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) {
+        showModalError('Vui lòng nhập email.');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/users/forgot-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
         });
-        const data = await response.json();
-        if (response.ok) {
-            alert(data.message + ' (OTP in BE console)');  // Copy OTP từ console server
+        const data = await res.json();
+
+        if (res.ok) {
+            document.getElementById('otp-pass-section').style.display = 'block';
+            document.getElementById('send-otp-btn').style.display = 'none';
+            showModalError('OTP đã gửi! Kiểm tra email.', 'green');
         } else {
-            alert('Lỗi: ' + data.detail);
+            showModalError(data.detail || 'Lỗi gửi OTP.');
         }
+    } catch (err) {
+        console.error(err);
+        showModalError('Lỗi kết nối server.');
+    }
+}
+
+// ĐỔI MẬT KHẨU (GỌI 1 LẦN DUY NHẤT)
+async function resetPasswordWithOTP() {
+    const email = document.getElementById('forgot-email').value.trim();
+    const otp = document.getElementById('forgot-otp').value.trim();
+    const newPass = document.getElementById('new-password').value.trim();
+    const confirmPass = document.getElementById('confirm-password').value.trim();
+
+    if (!otp || otp.length !== 6) return showModalError('OTP phải 6 số.');
+    if (newPass.length < 8) return showModalError('Mật khẩu mới phải ≥ 8 ký tự.');
+    if (newPass !== confirmPass) return showModalError('Mật khẩu xác nhận không khớp.');
+
+    try {
+        const res = await fetch(`${API_URL}/users/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp, new_password: newPass })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('Đổi mật khẩu thành công!');
+            closeForgotModal();
+        } else {
+            const msg = data.detail?.[0]?.msg || data.detail || 'OTP sai hoặc hết hạn.';
+            showModalError(msg);
+        }
+    } catch (err) {
+        console.error(err);
+        showModalError('Lỗi kết nối server.');
+    }
+}
+
+// HIỂN THỊ LỖI TRONG MODAL
+function showModalError(msg, color = 'red') {
+    const el = document.getElementById('reset-error');
+    if (el) {
+        el.textContent = msg;
+        el.style.color = color;
     }
 }

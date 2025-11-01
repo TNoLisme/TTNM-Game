@@ -12,7 +12,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"], 
     allow_headers=["*"],
 )
-@app.get("/") # <--- Định nghĩa route gốc
+
+@app.get("/")  # Route gốc để test server live
 def read_root():
     return {"Hello": "World"}
 
@@ -21,5 +22,4 @@ app.include_router(user_router)
 
 if __name__ == "__main__":
     import uvicorn
-    # Sử dụng host="127.0.0.1" thay vì "0.0.0.1" (địa chỉ không hợp lệ)
-    uvicorn.run(app, host="localhost", port=8000, reload=True) 
+    # uvicorn.run(app, host="localhost", port=8000, reload=True)  # Comment tạm để tránh conflict với command uvicorn

@@ -8,6 +8,7 @@
 </head>
 
 <body>
+    <!-- HEADER -->
     <header>
         <div class="logo">
             <img src="../../assets/images/logo.png" alt="Logo" />
@@ -19,6 +20,7 @@
         </div>
     </header>
 
+    <!-- MAIN LOGIN FORM -->
     <div class="auth-container">
         <div class="auth-box">
             <div class="auth-image">
@@ -39,18 +41,44 @@
                     </div>
 
                     <button type="submit">Đăng nhập</button>
-                    <div id="error-message" style="color: red;"></div>
+                    <div id="error-message" style="color: red; margin-top: 10px;"></div>
                 </form>
 
                 <div class="extra-links">
                     <a href="register.html">Đăng ký tài khoản</a>
-                    <a id="forgot-password-link" href="#">Quên mật khẩu?</a> <!-- Sửa ở đây: Thêm id, xóa onclick -->
+                    <a id="forgot-password-link" href="#">Quên mật khẩu?</a>
                 </div>
 
                 <div class="auth-footer">© 2025 EmoGarden. All rights reserved.</div>
             </div>
         </div>
     </div>
+
+<div id="forgot-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000;">
+    <div style="background:white; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.2); position:relative;">
+        <span onclick="closeForgotModal()" style="position:absolute; top:10px; right:15px; font-size:28px; cursor:pointer; color:#999;">X</span>
+        <h3 style="margin:0 0 15px; color:#333;">Quên Mật Khẩu</h3>
+
+        <!-- BƯỚC DUY NHẤT: GỬI OTP + NHẬP OTP + PASS MỚI -->
+        <div id="reset-form">
+            <!-- Email -->
+            <input id="forgot-email" type="email" placeholder="Email của bạn" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:8px; font-size:15px;" />
+            <button id="send-otp-btn" onclick="sendOTP()" style="width:100%; padding:12px; background:#9C27B0; color:white; border:none; border-radius:8px; cursor:pointer; font-size:15px; margin:8px 0;">Gửi OTP</button>
+
+            <!-- OTP + Pass mới (ẩn lúc đầu) -->
+            <div id="otp-pass-section" style="display:none; margin-top:15px;">
+                <input id="forgot-otp" type="text" placeholder="Nhập OTP (6 số)" maxlength="6" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:8px; font-size:15px;" />
+                <input id="new-password" type="password" placeholder="Mật khẩu mới (≥8 ký tự)" minlength="8" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:8px; font-size:15px;" />
+                <input id="confirm-password" type="password" placeholder="Xác nhận mật khẩu" minlength="8" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:8px; font-size:15px;" />
+                <button onclick="resetPasswordWithOTP()" style="width:100%; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px; cursor:pointer; font-size:15px; margin:8px 0;">Đổi Mật Khẩu</button>
+            </div>
+
+            <div id="reset-error" style="color:red; margin-top:8px; font-size:14px; min-height:20px;"></div>
+        </div>
+    </div>
+</div>
+
+    <!-- LOAD JS -->
     <script src="../components/login.js"></script>
 </body>
 
