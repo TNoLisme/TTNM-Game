@@ -1,0 +1,564 @@
+/* ========== Reset nhẹ ========== */
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: #222;
+}
+
+/* ========== Theme tokens ========== */
+:root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --text: #222;
+    --muted: #6b7280;
+    --primary: #2563eb;
+    --ring: #d1d5db;
+    --border: #e5e7eb;
+    --shadow: 0 8px 24px rgba(0, 0, 0, .06);
+    --radius: 16px;
+}
+
+/* ========== Layout tổng ========== */
+body {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    /* Sidebar | Main */
+    background: var(--bg);
+}
+
+/* ========== Sidebar ========== */
+.sidebar {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
+    padding: 16px 14px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+}
+
+.sidebar__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+}
+
+.sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 4px 20px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+
+.sidebar__brand svg {
+    color: var(--primary);
+}
+
+.sidebar__brand-text {
+    font-size: 18px;
+}
+
+.sidebar__nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.sidebar__nav a {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.sidebar__nav a:hover {
+    background: #f3f4f6;
+}
+
+/* ========== Main Learn ========== */
+.learn {
+    padding: 24px 28px;
+}
+
+.learn__header {
+    margin-bottom: 16px;
+}
+
+.learn__title {
+    margin: 0 0 6px 0;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: .3px;
+}
+
+.learn__body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    /* Emotion list | Media area */
+    gap: 18px;
+}
+
+/* ========== Cột trái: CÁC CẢM XÚC ========== */
+.emotion-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+}
+
+.emotion-list__title {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: .5px;
+}
+
+.emotion-list__items {
+    display: grid;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: calc(100vh - 220px);
+    overflow: auto;
+}
+
+.emotion-pill {
+    width: 100%;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.emotion-pill:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.emotion-pill[aria-current="true"],
+.emotion-pill.active {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #1e40af;
+}
+
+/* ========== Khung media: Video/Ảnh + mũi tên ========== */
+.media-carousel {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    min-height: 520px;
+    /* tạo khung giống wireframe */
+    display: grid;
+    place-items: center;
+}
+
+.media-carousel__stage {
+    width: 100%;
+    max-width: 980px;
+    aspect-ratio: 16/9;
+    margin: 0;
+    background: #fff;
+    border: 2px solid #d4d4d8;
+    /* viền đậm hơn để giống khung */
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    padding: 12px;
+}
+
+.media-carousel__video,
+.media-carousel__stage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 18px;
+    outline: none;
+}
+
+.media-carousel__caption {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+}
+
+/* Nút mũi tên trái/phải */
+.media-carousel__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--ring);
+    background: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: var(--shadow);
+}
+
+.media-carousel__nav--prev {
+    left: 16px;
+}
+
+.media-carousel__nav--next {
+    right: 16px;
+}
+
+.media-carousel__nav:hover {
+    background: #f3f4f6;
+}
+
+/* Dots (tùy chọn) */
+.media-carousel__dots {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+}
+
+.media-carousel__dots button {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    border: 0;
+    background: #d1d5db;
+    cursor: pointer;
+}
+
+.media-carousel__dots button[aria-current="true"] {
+    background: var(--primary);
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 1080px) {
+    .learn__body {
+        grid-template-columns: 180px 1fr;
+    }
+}
+
+@media (max-width: 860px) {
+    body {
+        grid-template-columns: 72px 1fr;
+        /* Sidebar hẹp */
+    }
+
+    .sidebar__brand-text {
+        display: none;
+    }
+
+    .sidebar__nav a {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .learn {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 720px) {
+    .learn__body {
+        grid-template-columns: 1fr;
+        /* Xếp dọc */
+    }
+
+    .emotion-list {
+        order: 2;
+    }
+
+    .media-carousel {
+        order: 1;
+        min-height: 420px;
+    }
+}
+
+/* ===== Icon + màu cho các nút cảm xúc ===== */
+.emotion-pill {
+    position: relative;
+    padding-left: 40px;
+    /* chừa chỗ cho icon */
+    font-weight: 600;
+}
+
+/* Icon mặc định (sửa theo emotion ở dưới) */
+.emotion-pill::before {
+    content: "🙂";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+}
+
+/* HAPPY */
+.emotion-pill[data-emotion="happy"] {
+    background: #fff7cc;
+    /* vàng nhạt */
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.emotion-pill[data-emotion="happy"]::before {
+    content: "😊";
+}
+
+/* SAD */
+.emotion-pill[data-emotion="sad"] {
+    background: #e0f2fe;
+    /* xanh dương nhạt */
+    border-color: #bae6fd;
+    color: #0c4a6e;
+}
+
+.emotion-pill[data-emotion="sad"]::before {
+    content: "😢";
+}
+
+/* ANGRY */
+.emotion-pill[data-emotion="angry"] {
+    background: #fee2e2;
+    /* đỏ nhạt */
+    border-color: #fecaca;
+    color: #7f1d1d;
+}
+
+.emotion-pill[data-emotion="angry"]::before {
+    content: "😠";
+}
+
+/* FEAR */
+.emotion-pill[data-emotion="fear"] {
+    background: #ede9fe;
+    /* tím nhạt */
+    border-color: #ddd6fe;
+    color: #4c1d95;
+}
+
+.emotion-pill[data-emotion="fear"]::before {
+    content: "😨";
+}
+
+/* SURPRISE */
+.emotion-pill[data-emotion="surprise"] {
+    background: #ffedd5;
+    /* cam nhạt */
+    border-color: #fed7aa;
+    color: #7c2d12;
+}
+
+.emotion-pill[data-emotion="surprise"]::before {
+    content: "😮";
+}
+
+/* DISGUST */
+.emotion-pill[data-emotion="disgust"] {
+    background: #dcfce7;
+    /* xanh lá nhạt */
+    border-color: #bbf7d0;
+    color: #14532d;
+}
+
+.emotion-pill[data-emotion="disgust"]::before {
+    content: "🤢";
+}
+
+/* NEUTRAL */
+.emotion-pill[data-emotion="neutral"] {
+    background: #f4f4f5;
+    /* xám nhạt */
+    border-color: #e4e4e7;
+    color: #3f3f46;
+}
+
+.emotion-pill[data-emotion="neutral"]::before {
+    content: "😐";
+}
+
+/* Trạng thái đang chọn */
+.emotion-pill.active {
+    outline: 2px solid rgba(0, 0, 0, .08);
+    filter: saturate(1.1);
+}
+
+/* ===== Khung media nền tím ===== */
+.media-carousel {
+    background: #c28bf2;
+    /* tím (purple-600) */
+    border-color: #c28bf2;
+}
+
+.media-carousel__stage {
+    background: transparent;
+    /* trong suốt để lộ nền tím */
+    border: 2px solid rgba(255, 255, 255, .4);
+}
+
+.media-carousel__caption {
+    color: #f3e8ff;
+    /* chữ sáng trên nền tím */
+}
+
+/* Nút mũi tên nổi bật trên nền tím */
+.media-carousel__nav {
+    background: #ffffff;
+    border-color: #e9d5ff;
+}
+
+.media-carousel__nav:hover {
+    background: #f5f3ff;
+}
+
+.media-carousel__stage {
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    max-width: 980px;
+    /* fallback chiều cao khi màn hình thấp */
+    max-height: min(70vh, 780px);
+    background: #0000;
+    /* trong suốt để thấy nền tím */
+    border-radius: 24px;
+}
+
+/* Ảnh & Video chiếm trọn khung, giữ tỉ lệ (không crop) */
+.media-carousel__stage img,
+.media-carousel__video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    /* đổi từ cover -> contain để không cắt nội dung */
+    display: block;
+    border-radius: 18px;
+    background: #000;
+    /* nền đen phía sau video cho đẹp mắt */
+    outline: none;
+}
+
+/* Nếu muốn video luôn full theo chiều ngang mà không vượt khung, giữ tỉ lệ */
+.media-carousel__video {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Thu nhỏ khung tổng để bớt “đệm” dọc, video đỡ có cảm giác nhỏ */
+.media-carousel {
+    padding: 16px !important;
+    min-height: unset !important;
+    /* bỏ min-height cố định 520px */
+}
+
+/* Responsive tweak: khi màn nhỏ, ưu tiên chiều cao hợp lý */
+@media (max-width: 720px) {
+    .media-carousel__stage {
+        max-height: 50vh;
+        border-radius: 16px;
+    }
+
+    .media-carousel__stage img,
+    .media-carousel__video {
+        border-radius: 12px;
+    }
+}
+
+/* ====== FIX CỰC MẠNH: Video/Ảnh fill khung chuẩn 16:9 ====== */
+
+/* Khung ngoài: bớt “đệm” để khung không làm nhỏ media */
+.media-carousel {
+    padding: 12px !important;
+    min-height: unset !important;
+}
+
+/* Khung stage: tự tạo tỷ lệ 16:9, bỏ padding, cho phép phủ kín */
+.media-carousel__stage {
+    position: relative !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 980px !important;
+    aspect-ratio: 16 / 9 !important;
+    overflow: hidden !important;
+    display: block !important;
+    /* tránh grid/flex ảnh hưởng kích thước con */
+    background: transparent !important;
+    border-radius: 24px !important;
+}
+
+/* TẤT CẢ video/img bên trong stage đều bị ép full khung */
+.media-carousel__stage>video,
+.media-carousel__stage>img,
+.media-carousel__stage video,
+.media-carousel__stage img {
+    position: absolute !important;
+    inset: 0 !important;
+    /* top/right/bottom/left = 0 */
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    /* giữ tỉ lệ, không crop; đổi 'cover' nếu muốn tràn kín */
+    background: #000 !important;
+    /* nền đen cho video đẹp hơn */
+    border-radius: 24px !important;
+    outline: none !important;
+}
+
+/* NÚT điều hướng nổi phía trên media */
+.media-carousel__nav {
+    z-index: 2 !important;
+}
+
+/* Mobile: giảm chiều cao cho vừa màn */
+@media (max-width: 720px) {
+    .media-carousel__stage {
+        aspect-ratio: 16 / 9 !important;
+        max-height: 50vh !important;
+        border-radius: 16px !important;
+    }
+
+    .media-carousel__stage>video,
+    .media-carousel__stage>img,
+    .media-carousel__stage video,
+    .media-carousel__stage img {
+        border-radius: 16px !important;
+    }
+}

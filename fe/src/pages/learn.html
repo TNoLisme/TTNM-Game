@@ -2,27 +2,90 @@
 <html lang="vi">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTNM Game - Learn</title>
-    <link rel="stylesheet" href="/src/styles/game.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EmoGarden • Học cảm xúc</title>
+    <link rel="stylesheet" href="../styles/learn.css" />
+    <script type="module" src="../components/learn.js"></script>
 </head>
 
 <body>
-    <div class="navbar">
-        <button id="back-button" class="back-btn">&#x2190; Quay lại</button>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" aria-label="Thanh điều hướng">
+        <button class="sidebar__toggle" aria-label="Mở/đóng menu" aria-expanded="true">☰</button>
 
-        <span>TTNM Game - Learn</span>
+        <a href="/" class="sidebar__brand" aria-label="EmoGarden">
+            <!-- Logo tạm -->
+            <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" fill="currentColor"></circle>
+            </svg>
+            <span class="sidebar__brand-text">EmoGarden</span>
+        </a>
 
-        <button id="logout-button" class="logout-btn">Đăng xuất</button>
-    </div>
+        <nav class="sidebar__nav">
+            <ul>
+                <li><a href="#">Tài khoản</a></li>
+                <li><a href="#">Game click</a></li>
+                <li><a href="#">Game CV</a></li>
+                <li><a href="#">vân vân</a></li>
+            </ul>
+        </nav>
+    </aside>
 
-    <div class="container">
-        <h1>Learn</h1>
-        <p>Đây là nội dung cơ bản của Learn.</p>
-    </div>
+    <!-- MAIN CONTENT -->
+    <main class="learn" id="main-content">
+        <header class="learn__header">
+            <h1 class="learn__title">HỌC CẢM XÚC</h1>
+        </header>
 
-    <script src="/src/components/learn.js"></script>
+        <section class="learn__body" aria-label="Khu vực học video">
+            <!-- CỘT TRÁI: DANH SÁCH CẢM XÚC -->
+            <aside class="emotion-list" aria-label="Các cảm xúc">
+                <h2 class="emotion-list__title">CÁC CẢM XÚC</h2>
+                <ul class="emotion-list__items" id="emotion-list">
+                    <!-- ví dụ placeholder; sau này load động -->
+                    <li><button class="emotion-pill" data-emotion="happy">Vui</button></li>
+                    <li><button class="emotion-pill" data-emotion="sad">Buồn</button></li>
+                    <li><button class="emotion-pill" data-emotion="angry">Tức giận</button></li>
+                    <li><button class="emotion-pill" data-emotion="fear">Sợ hãi</button></li>
+                    <li><button class="emotion-pill" data-emotion="surprise">Ngạc nhiên</button></li>
+                    <li><button class="emotion-pill" data-emotion="disgust">Ghê tởm</button></li>
+                </ul>
+            </aside>
+
+            <!-- KHUNG GIỮA: VIDEO/CAROUSEL -->
+            <section class="media-carousel" aria-label="Video ảnh các thứ">
+                <button class="media-carousel__nav media-carousel__nav--prev" aria-label="Bài trước" data-action="prev">
+                    ‹
+                </button>
+
+                <figure class="media-carousel__stage">
+                    <!-- Có thể thay bằng <img> nếu là hình ảnh -->
+                    <video id="lesson-video" class="media-carousel__video" width="960" height="540" controls
+                        preload="metadata">
+                        <source src="../../assets/images/logo.png" type="video/mp4" />
+                        Trình duyệt của bạn không hỗ trợ video.
+                    </video>
+                    <figcaption class="media-carousel__caption" id="lesson-caption">
+                        VIDEO ẢNH CÁC THỨ
+                    </figcaption>
+                </figure>
+
+                <button class="media-carousel__nav media-carousel__nav--next" aria-label="Bài tiếp theo"
+                    data-action="next">
+                    ›
+                </button>
+
+                <!-- Thanh chỉ mục/tiến độ (tùy chọn) -->
+                <div class="media-carousel__dots" role="tablist" aria-label="Chọn bài">
+                    <!-- JS sẽ render các chấm/bước -->
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <!-- GỢI Ý: JS sẽ gắn sau -->
+    <!-- <script src="./js/learn.js" type="module"></script> -->
 </body>
 
 </html>
