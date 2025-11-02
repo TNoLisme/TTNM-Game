@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ của bé - EmoGarden</title>
+    <link rel="stylesheet" href="../styles/profile.css" />
+</head>
+
+<body>
+    <header>
+    <div class="logo">
+        <a href="home.html"> <img src="/assets/images/logo.png" alt="Logo" class="logo-image" /> </a> 
+    </div>
+    <div class="buttons"> 
+        <a href="#" id="logout-btn">🚪 Đăng xuất</a> 
+    </div> 
+    </header>
+
+    <div class="profile-container">
+        <div id="error-message" class="error-message" style="display: none;"></div>
+
+        <div class="profile-header">
+            <div class="avatar-section">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect fill='%23ffeaa7' width='120' height='120'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='60' fill='%23fff'%3E👶%3C/text%3E%3C/svg%3E" 
+                     alt="Avatar" class="avatar" id="user-avatar" />
+                <div class="avatar-badge">⭐</div>
+            </div>
+            <h1 id="user-name">Đang tải...</h1>
+            <div class="user-level" id="user-level">Cấp độ 1</div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>👤 Tên đăng nhập</h3>
+                <p id="username">---</p>
+            </div>
+            <div class="info-card">
+                <h3>📧 Email</h3>
+                <p id="email">---</p>
+            </div>
+            <div class="info-card">
+                <h3>📅 Ngày tham gia</h3>
+                <p id="join-date">---</p>
+            </div>
+            <div class="info-card">
+                <h3>🎂 Tuổi</h3>
+                <p id="age">---</p>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>📊 Thống kê chơi game</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="number" id="games-played">0</div>
+                    <div class="label">Trò chơi đã chơi</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number" id="total-score">0</div>
+                    <div class="label">Tổng điểm</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number" id="achievements">0</div>
+                    <div class="label">Thành tích</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number" id="play-time">0h</div>
+                    <div class="label">Thời gian chơi</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="badges-section">
+            <h2>🏆 Huy hiệu</h2>
+            <div class="badges-container" id="badges-container">
+                <div class="badge" title="Người mới">🌟</div>
+                <div class="badge" title="Chính xác">🎯</div>
+                <div class="badge" title="Vô địch">🏅</div>
+                <div class="badge locked" title="Chưa mở khóa">🔒</div>
+                <div class="badge locked" title="Chưa mở khóa">🔒</div>
+                <div class="badge locked" title="Chưa mở khóa">🔒</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="editProfile()">✏️ Chỉnh sửa thông tin</button>
+            <a href="home.html" class="btn btn-secondary">🎮 Tiếp tục chơi</a>
+        </div>
+    </div>
+
+    <script type="module" src="../components/profile.js"></script>
+</body>
+
+</html>

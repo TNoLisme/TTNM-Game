@@ -1,6 +1,6 @@
 from uuid import UUID
 import enum
-from app.domain.enum import RoleEnum
+from ..enum import RoleEnum
 class User:
     def __init__(self, user_id: UUID, username: str, email: str, password: str, role: RoleEnum, name: str):
         self.user_id = user_id

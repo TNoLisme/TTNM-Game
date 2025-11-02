@@ -1,0 +1,354 @@
+@startuml
+' Các enum
+enum game_type_enum {
+  GameClick
+  GameCV
+}
+enum session_state_enum {
+  playing
+  pause
+  end
+}
+enum content_type_enum {
+  text
+  image
+  video
+  audio
+}
+enum role_enum {
+  child
+  admin
+}
+enum report_type_enum {
+  daily
+  weekly
+  monthly
+}
+
+
+' Abstract class Game
+abstract class Game {
+  ' Thuộc tính:
+  -game_id: UUID ' ID trò chơi, khóa chính để định danh duy nhất trò chơi
+  -game_type: game_type_enum ' Loại trò chơi, xác định là GameClick hay GameCV
+  -name: string ' Tên trò chơi, ví dụ: "Recognize Emotion"
+  -level: int ' Level hiện tại của trò chơi, bắt đầu từ 1
+  -difficulty_level: int ' Mức độ khó, từ 1-10, ảnh hưởng đến số lượng đáp án hoặc độ phức tạp
+  -max_errors: int ' Số lỗi tối đa cho phép trong một level, mặc định là 3
+  -level_threshold: int ' Ngưỡng điểm để lên level tiếp theo
+  -time_limit: int ' Thời gian giới hạn cho mỗi câu hỏi (tính bằng giây)
+  ' Phương thức:
+  +play(session: Session): void ' Bắt đầu hoặc tiếp tục phiên chơi, sử dụng trạng thái từ Session
+  +initialize_session(session: Session): void ' Sao chép cấu hình (max_errors, level_threshold, time_limit) vào Session khi bắt đầu
+}
+
+
+' Các class kế thừa từ Game
+class GameClick extends Game {
+  ' Thuộc tính:
+  -type_question: string ' Loại câu hỏi: "multiple_choice" hoặc "sole_choice"
+  -options: string[] ' Danh sách các lựa chọn cảm xúc cho câu hỏi
+  -is_hard_level: bool ' Xác định level có phải là khó (chuyển sang multiple_choice) hay không
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị nội dung từ Question, chờ người dùng click chọn đáp án
+  +display_type_options(type: string, options: string[]): void ' Hiển thị các lựa chọn dạng text, icon hoặc image
+  +check_answer(user_answers: string[], correct_answers: string[]): bool[] ' Kiểm tra đáp án người dùng, trả về mảng kết quả đúng/sai
+}
+class GameCV extends Game {
+  ' Thuộc tính:
+  -cv_model: object ' Mô hình AI (DeepFace/FER) để nhận diện cảm xúc từ camera
+  -camera_stream: object ' Luồng video từ camera để ghi hình người chơi
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị nội dung từ Question, ghi hình và phân tích cảm xúc
+  +process_cv_input(input: object): string ' Phân tích khung hình từ camera, trả về cảm xúc
+  +start_camera(): void ' Khởi động luồng camera để ghi hình
+  +stop_camera(): void ' Dừng luồng camera khi không cần thiết
+  +check_answer(user_answer: string, correct_answer: string): bool ' Kiểm tra cảm xúc người chơi có khớp với đáp án đúng không
+}
+class GameRecognizeEmotion extends GameClick {
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị nội dung từ Question, yêu cầu chọn cảm xúc chính xác
+}
+class GameSituationEmotion extends GameClick {
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị tình huống từ Question, yêu cầu chọn cảm xúc phù hợp
+}
+class GameFaceBuilder extends GameClick {
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị tình huống từ Question, yêu cầu ghép các bộ phận khuôn mặt để thể hiện cảm xúc
+  +validate_face(face_parts: dict): bool ' Kiểm tra các bộ phận khuôn mặt được chọn có khớp với cảm xúc yêu cầu không
+}
+class GameWhoIsWho extends GameClick {
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị nhiều khuôn mặt từ Question, yêu cầu khớp tên với cảm xúc
+  +validate_matches(matches: dict): bool ' Kiểm tra các cặp tên-cảm xúc có đúng không
+}
+class GameExpressEmotion extends GameCV {
+  ' Thuộc tính:
+  -target_emotion: string ' Cảm xúc mục tiêu mà người chơi cần thể hiện qua camera
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị cảm xúc mục tiêu từ Question, ghi hình và xác thực
+}
+class GameSituationExpress extends GameCV {
+  ' Phương thức:
+  +play(session: Session): void ' Hiển thị tình huống từ Question, yêu cầu người chơi thể hiện cảm xúc qua camera
+}
+
+
+' Class GameContent
+class GameContent {
+  ' Thuộc tính:
+  -content_id: UUID ' ID nội dung, khóa chính để định danh duy nhất nội dung
+  -game_id: UUID ' ID trò chơi, khóa ngoại liên kết với Game
+  -level: int ' Mức độ khó của nội dung, từ 1 trở lên
+  -content_type: content_type_enum ' Loại nội dung: text, image, video, audio
+  -media_path: string ' Đường dẫn tới file media (ảnh, video, âm thanh)
+  -question_text: string ' Nội dung câu hỏi dạng text (nếu áp dụng)
+  -correct_answer: string ' Đáp án đúng của nội dung (ví dụ: cảm xúc "vui")
+  -emotion: string ' Cảm xúc liên quan đến nội dung (ví dụ: "vui", "buồn")
+  -explanation: string ' Gợi ý hoặc giải thích cho nội dung
+  ' Phương thức:
+  +load_content_by_game_and_level(game_id: UUID, level: int): GameContent[] ' Tải danh sách nội dung theo game_id và level
+  +get_content_by_emotion(emotion: string): GameContent[] ' Tải danh sách nội dung theo cảm xúc
+  +validate_content(content: object): bool ' Kiểm tra tính hợp lệ của nội dung (đúng định dạng, không rỗng)
+  +get_media_path(): string ' Trả về đường dẫn file media để hiển thị
+}
+
+
+' Class GameData
+class GameData {
+  ' Thuộc tính:
+  -data_id: UUID ' ID dữ liệu game, khóa chính
+  -game_id: UUID ' ID trò chơi, khóa ngoại liên kết với Game
+  -level: int ' Mức độ khó của dữ liệu
+  -contents: List<GameContent> ' Danh sách các nội dung câu hỏi liên quan
+  -correct_answers: string[] ' Danh sách đáp án đúng cho các câu hỏi
+  -options: string[] ' Danh sách các lựa chọn cho GameClick
+  ' Phương thức:
+  +load_data_by_game_and_level(game_id: UUID, level: int): GameData ' Tải dữ liệu game theo game_id và level
+  +validate_data(data: dict): bool ' Kiểm tra tính hợp lệ của dữ liệu (đúng định dạng, đủ nội dung)
+  +get_random_contents(count: int): List<GameContent> ' Lấy ngẫu nhiên số lượng nội dung để tạo câu hỏi
+}
+
+
+' Class Question
+class Question {
+  ' Thuộc tính:
+  -question_id: UUID ' ID câu hỏi, khóa chính
+  -game_id: UUID ' ID trò chơi, khóa ngoại liên kết với Game
+  -level: int ' Mức độ khó của câu hỏi
+  -content: GameContent ' Nội dung chính của câu hỏi (ví dụ: ảnh hoặc video)
+  -answer_options: List<GameContent> ' Danh sách 4 nội dung cho đáp án
+  -correct_answer: string ' Đáp án đúng của câu hỏi
+  ' Phương thức:
+  +create_question(game_id: UUID, level: int, content: GameContent, answer_options: List<GameContent>): Question ' Tạo câu hỏi mới từ nội dung và đáp án
+  +get_random_contents(game_id: UUID, level: int): List<GameContent> ' Lấy ngẫu nhiên 5 nội dung (1 câu hỏi + 4 đáp án)
+  +validate_question(): bool ' Kiểm tra câu hỏi có hợp lệ không (đúng 1 nội dung, 4 đáp án)
+}
+
+
+' Class Session
+class Session {
+  ' Thuộc tính:
+  -session_id: UUID ' ID phiên chơi, khóa chính
+  -user_id: UUID ' ID người dùng, khóa ngoại liên kết với User
+  -game_id: UUID ' ID trò chơi, khóa ngoại liên kết với Game
+  -start_time: timestamp ' Thời gian bắt đầu phiên chơi
+  -end_time: timestamp ' Thời gian kết thúc phiên chơi
+  -state: session_state_enum ' Trạng thái phiên: playing, pause, end
+  -score: int ' Điểm số trong phiên chơi
+  -emotion_errors: dict<string, int> ' Số lần sai từng cảm xúc trong phiên
+  -max_errors: int ' Số lỗi tối đa trong phiên, sao chép từ Game
+  -level_threshold: int ' Ngưỡng điểm để lên level, sao chép từ Game
+  -ratio: double[] ' Tỷ lệ xuất hiện cảm xúc trong phiên, tính từ emotion_errors
+  -time_limit: int ' Thời gian giới hạn cho mỗi câu hỏi, sao chép từ Game
+  -questions: List<Question> ' Danh sách 10 câu hỏi được random ngay từ đầu level
+  ' Phương thức:
+  +start_session(user_id: UUID, game_id: UUID): void ' Bắt đầu phiên chơi mới, random 10 câu hỏi và lưu vào questions
+  +end_session(): void ' Kết thúc phiên chơi, lưu ratio và review_emotions vào ChildProgress
+  +save_state(state: session_state_enum): void ' Lưu trạng thái phiên (playing, pause, end)
+  +load_state(session_id: UUID): dict ' Tải trạng thái phiên theo session_id
+  +update_score(is_correct: bool): void ' Cập nhật điểm số dựa trên kết quả câu hỏi
+  +check_emotion_errors(errors: dict<string, int>, emotion: string): bool ' Kiểm tra lỗi cảm xúc, trả về true nếu cần ôn tập (vượt max_errors)
+  +show_emotion_concept(emotion: string): Promise ' Hiển thị nội dung ôn tập cảm xúc từ EmotionConcept
+  +calculate_ratio(errors: dict<string, int>): double[] ' Tính tỷ lệ xuất hiện cảm xúc dựa trên emotion_errors
+  +next_question_level(): Question ' Lấy câu hỏi tiếp theo từ questions
+  +advance_level(score: int): void ' Tăng level nếu điểm đạt level_threshold
+  +reset_emotion_errors(errors: dict<string, int>): void ' Đặt lại emotion_errors khi lên level
+}
+
+
+' Class SessionQuestions
+class SessionQuestions {
+  ' Thuộc tính:
+  -id: UUID ' ID bản ghi, khóa chính
+  -session_id: UUID ' ID phiên chơi, khóa ngoại liên kết với Session
+  -question: Question ' Câu hỏi được sử dụng trong phiên
+  -user_answer: dict ' Đáp án người dùng chọn (ví dụ: {"emotion": "vui"})
+  -correct_answer: dict ' Đáp án đúng (ví dụ: {"emotion": "vui"})
+  -is_correct: bool ' Kết quả trả lời có đúng không
+  -response_time_ms: int ' Thời gian phản hồi, tính bằng mili giây
+  -check_hint: bool ' Kiểm tra xem người dùng có sử dụng gợi ý không
+  -cv_confidence: float ' Độ tự tin từ mô hình CV (cho GameCV)
+  -timestamp: timestamp ' Thời gian trả lời câu hỏi
+  ' Phương thức:
+  +save_question(session_id: UUID, question: Question, user_answer: dict, correct_answer: dict, is_correct: bool, response_time_ms: int, check_hint: bool, cv_confidence: float): void ' Lưu thông tin câu hỏi và đáp án vào phiên
+  +get_questions_by_session(session_id: UUID): SessionQuestions[] ' Lấy danh sách câu hỏi trong phiên
+}
+
+
+' Class GameHistory
+class GameHistory {
+  ' Thuộc tính:
+  -history_id: UUID ' ID lịch sử, khóa chính
+  -user_id: UUID ' ID người dùng, khóa ngoại liên kết với User
+  -session_id: UUID ' ID phiên chơi, khóa ngoại liên kết với Session
+  -game_id: UUID ' ID trò chơi, khóa ngoại liên kết với Game
+  -score: int ' Điểm số của phiên chơi
+  -level: int ' Level của phiên chơi
+  -questions: SessionQuestions[] ' Danh sách câu hỏi trong phiên
+  ' Phương thức:
+  +load_history_by_user(user_id: UUID): GameHistory[] ' Tải lịch sử chơi theo user_id
+  +load_history_by_session(session_id: UUID): GameHistory ' Tải lịch sử chơi theo session_id
+}
+
+
+' Class SessionHistory
+class SessionHistory {
+  ' Thuộc tính:
+  -session_history_id: UUID ' ID lịch sử phiên, khóa chính
+  -user_id: UUID ' ID trẻ, khóa ngoại liên kết với Child
+  -game_id: UUID ' ID trò chơi, khóa ngoại liên kết với Game
+  -session_id: UUID ' ID phiên chơi, khóa ngoại liên kết với Session
+  -level: int ' Level của phiên chơi
+  -start_time: timestamp ' Thời gian bắt đầu phiên
+  -end_time: timestamp ' Thời gian kết thúc phiên
+  -score: int ' Điểm số của phiên
+  ' Phương thức:
+  +load_latest_session(user_id: UUID, game_id: UUID): SessionHistory ' Tải phiên chơi gần nhất theo user_id và game_id
+  +get_last_level(user_id: UUID, game_id: UUID): int ' Lấy level gần nhất mà trẻ đã chơi đến cho một game
+}
+
+
+' Class EmotionConcept
+class EmotionConcept {
+  ' Thuộc tính:
+  -concept_id: UUID ' ID khái niệm cảm xúc, khóa chính
+  -emotion: string ' Tên cảm xúc (ví dụ: "vui", "buồn")
+  -level: int ' Mức độ khó của khái niệm
+  -title: string ' Tiêu đề của khái niệm cảm xúc
+  -video_path: string ' Đường dẫn tới video ôn tập
+  -image_path: string ' Đường dẫn tới ảnh ôn tập
+  -audio_path: string ' Đường dẫn tới âm thanh ôn tập
+  -description: string ' Mô tả chi tiết về cảm xúc
+  ' Phương thức:
+  +load_concept_by_emotion_and_level(emotion: string, level: int): EmotionConcept ' Tải khái niệm cảm xúc theo emotion và level
+}
+
+
+' Abstract class User
+abstract class User {
+  ' Thuộc tính:
+  -user_id: UUID ' ID người dùng, khóa chính
+  -username: string ' Tên đăng nhập, duy nhất
+  -email: string ' Email người dùng, duy nhất
+  -password: string ' Mật khẩu đã mã hóa
+  -role: role_enum ' Vai trò: child hoặc admin
+  -name: string ' Tên đầy đủ của người dùng
+  ' Phương thức:
+  +update_profile(username: string, email: string): void ' Cập nhật thông tin hồ sơ người dùng
+  +get_role(): role_enum ' Trả về vai trò của người dùng (child hoặc admin)
+}
+
+
+' Class Child extends User
+class Child {
+  ' Thuộc tính:
+  -age: int ' Tuổi của trẻ, phải >= 0
+  -progress: ChildProgress[] ' Danh sách tiến trình chơi của trẻ
+  -last_played: timestamp ' Thời gian chơi gần nhất
+  -report_preferences: report_type_enum ' Tần suất báo cáo: daily, weekly, monthly
+  -created_at: timestamp ' Thời gian tạo tài khoản
+  -last_login: timestamp ' Thời gian đăng nhập gần nhất
+  ' Phương thức:
+  +update_progress(session: Session): void ' Cập nhật tiến trình chơi, bao gồm ratio và review_emotions, dựa trên phiên chơi
+  +get_stats(game_id: UUID): ChildProgress ' Lấy thống kê tiến trình cho một trò chơi cụ thể
+  +get_game_history(): Session[] ' Lấy lịch sử các phiên chơi của trẻ
+  +view_reports(report_type: report_type_enum): Report[] ' Xem báo cáo tiến trình của trẻ theo loại báo cáo
+  +get_last_level(game_id: UUID): int ' Lấy level gần nhất trẻ đã chơi đến cho một game từ SessionHistory
+}
+
+
+' Class Admin extends User
+class Admin {
+  ' Thuộc tính:
+  -all_child: Child[] ' Danh sách tất cả trẻ trong hệ thống
+  ' Phương thức:
+  +manage_users(user_id: UUID, action: string): void ' Quản lý người dùng: tạo, sửa, xóa
+  +manage_content(content: GameContent): void ' Quản lý nội dung game: thêm, sửa, xóa
+  +view_all_reports(report_type: report_type_enum): Report[] ' Xem báo cáo của tất cả trẻ theo loại báo cáo
+  +update_system_settings(settings: dict): void ' Cập nhật cài đặt hệ thống (ví dụ: cấu hình game, thông báo)
+}
+
+
+' Class ChildProgress
+class ChildProgress {
+  ' Thuộc tính:
+  -progress_id: UUID ' ID tiến trình, khóa chính
+  -child_id: UUID ' ID trẻ, khóa ngoại liên kết với Child
+  -game_id: UUID ' ID trò chơi, khóa ngoại liên kết với Game
+  -level: int ' Mức độ khó hiện tại, từ 1-10
+  -accuracy: float ' Tỷ lệ trả lời đúng, tính bằng phần trăm
+  -avg_response_time: float ' Thời gian phản hồi trung bình, tính bằng mili giây
+  -score: int ' Điểm số tổng cộng cho trò chơi
+  -last_played: timestamp ' Thời gian chơi gần nhất
+  -ratio: double[] ' Tỷ lệ xuất hiện cảm xúc, lưu từ Session sau khi kết thúc
+  -review_emotions: List<UUID> ' Danh sách concept_id của EmotionConcept cần ôn tập do sai quá max_errors
+  ' Phương thức:
+  +calculate_accuracy(sessions: Session[]): float ' Tính tỷ lệ trả lời đúng từ các phiên chơi
+  +update_emotion_distribution(sessions: Session[]): void ' Cập nhật phân bố cảm xúc từ các phiên chơi
+  +generate_report(report_type: report_type_enum): Report ' Tạo báo cáo tiến trình cho phụ huynh
+  +check_level_advance(score: int, level_threshold: int): bool ' Kiểm tra xem có đủ điểm để lên level không
+  +get_review_emotions(): List<EmotionConcept> ' Lấy danh sách EmotionConcept cần ôn tập dựa trên review_emotions
+}
+
+
+' Class Report
+class Report {
+  ' Thuộc tính:
+  -report_id: UUID ' ID báo cáo, khóa chính
+  -child_id: UUID ' ID trẻ, khóa ngoại liên kết với Child
+  -report_type: report_type_enum ' Loại báo cáo: daily, weekly, monthly
+  -generated_at: timestamp ' Thời gian tạo báo cáo
+  -summary: string ' Tóm tắt ngắn gọn về tiến trình của trẻ
+  -data: dict ' Dữ liệu chi tiết: biểu đồ, xu hướng, chỉ số cảm xúc và danh sách cảm xúc cần ôn tập
+  ' Phương thức:
+  +generate_summary(progress: ChildProgress): string ' Tạo tóm tắt báo cáo từ tiến trình, bao gồm review_emotions
+  +export_pdf(): void ' Xuất báo cáo dưới dạng PDF
+  +send_notification(user: User): void ' Gửi thông báo báo cáo qua email hoặc ứng dụng
+}
+
+
+' Mối quan hệ
+Game ||--o{ GameContent
+Game ||--o{ GameData
+Game ||--o{ Session
+Game ||--o{ Question
+GameData ||--o{ GameContent
+Question ||--o{ GameContent
+Session ||--o{ SessionQuestions
+Session ||--o{ Question
+SessionQuestions ||--o{ Question
+GameHistory ||--o{ Session
+GameHistory ||--o{ SessionQuestions
+Session ||--o{ EmotionConcept
+Child ||--o{ SessionHistory
+SessionHistory ||--o{ Session
+User ||--o{ Session
+User ||--o{ GameHistory
+Child ||--o{ ChildProgress
+Child ||--o{ Report
+ChildProgress ||--o{ Game
+ChildProgress ||--o{ EmotionConcept
+Report ||--o{ ChildProgress
+@enduml

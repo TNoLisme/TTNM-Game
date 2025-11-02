@@ -1,29 +1,72 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTNM Game - Trang Chủ</title>
-    <link rel="stylesheet" href="/src/styles/home.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EmoGarden - Trang chủ</title>
+  <link rel="stylesheet" href="../styles/home.css" />
 </head>
 
 <body>
-    <!-- Navbar -->
-    <div class="navbar">
-        <span>TTNM Game</span>
-        <button id="logout-button" class="logout-btn">Đăng xuất</button>
+  <header>
+    <div class="logo-container">
+      <img src="/assets/images/logo.png" alt="Logo" class="logo-image" />
+    </div>
+    <div class="navbar-actions">
+  <button id="profile-button" class="profile-btn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Hồ sơ
+    </button>
+    <a href="#" id="logout-btn" class="logout-btn">🚪 Đăng xuất</a>
+    </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="welcome-section">
+      <h1>🎮 Chào mừng đến với EmoGarden!</h1>
+      <p>Khám phá thế giới game học tập thú vị và phát triển kỹ năng của bạn. Chọn một trò chơi để bắt đầu hành trình!</p>
     </div>
 
-    <div class="container">
-        <ul class="game-menu">
-            <li><button id="button-1">Học</button></li>
-            <li><button id="button-2">Game Click</button></li>
-            <li><button id="button-3">Game CV</button></li>
-        </ul>
-    </div>
+    <ul class="game-menu">
+      <li>
+        <button id="button-1">
+          <span class="game-icon">📚</span>
+          <div class="game-content">
+            <div class="game-title">Học</div>
+            <div class="game-description">Khám phá kiến thức mới mỗi ngày</div>
+          </div>
+        </button>
+      </li>
+      <li>
+        <button id="button-2">
+          <span class="game-icon">🎯</span>
+          <div class="game-content">
+            <div class="game-title">Game Click</div>
+            <div class="game-description">Thử thách phản xạ và tốc độ</div>
+          </div>
+        </button>
+      </li>
+      <li>
+        <button id="button-3">
+          <span class="game-icon">🎨</span>
+          <div class="game-content">
+            <div class="game-title">Game CV</div>
+            <div class="game-description">Sáng tạo và thể hiện bản thân</div>
+          </div>
+        </button>
+      </li>
+    </ul>
+  </div>
 
-    <script type="module" src="/src/components/home.js"></script>
+  <footer>
+    <p>&copy; 2025 EmoGarden. Tất cả quyền được bảo lưu.</p>
+  </footer>
+
+  <script type="module" src="../components/home.js"></script>
 </body>
-
 </html>

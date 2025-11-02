@@ -3,13 +3,13 @@ from uuid import UUID
 from typing import List
 from datetime import datetime
 import enum
-from app.domain.users.user import User
-from app.domain.enum import RoleEnum
-from app.domain.analytics.child_progress import ChildProgress
-from app.domain.sessions.session import Session
+from .user import User
+from ..enum import RoleEnum
+from ..analytics.child_progress import ChildProgress
+from ..sessions.session import Session
 import enum
 from datetime import date
-from app.domain.enum import ReportTypeEnum, GenderEnum
+from ..enum import ReportTypeEnum, GenderEnum
 
 
 class Child(User):

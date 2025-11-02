@@ -13,9 +13,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Gắn router người dùng
 app.include_router(user_router)
+
+# ✅ Route mặc định cho "/"
+@app.get("/")
+def root():
+    return {"message": "Welcome to the TTNM Game API!"}
 
 if __name__ == "__main__":
     import uvicorn
-    # Sử dụng host="127.0.0.1" thay vì "0.0.0.1" (địa chỉ không hợp lệ)
-    uvicorn.run(app, host="localhost", port=8000, reload=True) 
+    uvicorn.run(app, host="localhost", port=8000, reload=True)

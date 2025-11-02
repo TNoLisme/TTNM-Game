@@ -2,8 +2,8 @@ from uuid import UUID
 from typing import Dict
 from datetime import datetime
 import enum
-from app.domain.analytics.child_progress import ChildProgress
-from app.domain.users.user import User
+from .child_progress import ChildProgress
+from ..users.user import User
 
 class ReportTypeEnum(enum.Enum):
     daily = "daily"

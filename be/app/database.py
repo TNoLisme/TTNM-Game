@@ -1,18 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.base import Base  # Import từ base.py
+from app.base import Base 
 from dotenv import load_dotenv
 import os
 
-# Load biến môi trường
-load_dotenv()
+load_dotenv(r"D:\TTNM\TTNM-Game\be\app\.env")
 
 DATABASE_URL = os.getenv("DATABASE_URL_SQLSERVER")
+print("DATABASE_URL =", DATABASE_URL)  # kiểm tra giá trị
 
-# Tạo engine kết nối CSDL
 engine = create_engine(DATABASE_URL)
 
-# Tạo SessionLocal để thao tác DB
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Hàm dependency để lấy session

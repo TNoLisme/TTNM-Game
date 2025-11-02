@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const button1 = document.querySelector('#button-1');
     const button2 = document.querySelector('#button-2');
     const button3 = document.querySelector('#button-3');
+    const profilebutton = document.querySelector('#profile-button');
 
     logoutBtn?.addEventListener('click', () => {
         localStorage.removeItem('currentUser');
@@ -22,5 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/src/pages/gameCV.html';
     });
 
+    profilebutton?.addEventListener('click', () => {
+        window.location.href = '/src/pages/profile.html';
+    });
 
 });
