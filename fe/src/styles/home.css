@@ -293,7 +293,9 @@ body {
 .card-btn:hover {
   background-color: #b172e0;
 }
-
+ .card-btn a {
+   text-decoration: none;
+ }
 /* Responsive */
 @media (max-width: 768px) {
   .learning-container {
