@@ -1,81 +1,388 @@
-/* Toàn trang */
+:root {
+  --main-color: #c28bf2;
+  --text-color: #333;
+  --bg-color: #fff;
+  --border-radius: 16px;
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.page-title {
+    font-size: 26px;
+  font-weight: 700;
+  color: #4c2c92;
+  margin-bottom: 30px;
+  text-align: left; 
+  align-self: flex-start; 
+  margin-left: 110px;
+}
+/* Main content */
+.banner-text {
+  width: 100%;
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #4c2c92;
+  text-shadow: none;
+  margin-bottom: 10px;
 }
 
-/* Navbar */
-.navbar {
-    display: flex;
-    justify-content: space-between;
+.emotion-section {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+  padding: 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.banner-container {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+
+}
+
+.banner {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 3px solid #c28bf2;
+  position: relative;
+}
+
+/* Khung chứa các slide để trượt */
+.slides {
+  display: flex;
+  width: 300%;
+  height: 100%;
+  transition: transform 0.6s ease;
+}
+
+/* Ảnh trong banner */
+.slides img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slide.active {
+  display: flex;
+}
+
+.arrow {
+  background-color: #c28bf2;
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.arrow:hover {
+  background-color: #b172e0;
+}
+
+.left {
+  position: absolute;
+  left: -100px;
+}
+
+.right {
+  position: absolute;
+  right: -100px;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.dot {
+  height: 10px;
+  width: 10px;
+  background-color: #ccc;
+  border-radius: 50%;
+  margin: 0 5px;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.dot.active {
+  background-color: #c28bf2;
+}
+
+/* Section tổng thể */
+.recent-games-section {
+  width: 90%;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+  padding: 20px 40px;  
+}
+
+/* Tiêu đề section */
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #4c2c92; 
+}
+
+/* Danh sách trò chơi */
+.game-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 cột đều nhau */
+  gap: 20px; /* khoảng cách giữa các thẻ */
+  justify-items: center; /* căn giữa nội dung trong từng ô */
+}
+
+/* Thẻ trò chơi */
+.game-card {
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%; /* tự chiếm toàn bộ cột của grid */
+  max-width: 250px; /* giới hạn độ rộng tối đa */
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.game-card:hover {
+  border: 3px solid #c28bf2; /* màu viền khi hover */
+  transform: translateY(-5px); /* hiệu ứng nổi nhẹ */
+}
+
+/* Ảnh trong thẻ */
+.game-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Tên trò chơi */
+.game-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  text-align: center;
+  padding: 10px;
+}
+/*responsive*/
+@media (max-width: 1000px) {
+  .game-list {
+    grid-template-columns: repeat(2, 1fr); /* còn 2 cột khi màn nhỏ */
+  }
+}
+
+@media (max-width: 600px) {
+  .game-list {
+    grid-template-columns: 1fr; /* 1 cột trên mobile */
+  }
+}
+
+/*menu bài học và game*/
+.emotion-learning-section {
+  width: 90%;
+  max-width: 1200px;
+  margin: 60px auto;
+  text-align: center;
+}
+
+.emotion-learning-section .section-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #4c2c92;
+  margin-bottom: 30px;
+}
+
+.learning-container {
+  display: flex;
+  justify-content: center;
+  gap: 200px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+/* Thẻ lớn cho từng phần */
+.learning-card {
+  background: linear-gradient(145deg, #ffffff, #f5edff);
+  border: 3px solid #c28bf2;
+  border-radius: 20px;
+  padding: 30px 25px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 12px rgba(194, 139, 242, 0.2);
+  justify-content: space-between;
+}
+
+.learning-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(194, 139, 242, 0.4);
+  border-color: #b172e0;
+}
+
+/* Biểu tượng cảm xúc/game */
+.card-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+/* Tiêu đề */
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #4c2c92;
+  margin-bottom: 10px;
+}
+
+/* Mô tả */
+.card-desc {
+  font-size: 15px;
+  color: #444;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* Nút hành động */
+.card-btn {
+  background-color: #c28bf2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.card-btn:hover {
+  background-color: #b172e0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .learning-container {
+    flex-direction: column;
     align-items: center;
-    padding: 10px 20px;
-    background-color: #1976d2;
-    color: white;
-}
-
-.navbar span {
-    font-weight: bold;
-    font-size: 1.2em;
-}
-
-.logout-btn {
-    background-color: #e53935;
-    border: none;
-    padding: 5px 10px;
-    color: white;
-    cursor: pointer;
-    border-radius: 3px;
-}
-
-.logout-btn:hover {
-    background-color: #c62828;
-}
-
-/* Container chính */
-.container {
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    width: 90%;
-    max-width: 600px;
-    margin: 30px auto;
-}
-
-/* Game buttons */
-.game-menu {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    justify-content: center;
     gap: 20px;
+  }
+
+  .learning-card {
+    width: 90%;
+  }
 }
 
-.game-menu li button {
-    padding: 15px 25px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    background-color: #4caf50;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    transition: 0.2s;
+/*Stats bar */
+/* Section thống kê cảm xúc */
+.emotion-stats-section {
+  width: 90%;
+  max-width: 1200px;
+  margin: 80px auto;
+  text-align: center;
 }
 
-.game-menu li button:hover {
-    background-color: #45a049;
+.emotion-stats-section .section-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #4c2c92;
+  margin-bottom: 40px;
 }
 
-/* Responsive nhỏ */
-@media (max-width: 500px) {
-    .game-menu {
-        flex-direction: column;
-        gap: 10px;
-    }
+/* Container chứa 3 chart */
+.chart-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 40px;
 }
+
+/* Thẻ chứa từng biểu đồ */
+.chart-card {
+  background: linear-gradient(145deg, #ffffff, #f5edff);
+  border: 3px solid #c28bf2;
+  border-radius: 20px;
+  padding: 25px 20px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 6px 12px rgba(194, 139, 242, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chart-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 16px rgba(194, 139, 242, 0.4);
+}
+
+/* Icon và tiêu đề */
+.chart-icon {
+  font-size: 50px;
+  margin-bottom: 10px;
+}
+
+.chart-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4c2c92;
+  margin-bottom: 15px;
+}
+
+/* Chart canvas */
+.chart-card canvas {
+  width: 100%;
+  max-width: 280px;
+  height: 280px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chart-card {
+    width: 90%;
+  }
+}
+
+/* Accessibility */
+button, .card, .learn-box, .small-game {
+  font-weight: 600;
+  outline: none;
+}
+
+button:focus, .card:focus, .learn-box:focus, .small-game:focus {
+  outline: 3px solid #9e6be2;
+} 
