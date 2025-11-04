@@ -29,73 +29,10 @@ body {
 
 /* ========== Layout tổng ========== */
 body {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    /* Sidebar | Main */
+    display: block;
     background: var(--bg);
 }
 
-/* ========== Sidebar ========== */
-.sidebar {
-    position: sticky;
-    top: 0;
-    min-height: 100vh;
-    padding: 16px 14px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-}
-
-.sidebar__toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-}
-
-.sidebar__brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 16px 4px 20px;
-    text-decoration: none;
-    color: var(--text);
-    font-weight: 700;
-    letter-spacing: .2px;
-}
-
-.sidebar__brand svg {
-    color: var(--primary);
-}
-
-.sidebar__brand-text {
-    font-size: 18px;
-}
-
-.sidebar__nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 6px;
-}
-
-.sidebar__nav a {
-    display: block;
-    padding: 10px 12px;
-    border-radius: 10px;
-    color: var(--text);
-    text-decoration: none;
-}
-
-.sidebar__nav a:hover {
-    background: #f3f4f6;
-}
 
 /* ========== Main Learn ========== */
 .learn {
@@ -104,6 +41,12 @@ body {
 
 .learn__header {
     margin-bottom: 16px;
+    background: #e0d3ee;
+    /* tím nhạt */
+    border: 1px solid #e9d5ff;
+    border-radius: 16px;
+    padding: 12px 16px;
+    box-shadow: var(--shadow);
 }
 
 .learn__title {
@@ -111,55 +54,69 @@ body {
     font-size: 24px;
     font-weight: 800;
     letter-spacing: .3px;
+    color: #b075f8;
 }
 
 .learn__body {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 250px 800px;
     /* Emotion list | Media area */
-    gap: 18px;
+    gap: 100px;
+    justify-content: center;
+    min-height: 80vh;
 }
 
 /* ========== Cột trái: CÁC CẢM XÚC ========== */
 .emotion-list {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: #c28bf2;
+    border: 2px solid #bb86fc;
     border-radius: var(--radius);
     padding: 14px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow), 0 0 12px #bb86fc, 0 0 24px rgba(187, 134, 252, 0.5);
 }
 
 .emotion-list__title {
     margin: 0 0 10px 0;
     font-size: 14px;
-    color: var(--muted);
+    color: #f3e8ff;
     font-weight: 700;
     letter-spacing: .5px;
 }
 
 .emotion-list__items {
-    display: grid;
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: calc(100vh - 220px);
-    overflow: auto;
+    height: calc(100vh - 220px);
+}
+
+.emotion-list__items>li {
+    flex: 1;
+    display: flex;
 }
 
 .emotion-pill {
     width: 100%;
-    padding: 10px 12px;
+    height: 100%;
+    min-height: 64px;
+    padding: 16px 20px;
     background: #f8fafc;
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 999px;
     cursor: pointer;
+    font-size: 18px;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, border-color .18s ease, filter .18s ease;
 }
 
 .emotion-pill:hover {
     border-color: #cbd5e1;
     background: #f1f5f9;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
 }
 
 .emotion-pill[aria-current="true"],
@@ -173,28 +130,46 @@ body {
 .media-carousel {
     position: relative;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 2px solid #bb86fc;
     border-radius: var(--radius);
     padding: 18px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow), 0 0 12px #bb86fc, 0 0 24px rgba(187, 134, 252, 0.5);
     min-height: 520px;
     /* tạo khung giống wireframe */
     display: grid;
     place-items: center;
 }
 
+/* Nhãn mô tả nằm trong khung media, phủ trên video */
+.media-carousel__label {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #7c3aed;
+    background: rgba(243, 232, 255, 0.9);
+    border: 1px solid #e9d5ff;
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    pointer-events: none;
+}
+
 .media-carousel__stage {
     width: 100%;
-    max-width: 980px;
+    max-width: 900px;
     aspect-ratio: 16/9;
     margin: 0;
     background: #fff;
-    border: 2px solid #d4d4d8;
+    border: 0;
     /* viền đậm hơn để giống khung */
     border-radius: 24px;
     display: grid;
     place-items: center;
-    padding: 12px;
+    padding: 0;
 }
 
 .media-carousel__video,
@@ -202,8 +177,10 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 18px;
+    border-radius: 24px;
     outline: none;
+    border: 2px solid #d4d4d8;
+    box-sizing: border-box;
 }
 
 .media-carousel__caption {
@@ -213,23 +190,69 @@ body {
     text-align: center;
 }
 
+/* Custom play/pause overlay */
+.media-overlay-controls {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    /* chỉ nhận sự kiện ở nút con */
+    z-index: 3;
+}
+
+.media-overlay-controls .play-toggle {
+    pointer-events: auto;
+    width: 76px;
+    height: 76px;
+    border-radius: 999px;
+    border: 2px solid #e9d5ff;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: grid;
+    place-items: center;
+    color: #7c3aed;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .16), 0 0 0 2px rgba(124, 58, 237, .12) inset;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, opacity .18s ease;
+}
+
+.media-overlay-controls .play-toggle:hover {
+    transform: scale(1.06);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .2), 0 0 0 2px rgba(124, 58, 237, .18) inset;
+}
+
+.media-overlay-controls.is-playing .play-toggle {
+    opacity: 0;
+    pointer-events: none;
+    /* ẩn khi đang phát */
+}
+
 /* Nút mũi tên trái/phải */
 .media-carousel__nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
     border-radius: 999px;
-    border: 1px solid var(--ring);
-    background: #fff;
+    border: 2px solid #e9d5ff;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: grid;
     place-items: center;
-    font-size: 24px;
+    color: #7c3aed;
+    font-size: 26px;
     line-height: 1;
     cursor: pointer;
     user-select: none;
-    box-shadow: var(--shadow);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .12), 0 0 0 2px rgba(124, 58, 237, .08) inset;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, color .18s ease, opacity .18s ease;
+    z-index: 3;
 }
 
 .media-carousel__nav--prev {
@@ -241,7 +264,19 @@ body {
 }
 
 .media-carousel__nav:hover {
-    background: #f3f4f6;
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-50%) scale(1.06);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .16), 0 0 0 2px rgba(124, 58, 237, .14) inset;
+}
+
+.media-carousel__nav:active {
+    transform: translateY(-50%) scale(0.98);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18), 0 0 0 2px rgba(124, 58, 237, .18) inset;
+}
+
+.media-carousel__nav:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, .35), 0 6px 20px rgba(0, 0, 0, .12);
 }
 
 /* Dots (tùy chọn) */
@@ -275,20 +310,6 @@ body {
 }
 
 @media (max-width: 860px) {
-    body {
-        grid-template-columns: 72px 1fr;
-        /* Sidebar hẹp */
-    }
-
-    .sidebar__brand-text {
-        display: none;
-    }
-
-    .sidebar__nav a {
-        padding: 8px 10px;
-        font-size: 14px;
-    }
-
     .learn {
         padding: 18px;
     }
@@ -313,7 +334,7 @@ body {
 /* ===== Icon + màu cho các nút cảm xúc ===== */
 .emotion-pill {
     position: relative;
-    padding-left: 40px;
+    padding-left: 50px;
     /* chừa chỗ cho icon */
     font-weight: 600;
 }
@@ -322,10 +343,10 @@ body {
 .emotion-pill::before {
     content: "🙂";
     position: absolute;
-    left: 12px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 18px;
+    font-size: 22px;
 }
 
 /* HAPPY */
@@ -413,16 +434,21 @@ body {
 }
 
 /* Trạng thái đang chọn */
+.emotion-pill[aria-current="true"],
 .emotion-pill.active {
     outline: 2px solid rgba(0, 0, 0, .08);
-    filter: saturate(1.1);
+    border-width: 2px;
+    border-color: #7c3aed;
+    filter: saturate(1.6) brightness(0.88);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, .35), 0 0 0 2px rgba(255, 255, 255, .45) inset;
 }
 
 /* ===== Khung media nền tím ===== */
 .media-carousel {
     background: #c28bf2;
     /* tím (purple-600) */
-    border-color: #c28bf2;
+    border-color: #bb86fc;
+    box-shadow: var(--shadow), 0 0 12px #bb86fc, 0 0 24px rgba(187, 134, 252, 0.5);
 }
 
 .media-carousel__stage {
@@ -454,9 +480,9 @@ body {
     overflow: hidden !important;
     aspect-ratio: 16 / 9;
     width: 100%;
-    max-width: 980px;
+    max-width: 900px;
     /* fallback chiều cao khi màn hình thấp */
-    max-height: min(70vh, 780px);
+    max-height: min(85vh, 900px);
     background: #0000;
     /* trong suốt để thấy nền tím */
     border-radius: 24px;
@@ -515,7 +541,7 @@ body {
     position: relative !important;
     padding: 0 !important;
     width: 100% !important;
-    max-width: 980px !important;
+    max-width: 900px !important;
     aspect-ratio: 16 / 9 !important;
     overflow: hidden !important;
     display: block !important;
@@ -534,12 +560,14 @@ body {
     /* top/right/bottom/left = 0 */
     width: 100% !important;
     height: 100% !important;
-    object-fit: contain !important;
-    /* giữ tỉ lệ, không crop; đổi 'cover' nếu muốn tràn kín */
-    background: #000 !important;
+    object-fit: cover !important;
+    /* fill khung, loại bỏ viền đen */
+    background: transparent !important;
     /* nền đen cho video đẹp hơn */
     border-radius: 24px !important;
     outline: none !important;
+    border: 2px solid #d4d4d8 !important;
+    box-sizing: border-box !important;
 }
 
 /* NÚT điều hướng nổi phía trên media */
@@ -551,7 +579,7 @@ body {
 @media (max-width: 720px) {
     .media-carousel__stage {
         aspect-ratio: 16 / 9 !important;
-        max-height: 50vh !important;
+        max-height: 80vh !important;
         border-radius: 16px !important;
     }
 

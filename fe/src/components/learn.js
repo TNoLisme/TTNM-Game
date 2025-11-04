@@ -6,36 +6,51 @@ export const apiBase = "http://127.0.0.1:8000"; // đổi nếu backend khác
 // Nếu có API /lessons trả về danh sách bài (ảnh/video), file sẽ ưu tiên dùng API.
 // Nếu không có, dùng fallback DEMO bên dưới.
 const FALLBACK_MEDIA = [
-    // Ví dụ ảnh
+    // Video cho cảm xúc VUI
     {
         id: 1,
-        type: "image",
-        src: "../../assets/images/happykids.jpg",
-        caption: "Vui - ảnh minh họa",
+        type: "video",
+        src: "../../assets/videos/happy.mp4",
+        caption: "Video cảm xúc Vui",
         emotion: "happy"
     },
+    // Một số nội dung khác (ảnh hoặc video) cho các cảm xúc còn lại
     {
         id: 2,
-        type: "image",
-        src: "../../assets/images/smile.jpg",
-        caption: "Buồn - ảnh minh họa",
-        emotion: "sad"
+        type: "video",
+        src: "../../assets/videos/fear.mp4",
+        caption: "Video cảm xúc sợ hãi",
+        emotion: "fear"
     },
-    // Ví dụ video
     {
         id: 3,
         type: "video",
-        src: "../../assets/videos/happy.mp4",
-        caption: "Giới thiệu cảm xúc",
-        emotion: "neutral"
+        src: "../../assets/videos/sad.mp4",
+        caption: "Video cảm xúc buồn",
+        emotion: "sad"
     },
     {
         id: 4,
         type: "video",
-        src: "./videos/basic.mp4",
-        caption: "Phân biệt vui/buồn/giận",
-        emotion: "happy"
+        src: "../../assets/videos/surprise.mp4",
+        caption: "Video cảm xúc ngạc nhiên",
+        emotion: "surprise"
     },
+    {
+        id: 5,
+        type: "video",
+        src: "../../assets/videos/disgust.mp4",
+        caption: "Video cảm xúc ghê tởm",
+        emotion: "disgust"
+    },
+    {
+        id: 6,
+        type: "video",
+        src: "../../assets/videos/angry.mp4",
+        caption: "Video cảm xúc tức giận",
+        emotion: "angry"
+    },
+
 ];
 
 // ================ TRẠNG THÁI ================
@@ -53,41 +68,8 @@ const stage = $(".media-carousel__stage");
 const btnPrev = $('.media-carousel__nav[data-action="prev"]');
 const btnNext = $('.media-carousel__nav[data-action="next"]');
 const dotsWrap = $(".media-carousel__dots");
-const sideToggle = $(".sidebar__toggle");
 const emotionList = $("#emotion-list");
-
-// ================ SIDEBAR COLLAPSE ================
-// Thu nhỏ/mở rộng sidebar bằng cách thay đổi grid-template-columns của body.
-// Lưu trạng thái vào localStorage để nhớ giữa các lần mở trang.
-
-const SIDEBAR_WIDE = "280px 1fr";
-const SIDEBAR_NARROW = "72px 1fr";
-const STORE_KEY = "emogarden.sidebarCollapsed";
-
-function applySidebarLayout(collapsed) {
-    document.body.style.gridTemplateColumns = collapsed ? SIDEBAR_NARROW : SIDEBAR_WIDE;
-    if (sideToggle) sideToggle.setAttribute("aria-expanded", String(!collapsed));
-}
-
-function loadSidebarState() {
-    const v = localStorage.getItem(STORE_KEY);
-    return v === "1";
-}
-
-function saveSidebarState(collapsed) {
-    localStorage.setItem(STORE_KEY, collapsed ? "1" : "0");
-}
-
-function initSidebarToggle() {
-    const collapsed = loadSidebarState();
-    applySidebarLayout(collapsed);
-    if (!sideToggle) return;
-    sideToggle.addEventListener("click", () => {
-        const now = !loadSidebarState();
-        saveSidebarState(now);
-        applySidebarLayout(now);
-    });
-}
+const mediaOverlayLabel = $(".media-carousel__label");
 
 // ================ MEDIA CAROUSEL ================
 
@@ -187,6 +169,22 @@ function applyFilter(emotion /* string | null */ ) {
 
     current = 0;
     updateEmotionUI();
+    if (mediaOverlayLabel) {
+        if (!emotion) mediaOverlayLabel.textContent = "";
+        else {
+            const map = {
+                happy: "vui",
+                sad: "buồn",
+                angry: "tức giận",
+                fear: "sợ hãi",
+                surprise: "ngạc nhiên",
+                disgust: "ghê tởm",
+                neutral: "trung tính"
+            };
+            const phrase = map[(emotion || "").toLowerCase()] || (emotion || "");
+            mediaOverlayLabel.textContent = `Cảm xúc ${phrase}`;
+        }
+    }
     updateCarousel();
 }
 
@@ -261,12 +259,12 @@ async function fetchLessonsOrFallback() {
 
 // ================ KHỞI TẠO ================
 async function init() {
-    initSidebarToggle();
     initEmotionFilters();
 
     allItems = await fetchLessonsOrFallback();
     // Mặc định hiển thị tất cả
     filtered = [...allItems];
+    if (mediaOverlayLabel) mediaOverlayLabel.textContent = "";
     updateCarousel();
 
     // Gán sự kiện prev/next
