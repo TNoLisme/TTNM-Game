@@ -1,69 +1,109 @@
 <!DOCTYPE html>
 <html lang="vi">
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>EmoGarden • Học cảm xúc</title>
     <link rel="stylesheet" href="../styles/learn.css" />
     <script type="module" src="../components/learn.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
     <!-- MAIN CONTENT -->
     <main class="learn" id="main-content">
-        <header class="learn__header">
-            <h1 class="learn__title">HỌC CẢM XÚC</h1>
-        </header>
+      <header class="learn__header">
+        <h1 class="learn__title">HỌC CẢM XÚC</h1>
+      </header>
 
-        <section class="learn__body" aria-label="Khu vực học video">
-            <!-- CỘT TRÁI: DANH SÁCH CẢM XÚC -->
-            <aside class="emotion-list" aria-label="Các cảm xúc">
-                <h2 class="emotion-list__title">CÁC CẢM XÚC</h2>
-                <ul class="emotion-list__items" id="emotion-list">
-                    <!-- ví dụ placeholder; sau này load động -->
-                    <li><button class="emotion-pill" data-emotion="happy">Vui</button></li>
-                    <li><button class="emotion-pill" data-emotion="sad">Buồn</button></li>
-                    <li><button class="emotion-pill" data-emotion="angry">Tức giận</button></li>
-                    <li><button class="emotion-pill" data-emotion="fear">Sợ hãi</button></li>
-                    <li><button class="emotion-pill" data-emotion="surprise">Ngạc nhiên</button></li>
-                    <li><button class="emotion-pill" data-emotion="disgust">Ghê tởm</button></li>
-                </ul>
-            </aside>
+      <section class="learn__body" aria-label="Khu vực học video">
+        <!-- CỘT TRÁI: DANH SÁCH CẢM XÚC -->
+        <aside class="emotion-list" aria-label="Các cảm xúc">
+          <h2 class="emotion-list__title">CÁC CẢM XÚC</h2>
+          <ul class="emotion-list__items" id="emotion-list">
+            <!-- ví dụ placeholder; sau này load động -->
+            <li>
+              <button class="emotion-pill" data-emotion="happy">Vui</button>
+            </li>
+            <li>
+              <button class="emotion-pill" data-emotion="sad">Buồn</button>
+            </li>
+            <li>
+              <button class="emotion-pill" data-emotion="angry">
+                Tức giận
+              </button>
+            </li>
+            <li>
+              <button class="emotion-pill" data-emotion="fear">Sợ hãi</button>
+            </li>
+            <li>
+              <button class="emotion-pill" data-emotion="surprise">
+                Ngạc nhiên
+              </button>
+            </li>
+            <li>
+              <button class="emotion-pill" data-emotion="disgust">
+                Ghê tởm
+              </button>
+            </li>
+          </ul>
+        </aside>
 
-            <!-- KHUNG GIỮA: VIDEO/CAROUSEL -->
-            <section class="media-carousel" aria-label="Video ảnh các thứ">
-                <button class="media-carousel__nav media-carousel__nav--prev" aria-label="Bài trước" data-action="prev">
-                    ‹
-                </button>
+        <!-- KHUNG GIỮA: VIDEO/CAROUSEL -->
+        <section class="media-carousel" aria-label="Video ảnh các thứ">
+          <button
+            class="media-carousel__nav media-carousel__nav--prev"
+            aria-label="Bài trước"
+            data-action="prev"
+          >
+            ‹
+          </button>
 
-                <figure class="media-carousel__stage">
-                    <!-- Có thể thay bằng <img> nếu là hình ảnh -->
-                    <video id="lesson-video" class="media-carousel__video" width="960" height="540" controls
-                        preload="metadata">
-                        <source src="../../assets/images/logo.png" type="video/mp4" />
-                        Trình duyệt của bạn không hỗ trợ video.
-                    </video>
-                    <figcaption class="media-carousel__caption" id="lesson-caption">
-                        VIDEO ẢNH CÁC THỨ
-                    </figcaption>
-                </figure>
+          <figure class="media-carousel__stage">
+            <!-- JS sẽ tự đổ video / ảnh vào đây -->
+          </figure>
 
-                <button class="media-carousel__nav media-carousel__nav--next" aria-label="Bài tiếp theo"
-                    data-action="next">
-                    ›
-                </button>
+          <button
+            class="media-carousel__nav media-carousel__nav--next"
+            aria-label="Bài tiếp theo"
+            data-action="next"
+          >
+            ›
+          </button>
 
-                <!-- Thanh chỉ mục/tiến độ (tùy chọn) -->
-                <div class="media-carousel__dots" role="tablist" aria-label="Chọn bài">
-                    <!-- JS sẽ render các chấm/bước -->
-                </div>
-            </section>
+          <!-- Thanh chỉ mục/tiến độ -->
+          <div
+            class="media-carousel__dots"
+            role="tablist"
+            aria-label="Chọn bài"
+          >
+            <!-- JS sẽ render các chấm/bước -->
+          </div>
+
+          <!-- 🔊 KHUNG TÌNH HUỐNG SAU VIDEO -->
+          <div
+            class="situation-panel"
+            id="situation-panel"
+            aria-label="Tình huống minh họa cảm xúc"
+          >
+            <div class="situation-panel__text-wrap">
+              <p id="situation-text">
+                Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.
+              </p>
+              <button
+                type="button"
+                class="situation-panel__audio-btn"
+                id="situation-audio-btn"
+                aria-label="Nghe câu đọc"
+              >
+                🔊
+              </button>
+            </div>
+          </div>
         </section>
+      </section>
     </main>
 
     <!-- GỢI Ý: JS sẽ gắn sau -->
     <!-- <script src="./js/learn.js" type="module"></script> -->
-</body>
-
+  </body>
 </html>
