@@ -14,10 +14,17 @@ const showToast = (message, type = 'success') => {
         document.body.appendChild(container);
     }
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type} show`;
-    toast.innerHTML = `<span>${type === 'success' ? '✓' : '✕'} ${message}</span>`;
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
+        <div class="toast-message">${message}</div>
+    `;
     container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 };
 
 // REDIRECT + LƯU USER ĐẦY ĐỦ
@@ -36,7 +43,7 @@ const redirectToHome = (userFromAPI) => {
     const saveUser = { ...userFromAPI, user_id };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
     console.log('%c🚀 LƯU USER_ID:', 'color: blue;', saveUser);
-    showToast('Chào mừng ' + (saveUser.name || saveUser.username || 'bạn'));
+    showToast('Chào mừng ' + (saveUser.name || saveUser.username || 'bạn'), 'success');
     setTimeout(() => location.href = '/src/pages/home.html', 1500);
 };
 

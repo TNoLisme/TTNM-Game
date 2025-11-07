@@ -49,7 +49,7 @@ async function saveProfile(e) {
     const confirmPassword = $("edit-password-confirm").value;
 
     if (newPassword && newPassword !== confirmPassword) {
-        alert("Mật khẩu mới và mật khẩu xác nhận không khớp!");
+        showToast("Mật khẩu mới và mật khẩu xác nhận không khớp!", "error");
         $("edit-password-confirm").focus();
         return;
     }
@@ -86,11 +86,11 @@ async function saveProfile(e) {
             throw new Error(err.detail || "Lỗi server");
         }
 
-        alert("Thông tin cá nhân đã được cập nhật thành công!");
+        showToast("Thông tin cá nhân đã được cập nhật thành công!", "success");
         closeModal();
         loadProfile();
     } catch (err) {
-        alert("Lỗi: " + err.message);
+        showToast("Lỗi: " + err.message, "error");
     }
 }
 
@@ -168,3 +168,25 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.closeModal = closeModal;
+
+// Toast (shared behavior like login)
+function showToast(message, type = "success") {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
+        <div class="toast-message">${message}</div>
+    `;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
