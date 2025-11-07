@@ -11,6 +11,10 @@
             padding-bottom: 40px;
         }
 
+        body.modal-open {
+            overflow: hidden;
+        }
+
         header {
             background: white;
             padding: 15px 30px;
@@ -294,6 +298,172 @@
             box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
         }
 
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            background: rgba(15, 32, 73, 0.45);
+            backdrop-filter: blur(2px);
+            z-index: 200;
+        }
+
+        .modal[aria-hidden="false"] {
+            display: flex;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+        }
+
+        .modal-card {
+            position: relative;
+            width: min(620px, 100%);
+            background: white;
+            border-radius: 24px;
+            padding: 36px;
+            box-shadow: 0 25px 60px rgba(25, 118, 210, 0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            animation: modal-pop 0.25s ease-out;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            border: none;
+            background: none;
+            font-size: 32px;
+            line-height: 1;
+            cursor: pointer;
+            color: #9aa6c2;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: #e57373;
+            transform: scale(1.1);
+        }
+
+        .modal-header {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .modal-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .modal-header h2 {
+            font-size: 1.6rem;
+            color: #1b3a61;
+            margin-bottom: 6px;
+        }
+
+        .modal-header p {
+            color: #607197;
+            font-size: 0.95rem;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .form-section {
+            background: linear-gradient(135deg, rgba(187, 222, 251, 0.25), rgba(227, 242, 253, 0.6));
+            border-radius: 18px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-section h3 {
+            font-size: 1.1rem;
+            color: #1f4b80;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-field span {
+            font-weight: 600;
+            color: #2a4f80;
+            font-size: 0.95rem;
+        }
+
+        .form-field input,
+        .form-field select {
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(105, 141, 189, 0.35);
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            color: #1b3a61;
+            background: white;
+        }
+
+        .form-field input::placeholder {
+            color: #9aa6c2;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            outline: none;
+            border-color: #5a8de1;
+            box-shadow: 0 0 0 4px rgba(104, 159, 249, 0.25);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .modal-footer .btn {
+            min-width: 160px;
+            text-align: center;
+        }
+
+        @keyframes modal-pop {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
@@ -328,5 +498,13 @@
 
             .btn {
                 width: 100%;
+            }
+
+            .modal-card {
+                padding: 28px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
             }
         }

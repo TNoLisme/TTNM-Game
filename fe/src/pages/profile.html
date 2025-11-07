@@ -89,94 +89,78 @@
             <a href="home.html" class="btn btn-secondary">🎮 Tiếp tục chơi</a>
         </div>
 
-        <!-- MODAL SIÊU ĐẸP -->
-        <div id="edit-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal()">×</span>
-                <h2>✏️ Chỉnh sửa thông tin</h2>
-                <form id="edit-form">
-                    <label>Tên đăng nhập: <input type="text" id="edit-username" /></label><br><br>
-                    <label>Tên hiển thị: <input type="text" id="edit-name" required /></label><br><br>
-                    <label>Email: <input type="email" id="edit-email" /></label><br><br>
-                    <label>Mật khẩu mới (để trống nếu không đổi): <input type="password" id="edit-password" /></label><br><br>
-                    <label>Tuổi: <input type="number" id="edit-age" min="3" /></label><br><br>
-                    <label>Giới tính: 
-                        <select id="edit-gender">
-                            <option value="male">Nam</option>
-                            <option value="female">Nữ</option>
-                            <option value="other">Khác</option>
-                        </select>
-                    </label><br><br>
-                    <label>Ngày sinh: <input type="date" id="edit-dob" /></label><br><br>
-                    <label>SĐT: <input type="text" id="edit-phone" /></label><br><br>
-                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">❌ Hủy</button>
+        <div id="edit-modal" class="modal" aria-hidden="true">
+            <div class="modal-backdrop" onclick="closeModal()"></div>
+            <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+                <button type="button" class="modal-close" aria-label="Đóng" onclick="closeModal()">×</button>
+                <div class="modal-header">
+                    <div class="modal-icon">✏️</div>
+                    <div>
+                        <h2 id="edit-modal-title">Chỉnh sửa hồ sơ</h2>
+                        <p>Cập nhật thông tin cá nhân để đồng bộ với trang hồ sơ của bạn.</p>
+                    </div>
+                </div>
+
+                <form id="edit-form" class="modal-form">
+                    <div class="form-section">
+                        <h3>Thông tin tài khoản</h3>
+                        <div class="form-grid">
+                            <label class="form-field" for="edit-username">
+                                <span>Tên đăng nhập</span>
+                                <input type="text" id="edit-username" autocomplete="username" />
+                            </label>
+                            <label class="form-field" for="edit-email">
+                                <span>Email</span>
+                                <input type="email" id="edit-email" autocomplete="email" />
+                            </label>
+                            <label class="form-field" for="edit-password">
+                                <span>Mật khẩu mới</span>
+                                <input type="password" id="edit-password" autocomplete="new-password" placeholder="Để trống nếu không đổi" />
+                            </label>
+                            <label class="form-field" for="edit-password-confirm">
+                                <span>Nhập lại mật khẩu mới</span>
+                                <input type="password" id="edit-password-confirm" autocomplete="new-password" placeholder="Nhập lại mật khẩu" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Thông tin cá nhân</h3>
+                        <div class="form-grid">
+                            <label class="form-field" for="edit-name">
+                                <span>Tên hiển thị</span>
+                                <input type="text" id="edit-name" required autocomplete="name" />
+                            </label>
+                            <label class="form-field" for="edit-age">
+                                <span>Tuổi</span>
+                                <input type="number" id="edit-age" min="3" />
+                            </label>
+                            <label class="form-field" for="edit-gender">
+                                <span>Giới tính</span>
+                                <select id="edit-gender">
+                                    <option value="male">Nam</option>
+                                    <option value="female">Nữ</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </label>
+                            <label class="form-field" for="edit-dob">
+                                <span>Ngày sinh</span>
+                                <input type="date" id="edit-dob" />
+                            </label>
+                            <label class="form-field" for="edit-phone">
+                                <span>Số điện thoại</span>
+                                <input type="tel" id="edit-phone" autocomplete="tel" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">❌ Hủy</button>
+                    </div>
                 </form>
             </div>
         </div>
-
-        <style>
-            .modal { 
-                display: none; 
-                position: fixed; 
-                z-index: 100; 
-                left: 0; top: 0; 
-                width: 100%; height: 100%; 
-                background: rgba(0,0,0,0.5); 
-                justify-content: center; 
-                align-items: center;
-                padding: 20px;
-                box-sizing: border-box;
-            }
-            .modal-content { 
-                background: white; 
-                padding: 30px; 
-                width: 90%; 
-                max-width: 500px; 
-                border-radius: 20px; 
-                box-shadow: 0 15px 40px rgba(0,0,0,0.3); 
-                position: relative;
-                animation: modalPop 0.3s ease-out;
-            }
-            @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-            .close { 
-                position: absolute; 
-                top: 15px; 
-                right: 20px; 
-                font-size: 32px; 
-                font-weight: bold; 
-                cursor: pointer; 
-                color: #aaa;
-                transition: 0.2s;
-            }
-            .close:hover { color: #e74c3c; transform: scale(1.2); }
-            #edit-form label { 
-                display: block; 
-                text-align: left; 
-                margin: 12px 0 6px; 
-                font-weight: bold; 
-                color: #2c3e50;
-           tyard
-            #edit-form input, #edit-form select { 
-                width: 100%; 
-                padding: 14px; 
-                margin: 5px 0; 
-                border-radius: 10px; 
-                border: 1px solid #ddd; 
-                font-size: 16px;
-                transition: 0.2s;
-            }
-            #edit-form input:focus, #edit-form select:focus {
-                outline: none;
-                border-color: #3498db;
-                box-shadow: 0 0 8px rgba(52,152,219,0.3);
-            }
-            .btn { padding: 12px 24px; margin: 10px 5px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
-            .btn-primary { background: #2ecc71; color: white; }
-            .btn-primary:hover { background: #27ae60; }
-            .btn-secondary { background: #95a5a6; color: white; }
-            .btn-secondary:hover { background: #7f8c8d; }
-        </style>
     </div>
 
     <!-- FIX SRC: NẾU profile.js Ở components -->

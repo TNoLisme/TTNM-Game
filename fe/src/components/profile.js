@@ -45,6 +45,15 @@ async function saveProfile(e) {
     const userId = getUserId();
     if (!userId) return alert("Chưa đăng nhập bro!");
 
+    const newPassword = $("edit-password").value;
+    const confirmPassword = $("edit-password-confirm").value;
+
+    if (newPassword && newPassword !== confirmPassword) {
+        alert("Mật khẩu mới và mật khẩu xác nhận không khớp!");
+        $("edit-password-confirm").focus();
+        return;
+    }
+
     const update = {
         name: $("edit-name").value.trim(),
         username: $("edit-username").value.trim(),
@@ -53,7 +62,7 @@ async function saveProfile(e) {
         phone_number: $("edit-phone").value.trim(),
         gender: $("edit-gender").value,
         date_of_birth: $("edit-dob").value,
-        password: $("edit-password").value || undefined  // Chỉ gửi nếu có nhập
+        password: newPassword || undefined  // Chỉ gửi nếu có nhập
     };
 
     Object.keys(update).forEach(key => {
@@ -77,7 +86,7 @@ async function saveProfile(e) {
             throw new Error(err.detail || "Lỗi server");
         }
 
-        alert("TẤT CẢ ĐÃ LƯU: TÊN, USERNAME, EMAIL, TUỔI, GIỚI TÍNH, NGÀY SINH, SĐT, MẬT KHẨU!");
+        alert("Thông tin cá nhân đã được cập nhật thành công!");
         closeModal();
         loadProfile();
     } catch (err) {
@@ -97,7 +106,10 @@ function openEditModal() {
     if (!window.currentProfile) return alert("Tải profile trước!");
     const d = window.currentProfile;
 
-    document.getElementById("edit-modal").style.display = "flex";
+    const modal = document.getElementById("edit-modal");
+    if (!modal) return;
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
 
     $("edit-username").value = d.username || "";
     $("edit-name").value = d.name || "";
@@ -107,10 +119,19 @@ function openEditModal() {
     $("edit-dob").value = d.date_of_birth || "";
     $("edit-phone").value = d.phone_number || "";
     $("edit-password").value = ""; // Luôn để trống
+    $("edit-password-confirm").value = "";
+
+    const firstField = $("edit-name");
+    if (firstField) {
+        requestAnimationFrame(() => firstField.focus());
+    }
 }
 
 function closeModal() {
-    document.getElementById("edit-modal").style.display = "none";
+    const modal = document.getElementById("edit-modal");
+    if (!modal) return;
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
 }
 
 function animate(id, end) {
@@ -130,13 +151,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const editBtn = document.getElementById("edit-btn");
     const form = document.getElementById("edit-form");
-    const closeBtn = document.querySelector(".close");
+    const closeBtn = document.querySelector(".modal-close");
     const logout = document.getElementById("logout-btn");
 
     if (editBtn) editBtn.onclick = openEditModal;
     if (form) form.onsubmit = saveProfile;
     if (closeBtn) closeBtn.onclick = closeModal;
     if (logout) logout.onclick = () => confirm("Đăng xuất?") && (localStorage.clear(), location.href = "/src/pages/login.html");
+
+    document.addEventListener("keydown", e => {
+        const modal = document.getElementById("edit-modal");
+        if (e.key === "Escape" && modal && modal.getAttribute("aria-hidden") === "false") {
+            closeModal();
+        }
+    });
 });
 
 window.closeModal = closeModal;
