@@ -65,10 +65,10 @@ class UsersService:
             role=RoleEnum.child,
             name=data.get("name")
         )
-        self.user_repo.save_user(user)
+        self.user_repo.save_user(user)  # ĐÃ OK
 
         child = Child(
-            user_id=str(user_id),
+            user_id=str(user_id),  # PHẢI LÀ STR!
             age=data.get("age"),
             last_played=None,
             report_preferences=data.get("report_preferences"),
@@ -78,9 +78,9 @@ class UsersService:
             date_of_birth=data.get("date_of_birth"),
             phone_number=data.get("phone_number")
         )
-        self.child_repo.save(child)
-        print("Tạo child thành công ở đây.")
-        return {"status": "success", "message": f"Child created", "user_id": str(child.user_id)}
+        saved_child = self.child_repo.save(child)  # DÙNG SAVE ĐỂ RETURN DOMAIN
+        print("CHILD SAVED:", saved_child.__dict__)  # DEBUG
+        return {"status": "success", "message": "Child created", "user_id": str(user_id)}
     
     def login(self, username: str, password: str) -> dict:
         """Kiểm tra đăng nhập dựa trên username và password."""
@@ -90,6 +90,7 @@ class UsersService:
                 "success": True,
                 "message": "Đăng nhập thành công",
                 "user": {
+                    "user_id": str(user.user_id),
                     "username": user.username,
                     "fullName": user.name,
                     "accountType": user.role.value
@@ -153,3 +154,60 @@ class UsersService:
             del otp_storage[email]  # Xóa OTP sau khi thành công
             return {"status": "success", "message": "Password reset successfully"}
         return {"status": "failed", "message": "User not found"}
+    
+
+
+    def get_current_user_info(self, user_id: UUID) -> dict:
+        user = self.user_repo.get_user_by_id(user_id)
+        if not user:
+            return None
+        
+        base_info = {
+            "user_id": str(user.user_id),
+            "username": user.username,
+            "email": user.email,
+            "name": user.name,
+            "role": user.role.value
+        }
+        
+        # Nếu là child → thêm info child
+        if user.role == RoleEnum.child:
+            child = self.child_repo.get_by_user_id(str(user_id))
+            if child:
+                base_info.update({
+            "age": child.age,
+            "gender": child.gender.value if child.gender else None,
+            "phone_number": child.phone_number
+        })
+        
+        return base_info
+
+    
+    def update_profile(self, user_id: UUID, data: dict) -> dict:
+        user = self.user_repo.get_user_by_id(user_id)
+        if not user:
+            return {"success": False, "message": "User not found"}
+
+        # UPDATE USER
+        for key, value in data.items():
+            if hasattr(user, key) and value is not None:
+                setattr(user, key, value)
+        self.user_repo.update_user(user)
+
+        # UPDATE CHILD NẾU LÀ CHILD
+        if user.role == RoleEnum.child:
+            child = self.child_repo.get_by_user_id(user_id)  # UUID → repo sẽ convert str
+            if child:
+                child_data = {k: v for k, v in data.items() if k in ["age", "phone_number", "gender", "report_preferences"]}
+                if child_data:
+                    for key, value in child_data.items():
+                        if key == "gender":
+                            setattr(child, key, GenderEnum[value.upper()])
+                        else:
+                            setattr(child, key, value)
+                    self.child_repo.update(child)
+                    print("CHILD UPDATED IN SERVICE:", child.__dict__)
+            else:
+                print("[WARNING] Child not found for update!")
+
+        return {"success": True, "message": "Cập nhật thành công"}

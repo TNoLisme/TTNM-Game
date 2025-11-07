@@ -6,37 +6,91 @@ export const apiBase = "http://127.0.0.1:8000"; // đổi nếu backend khác
 // Nếu có API /lessons trả về danh sách bài (ảnh/video), file sẽ ưu tiên dùng API.
 // Nếu không có, dùng fallback DEMO bên dưới.
 const FALLBACK_MEDIA = [
-    // Ví dụ ảnh
+    // Video cho cảm xúc VUI
     {
         id: 1,
-        type: "image",
-        src: "../../assets/images/happykids.jpg",
-        caption: "Vui - ảnh minh họa",
-        emotion: "happy"
+        type: "video",
+        src: "../../assets/videos/happy.mp4",
+        caption: "Video cảm xúc Vui",
+        emotion: "happy",
     },
+    // Một số nội dung khác (ảnh hoặc video) cho các cảm xúc còn lại
     {
         id: 2,
-        type: "image",
-        src: "../../assets/images/smile.jpg",
-        caption: "Buồn - ảnh minh họa",
-        emotion: "sad"
+        type: "video",
+        src: "../../assets/videos/fear.mp4",
+        caption: "Video cảm xúc sợ hãi",
+        emotion: "fear",
     },
-    // Ví dụ video
     {
         id: 3,
         type: "video",
-        src: "../../assets/videos/happy.mp4",
-        caption: "Giới thiệu cảm xúc",
-        emotion: "neutral"
+        src: "../../assets/videos/sad.mp4",
+        caption: "Video cảm xúc buồn",
+        emotion: "sad",
     },
     {
         id: 4,
         type: "video",
-        src: "./videos/basic.mp4",
-        caption: "Phân biệt vui/buồn/giận",
-        emotion: "happy"
+        src: "../../assets/videos/surprise.mp4",
+        caption: "Video cảm xúc ngạc nhiên",
+        emotion: "surprise",
+    },
+    {
+        id: 5,
+        type: "video",
+        src: "../../assets/videos/disgust.mp4",
+        caption: "Video cảm xúc ghê tởm",
+        emotion: "disgust",
+    },
+    {
+        id: 6,
+        type: "video",
+        src: "../../assets/videos/angry.mp4",
+        caption: "Video cảm xúc tức giận",
+        emotion: "angry",
     },
 ];
+
+// ================ TÌNH HUỐNG THEO CẢM XÚC ================
+const SITUATIONS = {
+    happy: {
+        image: "../../assets/images/happy/situation_happy.png",
+        text: "Lan được tặng một món quà bất ngờ nên Lan rất vui và mỉm cười.",
+    },
+    sad: {
+        image: "../../assets/images/sad/situation_sad.png",
+        text: "An đánh rơi kem rồi, nên An buồn và khóc.",
+    },
+    angry: {
+        image: "../../assets/images/angry/situation_angry.png",
+        text: "Nam bị bạn giật đồ chơi mà không xin phép nên Nam tức giận.",
+    },
+    fear: {
+        image: "../../assets/images/fear/situation_fear.png",
+        text: "Bé Mai đi lạc mẹ trong siêu thị nên cảm thấy rất sợ hãi.",
+    },
+    surprise: {
+        image: "../../assets/images/surprise/situation_surprise.png",
+        text: "Huy mở hộp quà ra và thấy món đồ chơi mình rất thích nên rất ngạc nhiên.",
+    },
+    disgust: {
+        image: "../../assets/images/disgust/situation_disgust.png",
+        text: "Minh ngửi thấy mùi rác thối nên cảm thấy rất ghê tởm.",
+    },
+};
+
+function buildSituationItem(emotion) {
+    const info = SITUATIONS[emotion];
+    if (!info) return null;
+    return {
+        id: `situation-${emotion}`,
+        type: "image",
+        emotion: emotion,
+        src: info.image,
+        caption: info.text, // chỉ dùng cho panel dưới, không hiển thị trong figure nữa
+    };
+}
 
 // ================ TRẠNG THÁI ================
 let allItems = []; // Toàn bộ media (ảnh + video)
@@ -53,41 +107,12 @@ const stage = $(".media-carousel__stage");
 const btnPrev = $('.media-carousel__nav[data-action="prev"]');
 const btnNext = $('.media-carousel__nav[data-action="next"]');
 const dotsWrap = $(".media-carousel__dots");
-const sideToggle = $(".sidebar__toggle");
 const emotionList = $("#emotion-list");
-
-// ================ SIDEBAR COLLAPSE ================
-// Thu nhỏ/mở rộng sidebar bằng cách thay đổi grid-template-columns của body.
-// Lưu trạng thái vào localStorage để nhớ giữa các lần mở trang.
-
-const SIDEBAR_WIDE = "280px 1fr";
-const SIDEBAR_NARROW = "72px 1fr";
-const STORE_KEY = "emogarden.sidebarCollapsed";
-
-function applySidebarLayout(collapsed) {
-    document.body.style.gridTemplateColumns = collapsed ? SIDEBAR_NARROW : SIDEBAR_WIDE;
-    if (sideToggle) sideToggle.setAttribute("aria-expanded", String(!collapsed));
-}
-
-function loadSidebarState() {
-    const v = localStorage.getItem(STORE_KEY);
-    return v === "1";
-}
-
-function saveSidebarState(collapsed) {
-    localStorage.setItem(STORE_KEY, collapsed ? "1" : "0");
-}
-
-function initSidebarToggle() {
-    const collapsed = loadSidebarState();
-    applySidebarLayout(collapsed);
-    if (!sideToggle) return;
-    sideToggle.addEventListener("click", () => {
-        const now = !loadSidebarState();
-        saveSidebarState(now);
-        applySidebarLayout(now);
-    });
-}
+const mediaOverlayLabel = $(".media-carousel__label");
+//const situationImage = document.getElementById("situation-image");
+const situationText = document.getElementById("situation-text");
+const situationAudioBtn = document.getElementById("situation-audio-btn");
+const situationPanel = document.getElementById("situation-panel");
 
 // ================ MEDIA CAROUSEL ================
 
@@ -96,49 +121,40 @@ function renderStage(item) {
     // Xóa nội dung cũ
     stage.innerHTML = "";
 
-    // Tạo node tùy theo loại
+    // Trang 1: VIDEO (KHÔNG caption)
     if (item.type === "video") {
         const fig = document.createElement("figure");
         fig.className = "w-full h-full grid place-items-center m-0";
 
-        const video = document.createElement("video");
-        video.className = "media-carousel__video";
-        video.setAttribute("controls", "controls");
-        video.setAttribute("preload", "metadata");
+      const video = document.createElement("video");
+      video.className = "media-carousel__video";
+      video.setAttribute("controls", "controls");
+      video.setAttribute("preload", "metadata");
 
-        const src = document.createElement("source");
-        src.src = item.src;
-        src.type = "video/mp4"; // có thể thay đổi nếu bạn dùng webm/ogg
-        video.appendChild(src);
+      const src = document.createElement("source");
+      src.src = item.src;
+      src.type = "video/mp4";
+      video.appendChild(src);
 
-        const cap = document.createElement("figcaption");
-        cap.className = "media-carousel__caption";
-        cap.textContent = item.caption || "";
+      fig.appendChild(video);
+      stage.appendChild(fig);
 
-        fig.appendChild(video);
-        fig.appendChild(cap);
-        stage.appendChild(fig);
-    } else {
-        // image
-        const fig = document.createElement("figure");
-        fig.className = "w-full h-full grid place-items-center m-0";
+      // Trang 2: ẢNH TÌNH HUỐNG (CHỈ ảnh, KHÔNG caption trong figure)
+  } else if (item.type === "image") {
+      const fig = document.createElement("figure");
+      fig.className = "w-full h-full grid place-items-center m-0";
 
-        const img = document.createElement("img");
-        img.src = item.src;
-        img.alt = item.caption || "Hình minh họa cảm xúc";
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "18px";
+      const img = document.createElement("img");
+      img.src = item.src;
+      //img.alt = item.caption || "Hình minh họa cảm xúc";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+      img.style.borderRadius = "18px";
 
-        const cap = document.createElement("figcaption");
-        cap.className = "media-carousel__caption";
-        cap.textContent = item.caption || "";
-
-        fig.appendChild(img);
-        fig.appendChild(cap);
-        stage.appendChild(fig);
-    }
+      fig.appendChild(img);
+      stage.appendChild(fig);
+  }
 }
 
 function renderDots() {
@@ -157,15 +173,49 @@ function renderDots() {
     });
 }
 
+function renderSituationPanel() {
+    if (!situationPanel || !situationText) return;
+
+    //  Chưa chọn cảm xúc → ẩn panel, không text, không loa
+    if (!currentEmotion) {
+        situationPanel.style.display = "none";
+        situationText.textContent =
+            "Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.";
+        return;
+    }
+
+    const key = currentEmotion.toLowerCase();
+    const info = SITUATIONS[key];
+
+    if (!info) {
+        situationPanel.style.display = "none";
+        situationText.textContent = "";
+        return;
+    }
+
+    if (current === 0) {
+        // 👉 Trang 1: VIDEO → chỉ có video, ẩn panel (không text, không loa)
+        situationPanel.style.display = "none";
+        situationText.textContent = "";
+    } else {
+        // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text + loa
+        situationPanel.style.display = "flex"; // hoặc "" nếu CSS set sẵn display:flex
+        situationText.textContent = info.text; // An đánh rơi kem rồi, nên An buồn và khóc.
+    }
+}
+
 function updateCarousel() {
-    // đảm bảo current nằm trong khoảng
     if (filtered.length === 0) {
+      if (stage) {
         stage.innerHTML = `<div class="media-carousel__caption">Không có nội dung cho cảm xúc này.</div>`;
-        dotsWrap.innerHTML = "";
+        }
+        if (dotsWrap) dotsWrap.innerHTML = "";
         return;
     }
     current = (current + filtered.length) % filtered.length;
-    renderStage(filtered[current]);
+    const item = filtered[current];
+    renderStage(item);
+    renderSituationPanel(currentEmotion, current);
     renderDots();
 }
 
@@ -180,37 +230,67 @@ function goNext() {
 }
 
 // ================ LỌC THEO CẢM XÚC ================
-function applyFilter(emotion /* string | null */) {
+function applyFilter(emotion) {
     currentEmotion = emotion;
-    if (!emotion) filtered = [...allItems];
-    else filtered = allItems.filter(x => (x.emotion || "").toLowerCase() === emotion.toLowerCase());
+    if (!emotion) {
+        filtered = [...allItems];
+    } else {
+        const e = emotion.toLowerCase();
+        const media = allItems.filter((x) => (x.emotion || "").toLowerCase() === e);
+
+        // chỉ lấy video đầu tiên cho mỗi cảm xúc (nếu có)
+        const pages = [];
+        const video = media.find((x) => x.type === "video");
+        if (video) pages.push(video);
+
+        // thêm TRANG 2: ảnh tình huống
+        const situation = buildSituationItem(e);
+        if (situation) pages.push(situation);
+
+        filtered = pages;
+    }
 
     current = 0;
     updateEmotionUI();
+
+    if (mediaOverlayLabel) {
+        const map = {
+            happy: "vui",
+            sad: "buồn",
+            angry: "tức giận",
+            fear: "sợ hãi",
+            surprise: "ngạc nhiên",
+            disgust: "ghê tởm",
+            neutral: "trung tính",
+        };
+        mediaOverlayLabel.textContent = emotion
+            ? `Cảm xúc ${map[emotion] || emotion}`
+            : "";
+    }
+
     updateCarousel();
 }
 
+// ================ UI EMOTION PILL ================
 function updateEmotionUI() {
-    // set active cho nút emotion-pill
-    $$(".emotion-pill", emotionList).forEach(btn => {
+    $$(".emotion-pill", emotionList).forEach((btn) => {
         const e = btn.getAttribute("data-emotion");
         if (!currentEmotion && !e) {
             btn.classList.add("active");
-        } else if (currentEmotion && e && e.toLowerCase() === currentEmotion.toLowerCase()) {
-            btn.classList.add("active");
-        } else {
-            btn.classList.remove("active");
-        }
-    });
+      } else if (
+          currentEmotion &&
+          e &&
+          e.toLowerCase() === currentEmotion.toLowerCase()
+      ) {
+          btn.classList.add("active");
+      } else {
+          btn.classList.remove("active");
+      }
+  });
 }
 
 function initEmotionFilters() {
     if (!emotionList) return;
-// Thêm một nút "Tất cả" ở đầu nếu muốn
-// (Bỏ comment nếu cần)
-// const li = document.createElement("li");
-// li.innerHTML = `<button class="emotion-pill" data-emotion="">Tất cả</button>`;
-// emotionList.prepend(li);
 
     emotionList.addEventListener("click", (ev) => {
         const btn = ev.target.closest(".emotion-pill");
@@ -224,50 +304,51 @@ function initEmotionFilters() {
 async function fetchLessonsOrFallback() {
     try {
         const res = await fetch(`${apiBase}/lessons/`, {
-            method: "GET"
-        });
-        if (!res.ok) throw new Error("API /lessons trả lỗi");
-        const data = await res.json();
+        method: "GET",
+    });
+      if (!res.ok) throw new Error("API /lessons trả lỗi");
+      const data = await res.json();
 
-        // Chuẩn hóa về {type, src, caption, emotion}
-        // Giả định backend trả: {lesson_id, title, video_url, image_url?, emotion?}
-        const items = [];
-        for (const x of data) {
-            if (x.video_url) {
-                items.push({
-                    id: `v-${x.lesson_id}`,
-                    type: "video",
-                    src: x.video_url,
-                    caption: x.title || "",
-                    emotion: (x.emotion || "neutral")
-                });
-            }
-            if (x.image_url) {
-                items.push({
-                    id: `i-${x.lesson_id}`,
-                    type: "image",
-                    src: x.image_url,
-                    caption: x.title || "",
-                    emotion: (x.emotion || "neutral")
-                });
-            }
+      const items = [];
+      for (const x of data) {
+          if (x.video_url) {
+              items.push({
+                  id: `v-${x.lesson_id}`,
+                  type: "video",
+                  src: x.video_url,
+                  caption: x.title || "",
+            emotion: x.emotion || "neutral",
+        });
         }
-        return items.length ? items : FALLBACK_MEDIA;
-    } catch (e) {
-        // Không có API → dùng fallback
-        return FALLBACK_MEDIA;
-    }
+        if (x.image_url) {
+            items.push({
+                id: `i-${x.lesson_id}`,
+                type: "image",
+                src: x.image_url,
+                caption: x.title || "",
+            emotion: x.emotion || "neutral",
+        });
+          }
+      }
+      return items.length ? items : FALLBACK_MEDIA;
+  } catch (e) {
+      return FALLBACK_MEDIA;
+  }
 }
 
 // ================ KHỞI TẠO ================
 async function init() {
-    initSidebarToggle();
     initEmotionFilters();
 
     allItems = await fetchLessonsOrFallback();
-    // Mặc định hiển thị tất cả
-    filtered = [...allItems];
-    updateCarousel();
+    // Khi mới vào: mặc định cảm xúc "happy"
+    currentEmotion = "happy";
+    applyFilter("happy");
+
+    // ban đầu: chưa chọn cảm xúc → ẩn panel
+    if (situationPanel) {
+        situationPanel.style.display = "none";
+    }
 
     // Gán sự kiện prev/next
     if (btnPrev) btnPrev.addEventListener("click", goPrev);
@@ -277,7 +358,33 @@ async function init() {
     window.addEventListener("keydown", (e) => {
         if (e.key === "ArrowLeft") goPrev();
         if (e.key === "ArrowRight") goNext();
-    });
+  });
+
+    // 🔊 Nút phát giọng cho câu tình huống (panel dưới)
+    if (situationAudioBtn) {
+        situationAudioBtn.addEventListener("click", () => {
+            const text = situationText ? situationText.textContent.trim() : "";
+            if (text) {
+                speakVietnamese(text);
+            }
+        });
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
+async function speakVietnamese(text) {
+    const res = await fetch("https://api.fpt.ai/hmi/tts/v5", {
+        method: "POST",
+        headers: {
+            "api-key": "OXvPopJqIJgON0AglCE0KPkBvOovWSoy",
+            speed: "",
+            voice: "banmai",
+        },
+        body: text,
+    });
+
+    const data = await res.json();
+    const audioUrl = data.async;
+    const audio = new Audio(audioUrl);
+    audio.play();
+}

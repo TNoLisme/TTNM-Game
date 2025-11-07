@@ -1,87 +1,122 @@
-// fe/src/components/login.js
 const API_URL = 'http://localhost:8000';
 
+// TOAST + ERROR
 const showError = (message) => {
-    document.querySelector('#error-message').textContent = message || '';
+    const errorEl = document.querySelector('#error-message');
+    if (errorEl) errorEl.textContent = message || '';
 };
 
-const redirectToHome = (user) => {
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    alert('Đăng nhập thành công!');
-    window.location.href = '/src/pages/home.html';
+
+const showToast = (message, type = 'success') => {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
+        <div class="toast-message">${message}</div>
+    `;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 };
 
+// REDIRECT + LƯU USER ĐẦY ĐỦ
+const redirectToHome = (userFromAPI) => {
+    if (!userFromAPI || typeof userFromAPI !== 'object') {
+        showError('Không thể đọc dữ liệu người dùng.');
+        return;
+    }
+
+    const user_id = userFromAPI.user_id || userFromAPI.id || userFromAPI.user?.user_id;
+    if (!user_id) {
+        showError('Thiếu mã người dùng từ máy chủ. Vui lòng thử lại.');
+        return;
+    }
+
+    const saveUser = { ...userFromAPI, user_id };
+    localStorage.setItem('currentUser', JSON.stringify(saveUser));
+    console.log('%c🚀 LƯU USER_ID:', 'color: blue;', saveUser);
+    showToast('Chào mừng ' + (saveUser.name || saveUser.username || 'bạn'), 'success');
+    setTimeout(() => location.href = '/src/pages/home.html', 1500);
+
+};
+
+
+// HANDLE LOGIN CHUẨN
 const handleLogin = async (e) => {
     e.preventDefault();
     showError('');
-
     const username = document.querySelector('#username').value.trim();
     const password = document.querySelector('#password').value.trim();
+    if (!username || !password) return showError('Nhập đầy đủ thông tin!');
 
-    if (!username || !password) {
-        return showError('Vui lòng nhập đầy đủ Username và Password.');
-    }
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Đang đăng nhập...';
 
     try {
         const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify({ username, password })
         });
-        const data = await res.json();
 
-        if (res.ok && data.success) {
-            redirectToHome(data.user);
+        const data = await res.json();
+        console.log('Login response:', data);  // DEBUG
+
+        if (res.ok && (data.success || data.user)) {
+            const user = data.user || data.data || data;
+            redirectToHome(user);
+            return;
         } else {
-            showError(data.message || 'Sai tên đăng nhập hoặc mật khẩu.');
+            throw new Error(data.message || data.detail || 'Sai tài khoản hoặc mật khẩu.');
         }
     } catch (err) {
-        console.error(err);
-        showError('Lỗi kết nối server. Vui lòng thử lại.');
+        console.error('Login error:', err);
+        showError(err.message || 'Lỗi kết nối server.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Đăng nhập';
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.querySelector('#login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
-
-    const forgotLink = document.getElementById('forgot-password-link');
-    if (forgotLink) {
-        forgotLink.addEventListener('click', openForgotModal);
-        console.log('Forgot link attached');
-    } else {
-        console.error('Forgot link not found');
-    }
-});
-
-// ============ QUÊN MẬT KHẨU (GỌP 1 BƯỚC) ============
+// === QUÊN MẬT KHẨU (GIỮ NGUYÊN, CHỈ FIX NHỎ) ===
 function openForgotModal(e) {
     e.preventDefault();
     const modal = document.getElementById('forgot-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-        document.getElementById('otp-pass-section').style.display = 'none';
-        document.getElementById('reset-error').textContent = '';
-        document.getElementById('forgot-email').value = '';
-    }
+    modal.style.display = 'flex';
+    document.getElementById('otp-pass-section').style.display = 'none';
+    document.getElementById('reset-error').textContent = '';
+    document.getElementById('forgot-email').value = '';
 }
 
 function closeForgotModal() {
-    const modal = document.getElementById('forgot-modal');
-    if (modal) modal.style.display = 'none';
+    document.getElementById('forgot-modal').style.display = 'none';
     document.getElementById('otp-pass-section').style.display = 'none';
     document.getElementById('reset-error').textContent = '';
+    document.getElementById('forgot-email').value = '';
+    document.getElementById('forgot-otp').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
 }
 
-// GỬI OTP → HIỆN FORM NHẬP OTP + PASS
 async function sendOTP() {
     const email = document.getElementById('forgot-email').value.trim();
-    if (!email) {
-        showModalError('Vui lòng nhập email.');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showModalError('Email không hợp lệ.');
         return;
     }
+    const btn = document.getElementById('send-otp-btn');
+    btn.disabled = true;
+    btn.textContent = 'Đang gửi...';
 
     try {
         const res = await fetch(`${API_URL}/users/forgot-password`, {
@@ -90,30 +125,36 @@ async function sendOTP() {
             body: JSON.stringify({ email })
         });
         const data = await res.json();
-
         if (res.ok) {
             document.getElementById('otp-pass-section').style.display = 'block';
-            document.getElementById('send-otp-btn').style.display = 'none';
+            btn.style.display = 'none';
             showModalError('OTP đã gửi! Kiểm tra email.', 'green');
+            showToast('OTP sent!', 'success');
         } else {
             showModalError(data.detail || 'Lỗi gửi OTP.');
         }
     } catch (err) {
-        console.error(err);
-        showModalError('Lỗi kết nối server.');
+        showModalError('Lỗi kết nối.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gửi OTP';
     }
 }
 
-// ĐỔI MẬT KHẨU (GỌI 1 LẦN DUY NHẤT)
 async function resetPasswordWithOTP() {
     const email = document.getElementById('forgot-email').value.trim();
     const otp = document.getElementById('forgot-otp').value.trim();
-    const newPass = document.getElementById('new-password').value.trim();
-    const confirmPass = document.getElementById('confirm-password').value.trim();
+    const newPass = document.getElementById('new-password').value;
+    const confirm = document.getElementById('confirm-password').value;
 
-    if (!otp || otp.length !== 6) return showModalError('OTP phải 6 số.');
-    if (newPass.length < 8) return showModalError('Mật khẩu mới phải ≥ 8 ký tự.');
-    if (newPass !== confirmPass) return showModalError('Mật khẩu xác nhận không khớp.');
+    if (otp.length !== 6 || newPass.length < 8 || newPass !== confirm) {
+        showModalError('Kiểm tra OTP/Mật khẩu!');
+        return;
+    }
+
+    const btn = document.getElementById('reset-pass-btn');
+    btn.disabled = true;
+    btn.textContent = 'Đang đổi...';
 
     try {
         const res = await fetch(`${API_URL}/users/reset-password`, {
@@ -122,25 +163,32 @@ async function resetPasswordWithOTP() {
             body: JSON.stringify({ email, otp, new_password: newPass })
         });
         const data = await res.json();
-
         if (res.ok) {
-            alert('Đổi mật khẩu thành công!');
+            showToast('Đổi mật khẩu thành công!', 'success');
             closeForgotModal();
         } else {
-            const msg = data.detail?.[0]?.msg || data.detail || 'OTP sai hoặc hết hạn.';
-            showModalError(msg);
+            showModalError(data.detail || 'OTP sai.');
         }
     } catch (err) {
-        console.error(err);
-        showModalError('Lỗi kết nối server.');
+        showModalError('Lỗi kết nối.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Đổi Mật Khẩu';
     }
 }
 
-// HIỂN THỊ LỖI TRONG MODAL
 function showModalError(msg, color = 'red') {
     const el = document.getElementById('reset-error');
-    if (el) {
-        el.textContent = msg;
-        el.style.color = color;
-    }
+    el.textContent = msg;
+    el.style.color = color;
 }
+
+// EVENT LISTENERS
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('#login-form')?.addEventListener('submit', handleLogin);
+    document.getElementById('forgot-password-link')?.addEventListener('click', openForgotModal);
+    document.getElementById('close-modal')?.addEventListener('click', closeForgotModal);
+    document.getElementById('send-otp-btn')?.addEventListener('click', sendOTP);
+    document.getElementById('reset-pass-btn')?.addEventListener('click', resetPasswordWithOTP);
+    document.getElementById('forgot-modal')?.addEventListener('click', (e) => e.target === e.currentTarget && closeForgotModal());
+});

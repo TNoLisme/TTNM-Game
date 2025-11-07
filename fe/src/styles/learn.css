@@ -1,252 +1,334 @@
 /* ========== Reset nhẹ ========== */
 * {
-    box-sizing: border-box;
+box-sizing: border-box;
 }
 
 html,
 body {
-    height: 100%;
+height: 100%;
 }
 
 body {
-    margin: 0;
+margin: 0;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color: #222;
 }
 
 /* ========== Theme tokens ========== */
 :root {
-    --bg: #fafafa;
+--bg: #fafafa;
     --surface: #ffffff;
     --text: #222;
     --muted: #6b7280;
     --primary: #2563eb;
     --ring: #d1d5db;
     --border: #e5e7eb;
-    --shadow: 0 8px 24px rgba(0, 0, 0, .06);
+--shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     --radius: 16px;
 }
 
 /* ========== Layout tổng ========== */
 body {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    /* Sidebar | Main */
+display: block;
     background: var(--bg);
-}
-
-/* ========== Sidebar ========== */
-.sidebar {
-    position: sticky;
-    top: 0;
-    min-height: 100vh;
-    padding: 16px 14px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-}
-
-.sidebar__toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-}
-
-.sidebar__brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 16px 4px 20px;
-    text-decoration: none;
-    color: var(--text);
-    font-weight: 700;
-    letter-spacing: .2px;
-}
-
-.sidebar__brand svg {
-    color: var(--primary);
-}
-
-.sidebar__brand-text {
-    font-size: 18px;
-}
-
-.sidebar__nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 6px;
-}
-
-.sidebar__nav a {
-    display: block;
-    padding: 10px 12px;
-    border-radius: 10px;
-    color: var(--text);
-    text-decoration: none;
-}
-
-.sidebar__nav a:hover {
-    background: #f3f4f6;
 }
 
 /* ========== Main Learn ========== */
 .learn {
-    padding: 24px 28px;
+padding: 24px 28px;
 }
 
 .learn__header {
-    margin-bottom: 16px;
+margin-bottom: 16px;
+background: #e0d3ee;
+    /* tím nhạt */
+    border: 1px solid #e9d5ff;
+    border-radius: 16px;
+    padding: 12px 16px;
+    box-shadow: var(--shadow);
 }
 
 .learn__title {
-    margin: 0 0 6px 0;
+margin: 0 0 6px 0;
     font-size: 24px;
     font-weight: 800;
-    letter-spacing: .3px;
+letter-spacing: 0.3px;
+    color: #b075f8;
 }
 
 .learn__body {
-    display: grid;
-    grid-template-columns: 220px 1fr;
+display: grid;
+grid-template-columns: 250px 800px;
     /* Emotion list | Media area */
-    gap: 18px;
+gap: 100px;
+    justify-content: center;
+    min-height: 80vh;
 }
 
 /* ========== Cột trái: CÁC CẢM XÚC ========== */
 .emotion-list {
-    background: var(--surface);
-    border: 1px solid var(--border);
+background: #c28bf2;
+    border: 2px solid #bb86fc;
     border-radius: var(--radius);
     padding: 14px;
-    box-shadow: var(--shadow);
+box-shadow: var(--shadow), 0 0 12px #bb86fc, 0 0 24px rgba(187, 134, 252, 0.5);
 }
 
 .emotion-list__title {
-    margin: 0 0 10px 0;
+margin: 0 0 10px 0;
     font-size: 14px;
-    color: var(--muted);
+color: #f3e8ff;
     font-weight: 700;
-    letter-spacing: .5px;
+letter-spacing: 0.5px;
 }
 
 .emotion-list__items {
-    display: grid;
-    gap: 8px;
+display: flex;
+    flex-direction: column;
+    gap: 12px;
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: calc(100vh - 220px);
-    overflow: auto;
+height: calc(100vh - 220px);
+}
+
+.emotion-list__items>li {
+    flex: 1;
+    display: flex;
 }
 
 .emotion-pill {
-    width: 100%;
-    padding: 10px 12px;
+width: 100%;
+height: 100%;
+    min-height: 64px;
+    padding: 16px 20px;
     background: #f8fafc;
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 999px;
     cursor: pointer;
+font-size: 18px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease,
+        background-color 0.18s ease, border-color 0.18s ease, filter 0.18s ease;
 }
 
 .emotion-pill:hover {
-    border-color: #cbd5e1;
+border-color: #cbd5e1;
     background: #f1f5f9;
+transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 .emotion-pill[aria-current="true"],
 .emotion-pill.active {
-    background: #eef2ff;
+background: #eef2ff;
     border-color: #c7d2fe;
     color: #1e40af;
 }
 
 /* ========== Khung media: Video/Ảnh + mũi tên ========== */
 .media-carousel {
-    position: relative;
+position: relative;
     background: var(--surface);
-    border: 1px solid var(--border);
+border: 2px solid #bb86fc;
     border-radius: var(--radius);
     padding: 18px;
-    box-shadow: var(--shadow);
+box-shadow: var(--shadow), 0 0 12px #bb86fc, 0 0 24px rgba(187, 134, 252, 0.5);
     min-height: 520px;
     /* tạo khung giống wireframe */
     display: grid;
     place-items: center;
 }
 
+/* Nhãn mô tả nằm trong khung media, phủ trên video */
+.media-carousel__label {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #7c3aed;
+    background: rgba(243, 232, 255, 0.9);
+    border: 1px solid #e9d5ff;
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    pointer-events: none;
+}
 .media-carousel__stage {
-    width: 100%;
-    max-width: 980px;
+width: 100%;
+max-width: 900px;
     aspect-ratio: 16/9;
     margin: 0;
     background: #fff;
-    border: 2px solid #d4d4d8;
+border: 0;
     /* viền đậm hơn để giống khung */
     border-radius: 24px;
     display: grid;
     place-items: center;
-    padding: 12px;
+padding: 0;
 }
 
 .media-carousel__video,
 .media-carousel__stage img {
-    width: 100%;
+width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 18px;
+border-radius: 24px;
     outline: none;
+border: 2px solid #d4d4d8;
+    box-sizing: border-box;
 }
 
 .media-carousel__caption {
-    margin-top: 8px;
+margin-top: 8px;
     font-size: 13px;
     color: var(--muted);
     text-align: center;
 }
+/* Trang tình huống (ảnh + text + loa) trong carousel */
+.situation-figure .media-carousel__caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.situation-caption__text {
+    flex: 1;
+    text-align: left;
+    font-size: 14px;
+    color: #111827;
+}
+
+.situation-caption__audio-btn {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 2px solid #e5e7eb;
+    background: #ffffff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.situation-caption__audio-btn:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
+    background: #f3e8ff;
+}
+
+.situation-caption__audio-btn:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+
+/* Custom play/pause overlay */
+.media-overlay-controls {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    /* chỉ nhận sự kiện ở nút con */
+    z-index: 3;
+}
+
+.media-overlay-controls .play-toggle {
+    pointer-events: auto;
+    width: 76px;
+    height: 76px;
+    border-radius: 999px;
+    border: 2px solid #e9d5ff;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: grid;
+    place-items: center;
+    color: #7c3aed;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.16),
+        0 0 0 2px rgba(124, 58, 237, 0.12) inset;
+    transition: transform 0.18s ease, box-shadow 0.18s ease,
+        background-color 0.18s ease, opacity 0.18s ease;
+}
+
+.media-overlay-controls .play-toggle:hover {
+    transform: scale(1.06);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2),
+        0 0 0 2px rgba(124, 58, 237, 0.18) inset;
+}
+
+.media-overlay-controls.is-playing .play-toggle {
+    opacity: 0;
+    pointer-events: none;
+    /* ẩn khi đang phát */
+}
 
 /* Nút mũi tên trái/phải */
 .media-carousel__nav {
-    position: absolute;
+position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
+width: 56px;
+    height: 56px;
     border-radius: 999px;
-    border: 1px solid var(--ring);
-    background: #fff;
+border: 2px solid #e9d5ff;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: grid;
     place-items: center;
-    font-size: 24px;
+color: #7c3aed;
+    font-size: 26px;
     line-height: 1;
     cursor: pointer;
     user-select: none;
-    box-shadow: var(--shadow);
+box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12),
+        0 0 0 2px rgba(124, 58, 237, 0.08) inset;
+    transition: transform 0.18s ease, box-shadow 0.18s ease,
+        background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
+    z-index: 3;
 }
 
 .media-carousel__nav--prev {
-    left: 16px;
+left: 16px;
 }
 
 .media-carousel__nav--next {
-    right: 16px;
+right: 16px;
 }
 
 .media-carousel__nav:hover {
-    background: #f3f4f6;
+background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-50%) scale(1.06);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16),
+        0 0 0 2px rgba(124, 58, 237, 0.14) inset;
+}
+
+.media-carousel__nav:active {
+    transform: translateY(-50%) scale(0.98);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18),
+        0 0 0 2px rgba(124, 58, 237, 0.18) inset;
+}
+
+.media-carousel__nav:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35), 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* Dots (tùy chọn) */
 .media-carousel__dots {
-    position: absolute;
+position: absolute;
     bottom: 14px;
     left: 50%;
     transform: translateX(-50%);
@@ -255,7 +337,7 @@ body {
 }
 
 .media-carousel__dots button {
-    width: 8px;
+width: 8px;
     height: 8px;
     border-radius: 999px;
     border: 0;
@@ -264,199 +346,191 @@ body {
 }
 
 .media-carousel__dots button[aria-current="true"] {
-    background: var(--primary);
+background: var(--primary);
 }
 
 /* ========== Responsive ========== */
 @media (max-width: 1080px) {
-    .learn__body {
+.learn__body {
         grid-template-columns: 180px 1fr;
     }
 }
 
 @media (max-width: 860px) {
-    body {
-        grid-template-columns: 72px 1fr;
-        /* Sidebar hẹp */
-    }
-
-    .sidebar__brand-text {
-        display: none;
-    }
-
-    .sidebar__nav a {
-        padding: 8px 10px;
-        font-size: 14px;
-    }
-
-    .learn {
+.learn {
         padding: 18px;
     }
 }
 
 @media (max-width: 720px) {
-    .learn__body {
+.learn__body {
         grid-template-columns: 1fr;
         /* Xếp dọc */
     }
 
-    .emotion-list {
-        order: 2;
-    }
+  .emotion-list {
+      order: 2;
+  }
 
-    .media-carousel {
-        order: 1;
-        min-height: 420px;
-    }
+  .media-carousel {
+      order: 1;
+      min-height: 420px;
+  }
 }
 
 /* ===== Icon + màu cho các nút cảm xúc ===== */
 .emotion-pill {
-    position: relative;
-    padding-left: 40px;
+position: relative;
+padding-left: 50px;
     /* chừa chỗ cho icon */
     font-weight: 600;
 }
 
 /* Icon mặc định (sửa theo emotion ở dưới) */
 .emotion-pill::before {
-    content: "🙂";
+content: "🙂";
     position: absolute;
-    left: 12px;
+left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 18px;
+font-size: 22px;
 }
 
 /* HAPPY */
 .emotion-pill[data-emotion="happy"] {
-    background: #fff7cc;
+background: #fff7cc;
     /* vàng nhạt */
     border-color: #fde68a;
     color: #92400e;
 }
 
 .emotion-pill[data-emotion="happy"]::before {
-    content: "😊";
+content: "😊";
 }
 
 /* SAD */
 .emotion-pill[data-emotion="sad"] {
-    background: #e0f2fe;
+background: #e0f2fe;
     /* xanh dương nhạt */
     border-color: #bae6fd;
     color: #0c4a6e;
 }
 
 .emotion-pill[data-emotion="sad"]::before {
-    content: "😢";
+content: "😢";
 }
 
 /* ANGRY */
 .emotion-pill[data-emotion="angry"] {
-    background: #fee2e2;
+background: #fee2e2;
     /* đỏ nhạt */
     border-color: #fecaca;
     color: #7f1d1d;
 }
 
 .emotion-pill[data-emotion="angry"]::before {
-    content: "😠";
+content: "😠";
 }
 
 /* FEAR */
 .emotion-pill[data-emotion="fear"] {
-    background: #ede9fe;
+background: #ede9fe;
     /* tím nhạt */
     border-color: #ddd6fe;
     color: #4c1d95;
 }
 
 .emotion-pill[data-emotion="fear"]::before {
-    content: "😨";
+content: "😨";
 }
 
 /* SURPRISE */
 .emotion-pill[data-emotion="surprise"] {
-    background: #ffedd5;
+background: #ffedd5;
     /* cam nhạt */
     border-color: #fed7aa;
     color: #7c2d12;
 }
 
 .emotion-pill[data-emotion="surprise"]::before {
-    content: "😮";
+content: "😮";
 }
 
 /* DISGUST */
 .emotion-pill[data-emotion="disgust"] {
-    background: #dcfce7;
+background: #dcfce7;
     /* xanh lá nhạt */
     border-color: #bbf7d0;
     color: #14532d;
 }
 
 .emotion-pill[data-emotion="disgust"]::before {
-    content: "🤢";
+content: "🤢";
 }
 
 /* NEUTRAL */
 .emotion-pill[data-emotion="neutral"] {
-    background: #f4f4f5;
+background: #f4f4f5;
     /* xám nhạt */
     border-color: #e4e4e7;
     color: #3f3f46;
 }
 
 .emotion-pill[data-emotion="neutral"]::before {
-    content: "😐";
+content: "😐";
 }
 
 /* Trạng thái đang chọn */
+.emotion-pill[aria-current="true"],
 .emotion-pill.active {
-    outline: 2px solid rgba(0, 0, 0, .08);
-    filter: saturate(1.1);
+outline: 2px solid rgba(0, 0, 0, 0.08);
+    border-width: 2px;
+    border-color: #7c3aed;
+    filter: saturate(1.6) brightness(0.88);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35),
+        0 0 0 2px rgba(255, 255, 255, 0.45) inset;
 }
 
 /* ===== Khung media nền tím ===== */
 .media-carousel {
-    background: #c28bf2;
+background: #c28bf2;
     /* tím (purple-600) */
-    border-color: #c28bf2;
+border-color: #bb86fc;
+    box-shadow: var(--shadow), 0 0 12px #bb86fc, 0 0 24px rgba(187, 134, 252, 0.5);
 }
 
 .media-carousel__stage {
-    background: transparent;
+background: transparent;
     /* trong suốt để lộ nền tím */
-    border: 2px solid rgba(255, 255, 255, .4);
+border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
 .media-carousel__caption {
-    color: #f3e8ff;
+color: #f3e8ff;
     /* chữ sáng trên nền tím */
 }
 
 /* Nút mũi tên nổi bật trên nền tím */
 .media-carousel__nav {
-    background: #ffffff;
+background: #ffffff;
     border-color: #e9d5ff;
 }
 
 .media-carousel__nav:hover {
-    background: #f5f3ff;
+background: #f5f3ff;
 }
 
 .media-carousel__stage {
-    padding: 0 !important;
+padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     overflow: hidden !important;
     aspect-ratio: 16 / 9;
     width: 100%;
-    max-width: 980px;
+max-width: 900px;
     /* fallback chiều cao khi màn hình thấp */
-    max-height: min(70vh, 780px);
+max-height: min(85vh, 900px);
     background: #0000;
     /* trong suốt để thấy nền tím */
     border-radius: 24px;
@@ -465,7 +539,7 @@ body {
 /* Ảnh & Video chiếm trọn khung, giữ tỉ lệ (không crop) */
 .media-carousel__stage img,
 .media-carousel__video {
-    width: 100% !important;
+width: 100% !important;
     height: 100% !important;
     object-fit: contain !important;
     /* đổi từ cover -> contain để không cắt nội dung */
@@ -478,44 +552,44 @@ body {
 
 /* Nếu muốn video luôn full theo chiều ngang mà không vượt khung, giữ tỉ lệ */
 .media-carousel__video {
-    max-width: 100%;
+max-width: 100%;
     max-height: 100%;
 }
 
 /* Thu nhỏ khung tổng để bớt “đệm” dọc, video đỡ có cảm giác nhỏ */
 .media-carousel {
-    padding: 16px !important;
+padding: 16px !important;
     min-height: unset !important;
     /* bỏ min-height cố định 520px */
 }
 
 /* Responsive tweak: khi màn nhỏ, ưu tiên chiều cao hợp lý */
 @media (max-width: 720px) {
-    .media-carousel__stage {
+.media-carousel__stage {
         max-height: 50vh;
         border-radius: 16px;
     }
 
-    .media-carousel__stage img,
-    .media-carousel__video {
-        border-radius: 12px;
-    }
+  .media-carousel__stage img,
+  .media-carousel__video {
+      border-radius: 12px;
+  }
 }
 
 /* ====== FIX CỰC MẠNH: Video/Ảnh fill khung chuẩn 16:9 ====== */
 
 /* Khung ngoài: bớt “đệm” để khung không làm nhỏ media */
 .media-carousel {
-    padding: 12px !important;
+padding: 12px !important;
     min-height: unset !important;
 }
 
 /* Khung stage: tự tạo tỷ lệ 16:9, bỏ padding, cho phép phủ kín */
 .media-carousel__stage {
-    position: relative !important;
+position: relative !important;
     padding: 0 !important;
     width: 100% !important;
-    max-width: 980px !important;
+max-width: 900px !important;
     aspect-ratio: 16 / 9 !important;
     overflow: hidden !important;
     display: block !important;
@@ -529,36 +603,126 @@ body {
 .media-carousel__stage>img,
 .media-carousel__stage video,
 .media-carousel__stage img {
-    position: absolute !important;
+position: absolute !important;
     inset: 0 !important;
     /* top/right/bottom/left = 0 */
     width: 100% !important;
     height: 100% !important;
-    object-fit: contain !important;
-    /* giữ tỉ lệ, không crop; đổi 'cover' nếu muốn tràn kín */
-    background: #000 !important;
+object-fit: cover !important;
+    /* fill khung, loại bỏ viền đen */
+    background: transparent !important;
     /* nền đen cho video đẹp hơn */
     border-radius: 24px !important;
     outline: none !important;
+border: 2px solid #d4d4d8 !important;
+    box-sizing: border-box !important;
 }
 
 /* NÚT điều hướng nổi phía trên media */
 .media-carousel__nav {
-    z-index: 2 !important;
+z-index: 2 !important;
 }
 
 /* Mobile: giảm chiều cao cho vừa màn */
 @media (max-width: 720px) {
-    .media-carousel__stage {
+.media-carousel__stage {
         aspect-ratio: 16 / 9 !important;
-        max-height: 50vh !important;
+    max-height: 80vh !important;
         border-radius: 16px !important;
     }
 
-    .media-carousel__stage>video,
-    .media-carousel__stage>img,
-    .media-carousel__stage video,
-    .media-carousel__stage img {
-        border-radius: 16px !important;
+  .media-carousel__stage>video,
+  .media-carousel__stage>img,
+  .media-carousel__stage video,
+  .media-carousel__stage img {
+      border-radius: 16px !important;
+  }
+}
+/* ========== TÌNH HUỐNG MINH HỌA SAU VIDEO ========== */
+
+.situation-panel {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    padding: 12px 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.situation-panel__image-wrap {
+    flex: 0 0 160px;
+    max-width: 200px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #000;
+}
+
+.situation-panel__image-wrap img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.situation-panel__text-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.situation-panel__text-wrap p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #111827;
+    font-weight: 500;
+}
+
+.situation-panel__audio-btn {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 2px solid #e5e7eb;
+    background: #ffffff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.situation-panel__audio-btn:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
+    background: #f3e8ff;
+}
+
+.situation-panel__audio-btn:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+
+@media (max-width: 720px) {
+    .situation-panel {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .situation-panel__image-wrap {
+        width: 100%;
+        max-width: none;
+    }
+
+    .situation-panel__text-wrap {
+        width: 100%;
+        justify-content: space-between;
     }
 }

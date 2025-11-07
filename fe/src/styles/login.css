@@ -1,33 +1,45 @@
-/* KẾ THỪA STYLE CHUNG (Header/Logo) TỪ index.css (cần import hoặc copy nếu không dùng tiền xử lý) */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-/* ==== CẤU HÌNH CHUNG & HEADER (Copy từ index.css cho đơn giản) ==== */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     background-color: #fff;
+    overflow-x: hidden;
 }
 
 a {
     text-decoration: none;
 }
 
+/* ============================ HEADER ============================ */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 40px;
     border-bottom: 1px solid #ddd;
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .logo {
     display: flex;
     align-items: center;
     font-weight: bold;
+    color: #333;
+    gap: 10px;
 }
 
 .logo img {
     width: 100px;
-    margin-right: 8px;
+    height: 100px;
+    object-fit: contain;
 }
 
 .buttons {
@@ -36,10 +48,11 @@ header {
 }
 
 .buttons a {
-    padding: 6px 14px;
-    border-radius: 6px;
-    border: 1px solid #c28bf2;
-    font-weight: bold;
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 2px solid #c28bf2;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .buttons a:first-child {
@@ -47,20 +60,30 @@ header {
     color: #fff;
 }
 
+.buttons a:first-child:hover {
+    background-color: #aa6ef0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(194, 139, 242, 0.3);
+}
+
 .buttons a:last-child {
     background-color: #fff;
     color: #c28bf2;
 }
 
-/* ============================ LOGIN FORM STYLE ============================ */
+.buttons a:last-child:hover {
+    background-color: #f9f5ff;
+    transform: translateY(-2px);
+}
+
+/* ============================ LOGIN FORM ============================ */
 .auth-container {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    padding-top: 40px;
-    background-color: #f7f3ff;
+    align-items: center;
     padding: 60px 20px;
-    min-height: 100vh;
+    background: linear-gradient(135deg, #f7f3ff 0%, #f0e8ff 100%);
+    min-height: calc(100vh - 60px);
 }
 
 .auth-box {
@@ -70,35 +93,53 @@ header {
     max-width: 95%;
     background-color: #fff;
     border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     overflow: hidden;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* --- Cột trái: hình minh họa --- */
 .auth-image {
     flex: 1;
-    background-color: #f0e8ff;
+    background: linear-gradient(135deg, #f0e8ff 0%, #e8d5ff 100%);
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 .auth-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 10px;
 }
 
 /* --- Cột phải: form --- */
 .auth-form {
     flex: 1;
     padding: 50px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .auth-form h2 {
     font-size: 36px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     color: #6c3bbb;
+    font-weight: 700;
 }
 
 /* Input, select, button, link */
@@ -109,64 +150,360 @@ header {
 label {
     display: block;
     font-size: 15px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     color: #555;
+    font-weight: 500;
 }
 
 input,
 select {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
     background-color: #f9f9ff;
     font-size: 15px;
+    transition: all 0.3s ease;
+    font-family: inherit;
 }
 
-button {
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #c28bf2;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(194, 139, 242, 0.1);
+}
+
+input::placeholder {
+    color: #aaa;
+}
+
+button[type="submit"] {
     width: 100%;
-    background-color: #c28bf2;
+    background: linear-gradient(135deg, #c28bf2 0%, #aa6ef0 100%);
     border: none;
     color: white;
-    padding: 12px;
-    border-radius: 8px;
+    padding: 14px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 16px;
+    font-weight: 700;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(194, 139, 242, 0.4);
+}
+
+button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#error-message {
+    color: #f5576c;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+/* ============================ TOAST NOTIFICATION ============================ */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
     font-weight: bold;
+    flex-shrink: 0;
 }
 
-button:hover {
-    background-color: #aa6ef0;
+.toast-message {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
 }
 
-/* Liên kết phụ */
+.toast-success .toast-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.toast-success {
+    border-left: 4px solid #667eea;
+}
+
+.toast-error .toast-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.toast-error {
+    border-left: 4px solid #f5576c;
+}
+
+.toast-info .toast-icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.toast-info {
+    border-left: 4px solid #4facfe;
+}
+
+.toast-warning .toast-icon {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.toast-warning {
+    border-left: 4px solid #fa709a;
+}
+
+.toast:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================ MODAL ============================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 0;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: scale(0.7) translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-content h3 {
+    margin: 0;
+    padding: 25px 30px;
+    border-bottom: 2px solid #f0f0f0;
+    font-size: 22px;
+    color: #333;
+    font-weight: 600;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.3s, transform 0.3s;
+    line-height: 1;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #333;
+    transform: rotate(90deg);
+}
+
+.modal-content > div:not(.modal-content h3) {
+    padding: 25px 30px;
+}
+
+.modal-input {
+    width: 80%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s;
+    margin: 0 auto 12px auto; /* Căn giữa */
+    display: block; /* Quan trọng! */
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: #c28bf2;
+    box-shadow: 0 0 0 3px rgba(194, 139, 242, 0.1);
+}
+
+.modal-button {
+    width: 80%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 8px auto; /* Căn giữa */
+    display: block; /* Quan trọng! */
+    transition: all 0.3s;
+}
+
+.modal-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.modal-button.primary {
+    background: linear-gradient(135deg, #c28bf2 0%, #aa6ef0 100%);
+    color: white;
+}
+
+.modal-button.primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(194, 139, 242, 0.4);
+}
+
+.modal-button.success {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+}
+
+.modal-button.success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+}
+
+#reset-error {
+    color: #f5576c;
+    margin-top: 12px;
+    font-size: 14px;
+    min-height: 20px;
+    text-align: center;
+    font-weight: 500;
+}
+
+#otp-pass-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px dashed #e0e0e0;
+}
+
+/* ============================ EXTRA LINKS ============================ */
 .extra-links {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
+    margin-top: 20px;
     font-size: 14px;
 }
 
 .extra-links a {
     color: #6c3bbb;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.extra-links a:hover {
+    color: #aa6ef0;
+    text-decoration: underline;
 }
 
 .auth-footer {
-    margin-top: 25px;
+    margin-top: 30px;
     font-size: 13px;
-    color: #777;
+    color: #999;
     text-align: center;
 }
 
-/* --- Responsive --- */
-@media (max-width: 900px) {
+/* ============================ RESPONSIVE ============================ */
+@media (max-width: 768px) {
+    header {
+        padding: 10px 20px;
+    }
+
+    .logo img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .buttons a {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .auth-container {
+        padding: 40px 15px;
+    }
+
     .auth-box {
         flex-direction: column;
-        width: 90%;
+        width: 95%;
     }
 
     .auth-image {
-        height: 250px;
+        height: 200px;
+        order: -1;
     }
 
     .auth-form {
@@ -175,5 +512,57 @@ button:hover {
 
     .auth-form h2 {
         font-size: 28px;
+        margin-bottom: 20px;
+    }
+
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .modal-content {
+        max-width: 95%;
+        margin: 20px;
+    }
+    
+    .modal-content h3 {
+        padding: 20px;
+        font-size: 20px;
+    }
+
+    .modal-content > div:not(.modal-content h3) {
+        padding: 20px;
+    }
+
+    .modal-button {
+        padding: 14px;
+    }
+
+    .extra-links {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-form h2 {
+        font-size: 24px;
+    }
+
+    input,
+    select,
+    button {
+        font-size: 14px;
+    }
+
+    .modal-content h3 {
+        font-size: 18px;
     }
 }

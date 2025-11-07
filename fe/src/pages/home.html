@@ -9,109 +9,106 @@
 </head>
 
 <body>
-    <h1 class="page-title">Trang chủ</h1>
-  <!-- Banner trôi -->
-  <div class="emotion-section">
-    <div class="banner-text">Cảm xúc cần rèn luyện nhiều hơn</div>
+    <header class="main-header">
+        <h1 class="page-title">Trang chủ</h1>
+        <a href="./profile.html" class="user-profile-link" title="Xem Hồ sơ">
+          <span class="profile-icon">&#128100;</span>
+        </a>
+        </header>
+        <div class="emotion-section">
+          <div class="banner-text">Cảm xúc cần rèn luyện nhiều hơn</div>
 
-    <div class="banner-container">
-      <button class="arrow left">&#10094;</button>
+        <div class="banner-container">
+          <button class="arrow left">&#10094;</button>
 
-      <div class="banner">
-        <div class="slides">
-          <img src="/fe/assets/images/...1" alt="Game 1">
-          <img src="/fe/assets/images/...2" alt="Game 2">
-          <img src="/fe/assets/images/...3" alt="Game 3">
+            <div class="banner">
+              <div class="slides">
+                <img src="/fe/assets/images/...1" alt="Game 1">
+                <img src="/fe/assets/images/...2" alt="Game 2">
+                <img src="/fe/assets/images/...3" alt="Game 3">
+              </div>
+            </div>
+
+            <button class="arrow right">&#10095;</button>
+            </div>
+
+        <div class="dots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
         </div>
-      </div>
+        </div>
 
-      <button class="arrow right">&#10095;</button>
-    </div>
+    <section class="recent-games-section">
+      <h2 class="section-title">Trò chơi đã chơi gần đây</h2>
 
-    <div class="dots">
-      <span class="dot active"></span>
-      <span class="dot"></span>
-      <span class="dot"></span>
-    </div>
-  </div>
+        <div class="game-list">
+          <div class="game-card">
+            <img src="/fe/assets/images/...1" alt="Game 1">
+            <p class="game-name">Tên trò chơi 1</p>
+          </div>
+          <div class="game-card">
+            <img src="/fe/assets/images/...2" alt="Game 2">
+            <p class="game-name">Tên trò chơi 2</p>
+          </div>
+          <div class="game-card">
+            <img src="/fe/assets/images/...3" alt="Game 3">
+            <p class="game-name">Tên trò chơi 3</p>
+          </div>
+          <div class="game-card">
+            <img src="/fe/assets/images/...4" alt="Game 4">
+            <p class="game-name">Tên trò chơi 4</p>
+          </div>
+        </div>
+        </section>
 
-  <!-- Mục game thường chơi -->
-  <section class="recent-games-section">
-    <h2 class="section-title">Trò chơi đã chơi gần đây</h2>
+    <section class="emotion-learning-section">
+      <h2 class="section-title">Khám phá cảm xúc cùng bạn nhỏ</h2>
 
-    <div class="game-list">
-      <div class="game-card">
-        <img src="/fe/assets/images/...1" alt="Game 1">
-        <p class="game-name">Tên trò chơi 1</p>
-      </div>
-      <div class="game-card">
-        <img src="/fe/assets/images/...2" alt="Game 2">
-        <p class="game-name">Tên trò chơi 2</p>
-      </div>
-      <div class="game-card">
-        <img src="/fe/assets/images/...3" alt="Game 3">
-        <p class="game-name">Tên trò chơi 3</p>
-      </div>
-      <div class="game-card">
-        <img src="/fe/assets/images/...4" alt="Game 4">
-        <p class="game-name">Tên trò chơi 4</p>
-      </div>
-    </div>
-  </section>
+        <div class="learning-container">
 
-  <!--menu bài học và game-->
-  <section class="emotion-learning-section">
-  <h2 class="section-title">Khám phá cảm xúc cùng bạn nhỏ</h2>
+            <div class="learning-card">
+              <div class="card-icon">😊</div>
+              <h3 class="card-title">Học 6 cảm xúc cơ bản</h3>
+              <p class="card-desc">Nhận biết và hiểu các cảm xúc vui, buồn, sợ, tức giận, ngạc nhiên và ghê tởm qua hình ảnh sinh
+                động.</p>
+              <button class="card-btn"><a href="./learn.html">Bắt đầu học</a></button>
+              </div>
 
-  <div class="learning-container">
+            <div class="learning-card">
+              <div class="card-icon">🎮</div>
+              <h3 class="card-title">Chơi 4 trò chơi cảm xúc</h3>
+              <p class="card-desc">Rèn luyện khả năng cảm xúc qua các trò chơi tương tác vui nhộn.</p>
+              <button class="card-btn">Vào chơi</button>
+            </div>
 
-    <!-- Học cảm xúc -->
-    <div class="learning-card">
-      <div class="card-icon">😊</div>
-      <h3 class="card-title">Học 6 cảm xúc cơ bản</h3>
-      <p class="card-desc">Nhận biết và hiểu các cảm xúc vui, buồn, sợ, tức giận, ngạc nhiên và ghê tởm qua hình ảnh sinh động.</p>
-      <button class="card-btn"><a href="./learn.html">Bắt đầu học</a></button>
-    </div>
-
-    <!-- Chơi game -->
-    <div class="learning-card">
-      <div class="card-icon">🎮</div>
-      <h3 class="card-title">Chơi 4 trò chơi cảm xúc</h3>
-      <p class="card-desc">Rèn luyện khả năng cảm xúc qua các trò chơi tương tác vui nhộn.</p>
-      <button class="card-btn">Vào chơi</button>
-    </div>
-
-  </div>
-</section>
+        </div>
+        </section>
 
 
-    <!-- Section thống kê -->
-<section class="emotion-stats-section">
-  <h2 class="section-title">Hành trình cảm xúc của bạn nhỏ</h2>
+    <section class="emotion-stats-section">
+      <h2 class="section-title">Hành trình cảm xúc của bạn nhỏ</h2>
 
-  <div class="chart-container">
-    <!-- Biểu đồ 1 -->
-    <div class="chart-card">
-      <div class="chart-icon">😕</div>
-      <h3 class="chart-title">Tỉ lệ sai của 6 cảm xúc</h3>
-      <canvas id="errorChart"></canvas>
-    </div>
+        <div class="chart-container">
+            <div class="chart-card">
+              <div class="chart-icon">😕</div>
+              <h3 class="chart-title">Tỉ lệ sai của 6 cảm xúc</h3>
+              <canvas id="errorChart"></canvas>
+            </div>
 
-    <!-- Biểu đồ 2 -->
-    <div class="chart-card">
-      <div class="chart-icon">📈</div>
-      <h3 class="chart-title">Tỉ lệ cải thiện của 6 cảm xúc</h3>
-      <canvas id="improvementChart"></canvas>
-    </div>
+            <div class="chart-card">
+              <div class="chart-icon">📈</div>
+              <h3 class="chart-title">Tỉ lệ cải thiện của 6 cảm xúc</h3>
+              <canvas id="improvementChart"></canvas>
+            </div>
 
-    <!-- Biểu đồ 3 -->
-    <div class="chart-card">
-      <div class="chart-icon">🎮</div>
-      <h3 class="chart-title">Tỉ lệ chơi của 4 trò chơi</h3>
-      <canvas id="gameChart"></canvas>
-    </div>
-  </div>
-</section>
+            <div class="chart-card">
+              <div class="chart-icon">🎮</div>
+              <h3 class="chart-title">Tỉ lệ chơi của 4 trò chơi</h3>
+              <canvas id="gameChart"></canvas>
+            </div>
+            </div>
+            </section>
 
 
     <script type="module" src="/src/components/home.js"></script>
