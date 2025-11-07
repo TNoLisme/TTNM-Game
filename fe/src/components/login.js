@@ -22,14 +22,22 @@ const showToast = (message, type = 'success') => {
 
 // REDIRECT + LƯU USER ĐẦY ĐỦ
 const redirectToHome = (userFromAPI) => {
-    let user_id = userFromAPI.user?.user_id || userFromAPI.user_id;
-    if (!user_id) user_id = "ab522c90-c812-4459-8eb4-0af23bd0414d";  // DEFAULT THỦ CÔNG
+    if (!userFromAPI || typeof userFromAPI !== 'object') {
+        showError('Không thể đọc dữ liệu người dùng.');
+        return;
+    }
 
-    const saveUser = { user_id, ...userFromAPI };
+    const user_id = userFromAPI.user_id || userFromAPI.id || userFromAPI.user?.user_id;
+    if (!user_id) {
+        showError('Thiếu mã người dùng từ máy chủ. Vui lòng thử lại.');
+        return;
+    }
+
+    const saveUser = { ...userFromAPI, user_id };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
-    console.log('%c🚀 LƯU USER_ID TỰ ĐỘNG:', 'color: blue;', saveUser);
-    showToast('Chào mừng ' + (saveUser.name || saveUser.username));
-    setTimeout(() => location.href = '/src/pages/home.html', 2000);
+    console.log('%c🚀 LƯU USER_ID:', 'color: blue;', saveUser);
+    showToast('Chào mừng ' + (saveUser.name || saveUser.username || 'bạn'));
+    setTimeout(() => location.href = '/src/pages/home.html', 1500);
 };
 
 // HANDLE LOGIN CHUẨN

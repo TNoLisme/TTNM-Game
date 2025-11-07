@@ -86,13 +86,22 @@ class UsersService:
         """Kiểm tra đăng nhập dựa trên username và password."""
         user = self.user_repo.get_by_username_and_password(username, password)
         if user:
+            child = self.child_repo.get_by_user_id(str(user.user_id)) if user.role == RoleEnum.child else None
             return {
                 "success": True,
                 "message": "Đăng nhập thành công",
                 "user": {
+                    "user_id": str(user.user_id),
                     "username": user.username,
-                    "fullName": user.name,
-                    "accountType": user.role.value
+                    "name": user.name,
+                    "email": user.email,
+                    "role": user.role.value,
+                    "child_profile": {
+                        "age": child.age,
+                        "gender": child.gender.value if child and child.gender else None,
+                        "phone_number": child.phone_number,
+                        "date_of_birth": child.date_of_birth.isoformat() if child and child.date_of_birth else None
+                    } if child else None
                 }
             }
         return {"success": False, "message": "Sai tên đăng nhập hoặc mật khẩu."}
