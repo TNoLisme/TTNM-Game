@@ -6,6 +6,7 @@ const showError = (message) => {
     if (errorEl) errorEl.textContent = message || '';
 };
 
+
 const showToast = (message, type = 'success') => {
     let container = document.querySelector('.toast-container');
     if (!container) {
@@ -45,7 +46,9 @@ const redirectToHome = (userFromAPI) => {
     console.log('%c🚀 LƯU USER_ID:', 'color: blue;', saveUser);
     showToast('Chào mừng ' + (saveUser.name || saveUser.username || 'bạn'), 'success');
     setTimeout(() => location.href = '/src/pages/home.html', 1500);
+
 };
+
 
 // HANDLE LOGIN CHUẨN
 const handleLogin = async (e) => {
