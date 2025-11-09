@@ -1,0 +1,139 @@
+
+
+.main-content {
+    padding: 40px 20px;
+    width: 100%;
+    max-width: 1300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.page-title {
+    font-size: 32px;
+    color: var(--main-color);
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.game-info-card {
+    background-color: #f5edff; 
+    border: 3px solid var(--main-color); 
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 40px; 
+    width: 90%;
+    max-width: 700px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+#selected-game-name {
+    color: #4c2c92; 
+    font-size: 28px;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+#game-description {
+    color: #666;
+    font-size: 16px;
+}
+
+.level-selection-container {
+    width: 90%;
+    max-width: 700px;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.selection-prompt {
+    font-size: 26px; 
+    color: #333;
+    margin-bottom: 30px; 
+    font-weight: 700;
+    text-align: left; 
+    padding-left: 10px;
+}
+
+.level-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px; 
+    padding: 10px;
+}
+
+.level-btn {
+    width: 80px; 
+    height: 80px;
+    background-color: #f2f2f2; 
+    color: var(--text-color);
+    border: 2px solid #ccc;
+    border-radius: 18px; 
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    margin: 0 auto; 
+}
+
+.level-btn:hover {
+    background-color: #e0e0e0;
+    border-color: #999;
+    transform: translateY(-2px);
+}
+
+.level-btn.active {
+    background-color: var(--main-color); 
+    color: white;
+    border-color: #4c2c92;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(76, 44, 146, 0.4);
+}
+
+#start-game-btn {
+    margin-top: 40px;
+    padding: 12px 40px;
+    font-size: 20px;
+    background-color: var(--main-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#start-game-btn:hover:not(:disabled) {
+    background-color: #b172e0;
+}
+
+#start-game-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .game-info-card, .level-selection-container {
+        width: 95%;
+    }
+    .level-grid {
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); 
+        gap: 15px;
+    }
+    .level-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 20px;
+    }
+}

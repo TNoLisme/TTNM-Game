@@ -1,0 +1,122 @@
+/* File: fe/src/styles/select_game.css */
+
+/* --- Layout Chính (2 Cột Lớn) --- */
+.game-main-layout {
+    display: flex;
+    gap: 40px; /* Khoảng cách giữa hai cột Game Click và Game CV */
+    width: 100%;
+    /* Đảm bảo layout 2 cột không bị tràn */
+    flex-wrap: wrap; 
+    padding: 20px 0;
+}
+
+.game-category-section {
+    /* Mỗi section chiếm 1 nửa không gian */
+    flex: 1 1 45%; 
+    min-width: 300px; /* Đảm bảo không quá nhỏ trên màn hình vừa */
+}
+
+
+/* --- Tiêu đề danh mục --- */
+.category-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--main-color); /* Màu tím chủ đạo */
+    margin-top: 0; 
+    margin-bottom: 20px;
+    padding-left: 10px;
+    border-left: 5px solid #4c2c92; /* Thanh dọc bên trái */
+}
+
+
+/* --- Lưới Game Con (2x2) --- */
+.game-grid {
+    display: grid;
+    /* CHIA LƯỚI 2x2: 2 cột bằng nhau */
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 20px; /* Khoảng cách giữa các thẻ game con */
+    padding: 0; 
+    margin-bottom: 0;
+}
+
+.game-block {
+    background-color: #fff;
+    border: 3px solid #ccc;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%; 
+}
+
+.game-block:hover {
+    border-color: var(--main-color);
+    box-shadow: 0 6px 15px rgba(194, 139, 242, 0.4);
+    transform: translateY(-5px);
+}
+
+.game-thumb {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    border-bottom: 2px solid #eee;
+}
+
+.game-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #4c2c92;
+    padding: 15px 10px 5px;
+}
+
+.game-desc {
+    font-size: 14px;
+    color: #666;
+    padding: 0 10px 15px;
+    flex-grow: 1; 
+}
+
+.play-btn {
+    background-color: var(--main-color);
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-bottom: 15px;
+    width: 80%;
+}
+
+.play-btn:hover {
+    background-color: #b172e0;
+}
+
+/* --- Responsive Layout --- */
+@media (max-width: 992px) {
+    .game-main-layout {
+        flex-direction: column;
+        gap: 40px;
+    }
+    .game-category-section {
+        flex: 1 1 100%;
+    }
+}
+@media (max-width: 600px) {
+    .game-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+}
+.main-content {
+    padding: 40px 20px;
+    width: 100%;
+    max-width: 1300px;
+}
