@@ -14,3 +14,10 @@ class GameContentsRepository(BaseRepository[GameContentModel, GameContent]):
             self.model_class.game_id == game_id, self.model_class.level == level
         ).all()
         return [self.mapper_class.to_domain(model) for model in game_content_models]
+
+    def get_by_game_id(self, game_id: UUID) -> list[GameContent]:
+        """Lấy tất cả game contents theo game_id."""
+        game_content_models = self.db_session.query(self.model_class).filter(
+            self.model_class.game_id == game_id
+        ).all()
+        return [self.mapper_class.to_domain(model) for model in game_content_models]

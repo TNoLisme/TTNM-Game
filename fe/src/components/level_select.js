@@ -15,7 +15,7 @@ const GAME_HTML_FILES = {
     'GC2': './game_click_2.html',
     'GC3': './game_click_3.html',
     'GC4': './game_click_4.html',
-    'GV1': './game_cv_1.html',
+    'GV1': './gameCV.html',
     'GV2': './game_cv_2.html',
 };
 
