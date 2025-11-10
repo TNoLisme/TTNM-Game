@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn Game - Emo Garden</title>
+    <link rel="stylesheet" href="../styles/home.css">
+    <link rel="stylesheet" href="../styles/select_game.css">
+</head>
+
+<body>
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
+            <span class="brand-name">Emo Garden</span>
+        </div>
+        <div class="nav-links">
+            <a href="./home.html" class="nav-item">Trang chủ</a>
+            <a href="./learn.html" class="nav-item">Học</a>
+            <a href="./select_game.html" class="nav-item active">Chơi game</a>
+        </div>
+        <div class="nav-user-actions">
+            <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
+                <span class="profile-icon">&#128100;</span>
+            </a>
+            <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <h1 class="page-title">Chọn Trò Chơi Cảm Xúc</h1>
+
+        <div class="game-main-layout">
+            
+            <section class="game-category-section">
+                <h2 class="category-title">🎮 Game Nhận Biết (Click & Kéo thả)</h2>
+                <div class="game-grid" id="game-click-list">
+                    
+                    <div class="game-block" data-game-id="GC1">
+                        <img src="/fe/assets/images/game_click_1_thumb.png" alt="Nhận diện cảm xúc" class="game-thumb">
+                        <h3 class="game-name">Nhận diện cảm xúc (Cơ bản)</h3>
+                        <p class="game-desc">Nhận diện cảm xúc qua hình ảnh/âm thanh/video.</p>
+                        <button class="play-btn">Chọn Level</button>
+                    </div>
+
+                    <div class="game-block" data-game-id="GC2">
+                        <img src="/fe/assets/images/game_click_2_thumb.png" alt="Lắp ghép" class="game-thumb">
+                        <h3 class="game-name">Xưởng Lắp Ghép Cảm Xúc</h3>
+                        <p class="game-desc">Lắp các bộ phận khuôn mặt để tạo cảm xúc.</p>
+                        <button class="play-btn">Chọn Level</button>
+                    </div>
+
+                    <div class="game-block" data-game-id="GC3">
+                        <img src="/fe/assets/images/game_click_3_thumb.png" alt="Ai đang biểu hiện" class="game-thumb">
+                        <h3 class="game-name">Ai đang biểu hiện cảm xúc gì</h3>
+                        <p class="game-desc">Ghép tên người với cảm xúc trên khuôn mặt nhóm.</p>
+                        <button class="play-btn">Chọn Level</button>
+                    </div>
+
+                    <div class="game-block" data-game-id="GC4">
+                        <img src="/fe/assets/images/game_click_4_thumb.png" alt="Tình huống" class="game-thumb">
+                        <h3 class="game-name">Chọn cảm xúc theo tình huống</h3>
+                        <p class="game-desc">Chọn cảm xúc phù hợp với một tình huống đời sống.</p>
+                        <button class="play-btn">Chọn Level</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="game-category-section">
+                <h2 class="category-title">💻 Game Biểu Cảm (Computer Vision)</h2>
+                <div class="game-grid" id="game-cv-list">
+                    
+                    <div class="game-block" data-game-id="GV1">
+                        <img src="/fe/assets/images/game_cv_1_thumb.png" alt="Biểu cảm tình huống" class="game-thumb">
+                        <h3 class="game-name">Biểu Cảm Theo Tình Huống</h3>
+                        <p class="game-desc">Thể hiện cảm xúc khuôn mặt phù hợp với tình huống.</p>
+                        <button class="play-btn">Chọn Level</button>
+                    </div>
+
+                    <div class="game-block" data-game-id="GV2">
+                        <img src="/fe/assets/images/game_cv_2_thumb.png" alt="Biểu cảm yêu cầu" class="game-thumb">
+                        <h3 class="game-name">Biểu Cảm Theo Yêu Cầu</h3>
+                        <p class="game-desc">Thể hiện cảm xúc khuôn mặt theo yêu cầu cụ thể.</p>
+                        <button class="play-btn">Chọn Level</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="../components/select_game.js"></script> 
+</body>
+
+</html>

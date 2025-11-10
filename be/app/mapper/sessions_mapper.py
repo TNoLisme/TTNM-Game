@@ -18,7 +18,7 @@ class SessionsMapper:
             user_id=session_model.user_id,
             game_id=session_model.game_id,
             start_time=session_model.start_time,
-            state=SessionStateEnum(session_model.state),
+            state=session_model.state,
             score=session_model.score,
             emotion_errors=session_model.emotion_errors,
             max_errors=session_model.max_errors,

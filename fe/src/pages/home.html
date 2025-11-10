@@ -1,72 +1,131 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EmoGarden - Trang chủ</title>
-  <link rel="stylesheet" href="../styles/home.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTNM Game - Trang Chủ</title>
+    <link rel="stylesheet" href="/src/styles/home.css">
 </head>
 
 <body>
-  <header>
-    <div class="logo-container">
-      <img src="/assets/images/logo.png" alt="Logo" class="logo-image" />
-    </div>
-    <div class="navbar-actions">
-  <button id="profile-button" class="profile-btn">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="2">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-      <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-        Hồ sơ
-    </button>
-    <a href="#" id="logout-btn" class="logout-btn">🚪 Đăng xuất</a>
-    </div>
-    </div>
-  </header>
+    <nav class="main-nav">
+      <div class="nav-brand">
+        <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
+        <span class="brand-name">Emo Garden</span>
+      </div>
+      <div class="nav-links">
+        <a href="./home.html" class="nav-item active">Trang chủ</a>
+        <a href="./learn.html" class="nav-item">Học</a>
+        <a href="./select_game.html" class="nav-item" id="game-nav-link">Chơi game</a>
+      </div>
+      <div class="nav-user-actions">
+        <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
+          <span class="profile-icon">&#128100;</span>
+        </a>
+            <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
+            </div>
+            </nav>
+            <main class="main-content">
+              <h1 class="page-title">Trang chủ</h1>
+        <div class="emotion-section">
+            <div class="banner-text">Cảm xúc cần rèn luyện nhiều hơn</div>
 
-  <div class="container">
-    <div class="welcome-section">
-      <h1>🎮 Chào mừng đến với EmoGarden!</h1>
-      <p>Khám phá thế giới game học tập thú vị và phát triển kỹ năng của bạn. Chọn một trò chơi để bắt đầu hành trình!</p>
-    </div>
+            <div class="banner-container">
+              <button class="arrow left">&#10094;</button>
 
-    <ul class="game-menu">
-      <li>
-        <button id="button-1">
-          <span class="game-icon">📚</span>
-          <div class="game-content">
-            <div class="game-title">Học</div>
-            <div class="game-description">Khám phá kiến thức mới mỗi ngày</div>
-          </div>
-        </button>
-      </li>
-      <li>
-        <button id="button-2">
-          <span class="game-icon">🎯</span>
-          <div class="game-content">
-            <div class="game-title">Game Click</div>
-            <div class="game-description">Thử thách phản xạ và tốc độ</div>
-          </div>
-        </button>
-      </li>
-      <li>
-        <button id="button-3">
-          <span class="game-icon">🎨</span>
-          <div class="game-content">
-            <div class="game-title">Game CV</div>
-            <div class="game-description">Sáng tạo và thể hiện bản thân</div>
-          </div>
-        </button>
-      </li>
-    </ul>
-  </div>
+                <div class="banner">
+                  <div class="slides">
+                    <img src="/fe/assets/images/...1" alt="Game 1">
+                    <img src="/fe/assets/images/...2" alt="Game 2">
+                    <img src="/fe/assets/images/...3" alt="Game 3">
+                  </div>
+                </div>
 
-  <footer>
-    <p>&copy; 2025 EmoGarden. Tất cả quyền được bảo lưu.</p>
-  </footer>
+                <button class="arrow right">&#10095;</button>
+            </div>
 
-  <script type="module" src="../components/home.js"></script>
+            <div class="dots">
+              <span class="dot active"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+        </div>
+
+        <section class="recent-games-section">
+          <h2 class="section-title">Trò chơi đã chơi gần đây</h2>
+
+            <div class="game-list">
+              <div class="game-card">
+                <img src="/fe/assets/images/...1" alt="Game 1">
+                <p class="game-name">Tên trò chơi 1</p>
+              </div>
+              <div class="game-card">
+                <img src="/fe/assets/images/...2" alt="Game 2">
+                <p class="game-name">Tên trò chơi 2</p>
+              </div>
+              <div class="game-card">
+                <img src="/fe/assets/images/...3" alt="Game 3">
+                <p class="game-name">Tên trò chơi 3</p>
+              </div>
+              <div class="game-card">
+                <img src="/fe/assets/images/...4" alt="Game 4">
+                <p class="game-name">Tên trò chơi 4</p>
+              </div>
+            </div>
+        </section>
+
+        <section class="emotion-learning-section">
+          <h2 class="section-title">Khám phá cảm xúc cùng bạn nhỏ</h2>
+
+            <div class="learning-container">
+
+                <div class="learning-card">
+                  <div class="card-icon">😊</div>
+                  <h3 class="card-title">Học 6 cảm xúc cơ bản</h3>
+                  <p class="card-desc">Nhận biết và hiểu các cảm xúc vui, buồn, sợ, tức giận, ngạc nhiên và ghê tởm qua hình ảnh sinh
+                    động.</p>
+                  <button class="card-btn"><a href="./learn.html">Bắt đầu học</a></button>
+                </div>
+
+                <div class="learning-card">
+                  <div class="card-icon">🎮</div>
+                  <h3 class="card-title">Chơi 4 trò chơi cảm xúc</h3>
+                  <p class="card-desc">Rèn luyện khả năng cảm xúc qua các trò chơi tương tác vui nhộn.</p>
+                    <button class="card-btn" id="go-to-game-select">Vào chơi</button>
+                    </div>
+
+            </div>
+        </section>
+
+
+        <section class="emotion-stats-section">
+          <h2 class="section-title">Hành trình cảm xúc của bạn nhỏ</h2>
+
+            <div class="chart-container">
+              <div class="chart-card">
+                <div class="chart-icon">😕</div>
+                <h3 class="chart-title">Tỉ lệ sai của 6 cảm xúc</h3>
+                <canvas id="errorChart"></canvas>
+              </div>
+
+                <div class="chart-card">
+                  <div class="chart-icon">📈</div>
+                  <h3 class="chart-title">Tỉ lệ cải thiện của 6 cảm xúc</h3>
+                  <canvas id="improvementChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                  <div class="chart-icon">🎮</div>
+                  <h3 class="chart-title">Tỉ lệ chơi của 4 trò chơi</h3>
+                  <canvas id="gameChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+
+    <script type="module" src="/src/components/home.js"></script>
 </body>
+
 </html>

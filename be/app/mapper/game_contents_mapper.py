@@ -9,11 +9,18 @@ class GameContentsMapper:
         """Chuyển đổi từ model sang domain entity."""
         if not game_content_model:
             return None
+        # Xử lý content_type - có thể là Enum hoặc string
+        content_type_value = game_content_model.content_type
+        if hasattr(content_type_value, 'value'):
+            content_type_value = content_type_value.value
+        elif content_type_value is None:
+            content_type_value = "text"  # Default
+        
         return GameContent(
             content_id=game_content_model.content_id,
             game_id=game_content_model.game_id,
             level=game_content_model.level,
-            content_type=game_content_model.content_type.value,
+            content_type=content_type_value,
             media_path=game_content_model.media_path,
             question_text=game_content_model.question_text,
             correct_answer=game_content_model.correct_answer,

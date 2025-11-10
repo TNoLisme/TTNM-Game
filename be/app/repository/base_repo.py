@@ -18,11 +18,11 @@ class BaseRepository(ABC, Generic[T, D]):
         return self.mapper_class.to_domain(model)
 
     def get_by_id(self, entity_id: any) -> Optional[D]:
-        model = self.db_session.query(self.model_class).filter(self.model_class.id == entity_id).first()
+        model = self.db_session.query(self.model_class).filter(self.model_class.user_id == entity_id).first()
         return self.mapper_class.to_domain(model) if model else None
 
     def update(self, domain_entity: D) -> Optional[D]:
-        model = self.db_session.query(self.model_class).filter(self.model_class.id == getattr(domain_entity, 'id', None)).first()
+        model = self.db_session.query(self.model_class).filter(self.model_class.user_id == domain_entity.user_id).first()
         if model:
             updated_model = self.mapper_class.to_model(domain_entity)
             self.db_session.commit()
