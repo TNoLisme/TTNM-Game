@@ -1,27 +1,25 @@
+# app/domain/game_data.py
 from uuid import UUID
-from typing import List, Dict
+from typing import List, Dict, Optional
+from app.domain.games.game_content import GameContent
 
 class GameData:
-    def __init__(self, data_id: UUID, game_id: UUID, level: int, contents: List[Dict]):
+    def __init__(self, data_id: UUID, game_id: UUID, user_id: UUID, level: int, contents: List[GameContent]):
         self.data_id = data_id
         self.game_id = game_id
+        self.user_id = user_id
         self.level = level
-        self.contents = contents  # Danh sách GameContent
-        self.correct_answers = []  # Tính toán từ questions
-        self.options = []  # Tính toán từ question_answer_options
+        self.contents = contents  # danh sách GameContent
 
     @classmethod
-    def load_data_by_game_and_level(cls, game_id: UUID, level: int) -> 'GameData':
-        # Placeholder: cần repository để truy vấn
-        return cls(UUID("456f1234-e89b-12d3-a456-426614174000"), game_id, level, [])
+    def load_data_by_game_and_level(cls, game_id: UUID, user_id: UUID, level: int, contents: List[GameContent]) -> 'GameData':
+        return cls(UUID("456f1234-e89b-12d3-a456-426614174000"), game_id, user_id, level, contents)
 
-    def validate_data(self, data: Dict) -> bool:
-        """Kiểm tra tính hợp lệ của dữ liệu."""
-        return bool(data.get("contents") and len(data.get("contents", [])) >= 50)
+    def validate_data(self) -> bool:
+        return len(self.contents) >= 50
 
-    def get_random_contents(self, count: int) -> List[Dict]:
-        """Lấy ngẫu nhiên số lượng nội dung để tạo câu hỏi."""
-        if not self.contents or len(self.contents) < count * 5:  # 5 GameContent mỗi câu
+    def get_random_contents(self, count: int) -> List[GameContent]:
+        """Lấy ngẫu nhiên n câu hỏi (mỗi câu gồm 1 nội dung chính)."""
+        if len(self.contents) < count:
             raise ValueError("Not enough contents")
-        # Placeholder: cần repository để random và tính toán correct_answers/options
-        return self.contents[:count * 5]
+        return self.contents[:count]

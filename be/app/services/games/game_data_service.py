@@ -13,6 +13,7 @@ class GameDataService:
         game_data = GameData(
             data_id=UUID("456f1234-e89b-12d3-a456-426614174000"),  # Giả định UUID
             game_id=data.game_id,
+            user_id=data.user_id,
             level=data.level,
             contents=data.contents
         )
@@ -28,6 +29,7 @@ class GameDataService:
             return {"status": "success", "data": {
                 "data_id": str(game_data.data_id),
                 "game_id": str(game_data.game_id),
+                "user_id": str(game_data.user_id),
                 "level": game_data.level,
                 "contents": game_data.contents
             }}

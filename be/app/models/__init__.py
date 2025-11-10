@@ -18,7 +18,6 @@ from .games.game_content import GameContent
 from .games.game_data import GameData
 from .games.question import Question
 from .games.game_data_contents import GameDataContents
-from .games.question_answer_options import QuestionAnswerOptions
 
 # Models -> Sessions
 from .sessions.session import Session
@@ -34,4 +33,4 @@ from .analytics.session_history import SessionHistory
 configure_mappers()
 
 __all__ = ['User', 'Session', 'GameHistory', 'Game', 'Base', 'Child', 'GameContent', 'GameData',
-           'Question', 'GameDataContents', 'QuestionAnswerOptions', 'EmotionConcept', 'SessionQuestions', 'ChildProgress', 'Report', 'SessionHistory']
+           'Question', 'GameDataContents', 'EmotionConcept', 'SessionQuestions', 'ChildProgress', 'Report', 'SessionHistory']

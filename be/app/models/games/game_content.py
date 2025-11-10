@@ -28,4 +28,3 @@ class GameContent(Base):
     game = relationship("Game", back_populates="game_contents")
     game_data = relationship("GameData", secondary="game_data_contents", back_populates="contents")
     questions = relationship("Question", back_populates="content")
-    answer_options = relationship("Question", secondary="question_answer_options", back_populates="answer_options")
