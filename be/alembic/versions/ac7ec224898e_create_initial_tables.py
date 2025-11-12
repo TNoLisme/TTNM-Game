@@ -91,24 +91,17 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["content_id"], ["game_content.content_id"], name="fk_questions_content_id")
     )
 
-    # Tạo bảng question_answer_options (mối quan hệ nhiều-nhiều)
-    op.create_table(
-        "question_answer_options",
-        sa.Column("question_id", mssqlUUID(), nullable=False),
-        sa.Column("content_id", mssqlUUID(), nullable=False),
-        sa.PrimaryKeyConstraint("question_id", "content_id"),
-        sa.ForeignKeyConstraint(["question_id"], ["questions.question_id"], name="fk_question_answer_options_question_id"),
-        sa.ForeignKeyConstraint(["content_id"], ["game_content.content_id"], name="fk_question_answer_options_content_id")
-    )
 
     # Tạo bảng game_data
     op.create_table(
         "game_data",
         sa.Column("data_id", mssqlUUID(), nullable=False, server_default=sa.text("NEWID()")),
         sa.Column("game_id", mssqlUUID(), nullable=False),
+        sa.Column("user_id", mssqlUUID(), nullable=False),
         sa.Column("level", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("data_id"),
-        sa.ForeignKeyConstraint(["game_id"], ["games.game_id"], name="fk_game_data_game_id")
+        sa.ForeignKeyConstraint(["game_id"], ["games.game_id"], name="fk_game_data_game_id"),
+        sa.ForeignKeyConstraint(["user_id"], ["users.user_id"], name="fk_game_data_user_id")
     )
 
     # Tạo bảng game_data_contents (mối quan hệ nhiều-nhiều)
@@ -238,24 +231,20 @@ def upgrade() -> None:
     )
 
 def downgrade() -> None:
-    """Downgrade schema."""
-    # Xóa các bảng phụ thuộc trước
-    op.drop_table("session_questions")
-    op.drop_table("session_history")
-    op.drop_table("game_history")
-    op.drop_table("child_progress")
-    op.drop_table("reports")
+    connection = op.get_bind()
 
-    # Xóa các bảng trung gian và liên quan
-    op.drop_table("question_answer_options")
-    op.drop_table("game_data_contents")
+# 1️⃣ Tạm tắt constraint
+    connection.execute(sa.text("EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT all'"))
 
-    # Xóa các bảng chính
-    op.drop_table("sessions")
-    op.drop_table("emotion_concepts")
-    op.drop_table("game_data")
-    op.drop_table("questions")
-    op.drop_table("game_content")
-    op.drop_table("games")
-    op.drop_table("children")
-    op.drop_table("users")
+    # 2️⃣ Xóa dữ liệu theo đúng thứ tự
+    tables = [
+        "session_questions", "session_history", "game_history", "child_progress", "reports",
+        "sessions", "game_data_contents", "game_data", "questions", "game_content",
+        "games", "emotion_concepts", "children", "users"
+    ]
+
+    for table in tables:
+        connection.execute(sa.text(f"DELETE FROM {table}"))
+
+    # 3️⃣ Bật lại constraint
+    connection.execute(sa.text("EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all'"))

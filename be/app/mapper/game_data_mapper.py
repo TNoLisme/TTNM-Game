@@ -16,6 +16,7 @@ class GameDataMapper:
         return GameData(
             data_id=game_data_model.data_id,
             game_id=game_data_model.game_id,
+            user_id=game_data_model.user_id,
             level=game_data_model.level,
             contents=[c.__dict__ for c in contents]  # Chuyển thành Dict
         )
@@ -28,6 +29,7 @@ class GameDataMapper:
         game_data_model = GameDataModel(
             data_id=game_data_domain.data_id,
             game_id=game_data_domain.game_id,
+            user_id=game_data_domain.user_id,
             level=game_data_domain.level
         )
         # Cập nhật contents (cần repository để lưu relationship)
@@ -41,9 +43,9 @@ class GameDataMapper:
         return GameDataSchema.GameDataResponse(
             data_id=game_data_model.data_id,
             game_id=game_data_model.game_id,
+            user_id=game_data_model.user_id,
             level=game_data_model.level,
             contents=[c.__dict__ for c in game_data_model.contents],  # Chuyển thành Dict
             correct_answers=[],  # Giả định từ domain
-            options=[],  # Giả định từ domain
             created_at=datetime(2025, 10, 25, 16, 20)
         )
