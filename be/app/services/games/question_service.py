@@ -12,7 +12,6 @@ class QuestionService(BaseGameService):
             game_id=UUID(data.get("game_id")),
             level=data.get("level"),
             content=data.get("content"),
-            answer_options=data.get("answer_options"),
             correct_answer=data.get("correct_answer")
         )
         self.repo.save_question(question)

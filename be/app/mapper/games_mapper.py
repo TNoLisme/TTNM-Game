@@ -22,7 +22,7 @@ class GamesMapper:
                 level_threshold=game_model.level_threshold,
                 time_limit=game_model.time_limit,
                 type_question="multiple_choice",  # Giả định
-                options=[]  # Cần lấy từ question_answer_options
+                options=[]
             )
         elif game_model.game_type == "GameCV":
             return GameCV(
