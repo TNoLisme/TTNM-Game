@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xưởng Cảm Xúc</title>
+    <link rel="stylesheet" href="../styles/game_click_2.css" />
+    <script type="module" src="../components/game_click_2.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Xưởng Cảm Xúc</h1>
+            <div class="header-stats">
+                <div class="stat-badge">
+                    <span class="stat-text">Câu hỏi <span id="questionNumber">1</span></span>
+                </div>
+                <div class="stat-badge">
+                    <span class="star-icon">⭐</span>
+                    <span class="stat-text"><span id="score">0</span> Stars</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="game-grid">
+            <!-- Situation Card -->
+            <div class="card situation-card">
+                <div class="situation-content">
+                    <div class="situation-emoji" id="situationEmoji">🎉</div>
+                    <div class="situation-box">
+                        <p class="situation-text" id="situationText">Loading...</p>
+                    </div>
+                    <div class="instruction-box">
+                        <p class="instruction-text">💡 Hãy xây dựng khuôn mặt cho biểu cảm này</p>
+                    </div>
+                </div>
+
+                <!-- Feedback -->
+                <div class="feedback feedback-correct" id="feedbackCorrect">
+                    <div class="feedback-emoji">🎉</div>
+                    <p class="feedback-text">Tuyệt vời! Bạn đã làm đúng rồi</p>
+                </div>
+
+                <div class="feedback feedback-incorrect" id="feedbackIncorrect">
+                    <div class="feedback-emoji">😊</div>
+                    <p class="feedback-text">Thử lại</p>
+                </div>
+            </div>
+
+            <!-- Face Builder Card -->
+            <div class="card face-card">
+                <!-- Face Display -->
+                <div class="face-container">
+                    <svg viewBox="0 0 300 300" class="face-svg" id="faceSvg">
+                        <defs>
+                            <radialGradient id="faceGradient" cx="50%" cy="40%">
+                                <stop offset="0%" stop-color="#FFE4C4" />
+                                <stop offset="100%" stop-color="#FFDAB9" />
+                            </radialGradient>
+                        </defs>
+
+                        <!-- Face shadow -->
+                        <circle cx="150" cy="155" r="100" fill="#00000015" />
+
+                        <!-- Face circle -->
+                        <circle cx="150" cy="150" r="100" fill="url(#faceGradient)" stroke="#F4A460" stroke-width="3" />
+
+                        <!-- Rosy cheeks -->
+                        <ellipse cx="90" cy="170" rx="20" ry="15" fill="#FFB6C1" opacity="0.4" />
+                        <ellipse cx="210" cy="170" rx="20" ry="15" fill="#FFB6C1" opacity="0.4" />
+
+                        <!-- Left Eyebrow -->
+                        <g id="leftEyebrow"></g>
+
+                        <!-- Right Eyebrow -->
+                        <g id="rightEyebrow"></g>
+
+                        <!-- Left Eye -->
+                        <g id="leftEye"></g>
+
+                        <!-- Right Eye -->
+                        <g id="rightEye"></g>
+
+                        <!-- Cute nose -->
+                        <ellipse cx="150" cy="160" rx="6" ry="8" fill="#FFB6C1" opacity="0.5" />
+                        <path d="M 150 165 L 145 170 M 150 165 L 155 170" stroke="#6B4423" stroke-width="2" fill="none"
+                            stroke-linecap="round" />
+
+                        <!-- Lips/Mouth -->
+                        <g id="mouth"></g>
+                    </svg>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="controls">
+                    <button class="control-btn eyebrow-btn" id="eyebrowBtn">
+                        <span>👁️ Lông mày</span>
+                        <span class="control-label" id="eyebrowLabel">Happy</span>
+                    </button>
+
+                    <button class="control-btn eyes-btn" id="eyesBtn">
+                        <span>👀 Mắt</span>
+                        <span class="control-label" id="eyesLabel">Happy</span>
+                    </button>
+
+                    <button class="control-btn lips-btn" id="lipsBtn">
+                        <span>👄 Môi</span>
+                        <span class="control-label" id="lipsLabel">Smile</span>
+                    </button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-outline" id="resetBtn">
+                        <span>↻ Bắt đầu lại</span>
+                    </button>
+                    <button class="btn btn-check" id="checkBtn">
+                        <span>Kiểm tra ✓</span>
+                    </button>
+                    <button class="btn btn-ghost" id="skipBtn">
+                        <span>Bỏ qua →</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
