@@ -7,13 +7,36 @@ const IMAGE_BASE_PATH = "../../assets/images/";
 
 // 6 ảnh, ví dụ: happy.png, sad.png, ...
 // Mỗi ảnh: 1/3 trái = lông mày, 1/3 giữa = mắt, 1/3 phải = miệng
-const emotionSprites = [
-  { id: "happy", label: "Vui vẻ", file: "happy/ensemble.png" }, // index 0
-  { id: "sad", label: "Buồn", file: "sad/ensemble.png" }, // index 1
-  { id: "angry", label: "Tức giận", file: "angry/ensemble.png" }, // index 2
-  { id: "surprise", label: "Ngạc nhiên", file: "surprise/ensemble.png" }, // index 3
-  { id: "fear", label: "Sợ hãi", file: "fear/ensemble.png" }, // index 4
-  { id: "disgust", label: "Ghê tởm", file: "disgust/ensemble.png" }, // index 5
+const emotionSprites = [{
+        id: "happy",
+        label: "Vui vẻ",
+        file: "happy/ensemble.png"
+    }, // index 0
+    {
+        id: "sad",
+        label: "Buồn",
+        file: "sad/ensemble.png"
+    }, // index 1
+    {
+        id: "angry",
+        label: "Tức giận",
+        file: "angry/ensemble.png"
+    }, // index 2
+    {
+        id: "surprise",
+        label: "Ngạc nhiên",
+        file: "surprise/ensemble.png"
+    }, // index 3
+    {
+        id: "fear",
+        label: "Sợ hãi",
+        file: "fear/ensemble.png"
+    }, // index 4
+    {
+        id: "disgust",
+        label: "Ghê tởm",
+        file: "disgust/ensemble.png"
+    }, // index 5
 ];
 
 // 3 bộ phận đều chọn trong cùng 1 mảng 6 cảm xúc
@@ -25,71 +48,70 @@ const lipOptions = emotionSprites;
 // CÁC TÌNH HUỐNG TRONG GAME
 // ========================
 
-const situations = [
-  {
-    text: "It's your birthday and you got a puppy! 🎁",
-    emoji: "🎉",
-    emotion: "happy",
-    eyebrows: 0,
-    eyes: 0,
-    lips: 0,
-  },
-  {
-    text: "Your ice cream fell on the ground! 🍦",
-    emoji: "😢",
-    emotion: "sad",
-    eyebrows: 1,
-    eyes: 1,
-    lips: 1,
-  },
-  {
-    text: "Someone took your favorite toy without asking! 🧸",
-    emoji: "😠",
-    emotion: "angry",
-    eyebrows: 2,
-    eyes: 2,
-    lips: 2,
-  },
-  {
-    text: "You opened a present and found exactly what you wanted! 🎁",
-    emoji: "😲",
-    emotion: "surprise",
-    eyebrows: 3,
-    eyes: 3,
-    lips: 3,
-  },
-  {
-    text: "It's time to go to the park and play! 🎈",
-    emoji: "🤩",
-    emotion: "fear",
-    eyebrows: 4,
-    eyes: 4,
-    lips: 4,
-  },
-  {
-    text: "You heard a strange noise in the dark! 🌙",
-    emoji: "😨",
-    emotion: "disgust",
-    eyebrows: 5,
-    eyes: 5,
-    lips: 5,
-  },
-  {
-    text: "Your friend shared their candy with you! 🍬",
-    emoji: "😊",
-    emotion: "happy",
-    eyebrows: 0,
-    eyes: 0,
-    lips: 0,
-  },
-  {
-    text: "You have to leave the playground when you were having fun! 🛝",
-    emoji: "☹️",
-    emotion: "sad",
-    eyebrows: 1,
-    eyes: 1,
-    lips: 1,
-  },
+const situations = [{
+        text: "It's your birthday and you got a puppy! 🎁",
+        emoji: "🎉",
+        emotion: "happy",
+        eyebrows: 0,
+        eyes: 0,
+        lips: 0,
+    },
+    {
+        text: "Your ice cream fell on the ground! 🍦",
+        emoji: "😢",
+        emotion: "sad",
+        eyebrows: 1,
+        eyes: 1,
+        lips: 1,
+    },
+    {
+        text: "Someone took your favorite toy without asking! 🧸",
+        emoji: "😠",
+        emotion: "angry",
+        eyebrows: 2,
+        eyes: 2,
+        lips: 2,
+    },
+    {
+        text: "You opened a present and found exactly what you wanted! 🎁",
+        emoji: "😲",
+        emotion: "surprise",
+        eyebrows: 3,
+        eyes: 3,
+        lips: 3,
+    },
+    {
+        text: "It's time to go to the park and play! 🎈",
+        emoji: "🤩",
+        emotion: "fear",
+        eyebrows: 4,
+        eyes: 4,
+        lips: 4,
+    },
+    {
+        text: "You heard a strange noise in the dark! 🌙",
+        emoji: "😨",
+        emotion: "disgust",
+        eyebrows: 5,
+        eyes: 5,
+        lips: 5,
+    },
+    {
+        text: "Your friend shared their candy with you! 🍬",
+        emoji: "😊",
+        emotion: "happy",
+        eyebrows: 0,
+        eyes: 0,
+        lips: 0,
+    },
+    {
+        text: "You have to leave the playground when you were having fun! 🛝",
+        emoji: "☹️",
+        emotion: "sad",
+        eyebrows: 1,
+        eyes: 1,
+        lips: 1,
+    },
 ];
 
 // ========================
@@ -128,6 +150,13 @@ const lipsLabel = document.getElementById("lipsLabel");
 const resetBtn = document.getElementById("resetBtn");
 const checkBtn = document.getElementById("checkBtn");
 const skipBtn = document.getElementById("skipBtn");
+// Popup elements
+const resultPopup = document.getElementById("result-popup");
+const popupIcon = document.getElementById("popup-icon");
+const popupTitle = document.getElementById("popup-title");
+const popupMessage = document.getElementById("popup-message");
+const popupReplayBtn = document.getElementById("popup-replay-btn");
+const popupNextBtn = document.getElementById("popup-next-btn");
 
 // 3 lớp ảnh chồng nhau
 let faceWrapper;
@@ -144,11 +173,11 @@ let sliceMouth;
 // ========================
 
 function setupFaceSlices() {
-  const faceContainer = document.querySelector(".face-container");
-  if (!faceContainer) return;
+    const faceContainer = document.querySelector(".face-container");
+    if (!faceContainer) return;
 
-  // Khung hình chữ nhật trắng 1024x585
-  faceContainer.innerHTML = `
+    // Khung hình chữ nhật trắng 1024x585
+    faceContainer.innerHTML = `
     <div id="faceWrapper"
       style="
         position: relative;
@@ -170,25 +199,25 @@ function setupFaceSlices() {
     </div>
   `;
 
-  faceWrapper = document.getElementById("faceWrapper");
+    faceWrapper = document.getElementById("faceWrapper");
 
-  sliceEyebrow = document.getElementById("sliceEyebrow");
-  sliceEyes = document.getElementById("sliceEyes");
-  sliceMouth = document.getElementById("sliceMouth");
+    sliceEyebrow = document.getElementById("sliceEyebrow");
+    sliceEyes = document.getElementById("sliceEyes");
+    sliceMouth = document.getElementById("sliceMouth");
 
-  // 3 hàng 1024x195 xếp chồng từ trên xuống
-  [sliceEyebrow, sliceEyes, sliceMouth].forEach((el) => {
-    el.style.flex = "0 0 120px"; // đúng 195px chiều cao
-    el.style.width = "100%"; // 1024px (hoặc thu nhỏ theo max-width)
-    el.style.backgroundRepeat = "no-repeat";
-    el.style.backgroundSize = "100% 300%"; // ảnh cao gấp 3 phần
-    el.style.backgroundPosition = "0 0";
-  });
+    // 3 hàng 1024x195 xếp chồng từ trên xuống
+    [sliceEyebrow, sliceEyes, sliceMouth].forEach((el) => {
+        el.style.flex = "0 0 120px"; // đúng 195px chiều cao
+        el.style.width = "100%"; // 1024px (hoặc thu nhỏ theo max-width)
+        el.style.backgroundRepeat = "no-repeat";
+        el.style.backgroundSize = "100% 300%"; // ảnh cao gấp 3 phần
+        el.style.backgroundPosition = "0 0";
+    });
 
-  // Ban đầu không có gì
-  sliceEyebrow.style.backgroundImage = "none";
-  sliceEyes.style.backgroundImage = "none";
-  sliceMouth.style.backgroundImage = "none";
+    // Ban đầu không có gì
+    sliceEyebrow.style.backgroundImage = "none";
+    sliceEyes.style.backgroundImage = "none";
+    sliceMouth.style.backgroundImage = "none";
 }
 
 // ========================
@@ -203,21 +232,21 @@ function setupFaceSlices() {
 // partIndex: 0 = 1/3 trên (lông mày), 1 = 1/3 giữa (mắt), 2 = 1/3 dưới (miệng)
 
 function setSliceBackground(slice, fileName, partIndex) {
-  if (!fileName) {
-    slice.style.backgroundImage = "none";
-    return;
-  }
+    if (!fileName) {
+        slice.style.backgroundImage = "none";
+        return;
+    }
 
-  slice.style.backgroundImage = `url(${IMAGE_BASE_PATH}${fileName})`;
-  slice.style.backgroundSize = "100% 300%"; // 3 phần theo chiều dọc
+    slice.style.backgroundImage = `url(${IMAGE_BASE_PATH}${fileName})`;
+    slice.style.backgroundSize = "100% 300%"; // 3 phần theo chiều dọc
 
-  if (partIndex === 0) {
-    slice.style.backgroundPosition = "0 0%"; // top 1/3
-  } else if (partIndex === 1) {
-    slice.style.backgroundPosition = "0 50%"; // middle 1/3
-  } else {
-    slice.style.backgroundPosition = "0 100%"; // bottom 1/3
-  }
+    if (partIndex === 0) {
+        slice.style.backgroundPosition = "0 0%"; // top 1/3
+    } else if (partIndex === 1) {
+        slice.style.backgroundPosition = "0 50%"; // middle 1/3
+    } else {
+        slice.style.backgroundPosition = "0 100%"; // bottom 1/3
+    }
 }
 
 // ========================
@@ -225,46 +254,63 @@ function setSliceBackground(slice, fileName, partIndex) {
 // ========================
 
 function init() {
-  setupFaceSlices();
-  updateSituation();
-  updateFace();
-  updateLabels();
-  updateStats();
-  updateButtonStates();
+    setupFaceSlices();
+    updateSituation();
+    updateFace();
+    updateLabels();
+    updateStats();
+    updateButtonStates();
 
-  // NÚT LÔNG MÀY
-  eyebrowBtn.addEventListener("click", () => {
-    if (!showingFeedback) {
-      if (selectedEyebrows === -1) selectedEyebrows = 0;
-      else selectedEyebrows = (selectedEyebrows + 1) % eyebrowOptions.length;
-      updateFace();
-      updateLabels();
+    // NÚT LÔNG MÀY
+    eyebrowBtn.addEventListener("click", () => {
+        if (!showingFeedback) {
+            if (selectedEyebrows === -1) selectedEyebrows = 0;
+            else selectedEyebrows = (selectedEyebrows + 1) % eyebrowOptions.length;
+            updateFace();
+            updateLabels();
+        }
+    });
+
+    // NÚT MẮT
+    eyesBtn.addEventListener("click", () => {
+        if (!showingFeedback) {
+            if (selectedEyes === -1) selectedEyes = 0;
+            else selectedEyes = (selectedEyes + 1) % eyeOptions.length;
+            updateFace();
+            updateLabels();
+        }
+    });
+
+    // NÚT MIỆNG
+    lipsBtn.addEventListener("click", () => {
+        if (!showingFeedback) {
+            if (selectedLips === -1) selectedLips = 0;
+            else selectedLips = (selectedLips + 1) % lipOptions.length;
+            updateFace();
+            updateLabels();
+        }
+    });
+
+    resetBtn.addEventListener("click", resetFace);
+    checkBtn.addEventListener("click", checkAnswer);
+    skipBtn.addEventListener("click", skipQuestion);
+
+    if (popupReplayBtn) {
+        popupReplayBtn.addEventListener("click", () => {
+            hideResultPopup();
+            resetFace();
+            showingFeedback = false;
+            updateButtonStates();
+        });
     }
-  });
 
-  // NÚT MẮT
-  eyesBtn.addEventListener("click", () => {
-    if (!showingFeedback) {
-      if (selectedEyes === -1) selectedEyes = 0;
-      else selectedEyes = (selectedEyes + 1) % eyeOptions.length;
-      updateFace();
-      updateLabels();
+    // Nút popup: sang câu tiếp theo (chỉ hiện khi đúng)
+    if (popupNextBtn) {
+        popupNextBtn.addEventListener("click", () => {
+            hideResultPopup();
+            nextQuestion();
+        });
     }
-  });
-
-  // NÚT MIỆNG
-  lipsBtn.addEventListener("click", () => {
-    if (!showingFeedback) {
-      if (selectedLips === -1) selectedLips = 0;
-      else selectedLips = (selectedLips + 1) % lipOptions.length;
-      updateFace();
-      updateLabels();
-    }
-  });
-
-  resetBtn.addEventListener("click", resetFace);
-  checkBtn.addEventListener("click", checkAnswer);
-  skipBtn.addEventListener("click", skipQuestion);
 }
 
 // ========================
@@ -272,13 +318,13 @@ function init() {
 // ========================
 
 function updateSituation() {
-  const situation = situations[currentQuestion];
-  situationEmoji.textContent = situation.emoji;
-  situationText.textContent = situation.text;
+    const situation = situations[currentQuestion];
+    situationEmoji.textContent = situation.emoji;
+    situationText.textContent = situation.text;
 
-  situationEmoji.classList.remove("fade-in");
-  void situationEmoji.offsetWidth;
-  situationEmoji.classList.add("fade-in");
+    situationEmoji.classList.remove("fade-in");
+    void situationEmoji.offsetWidth;
+    situationEmoji.classList.add("fade-in");
 }
 
 // ========================
@@ -286,38 +332,38 @@ function updateSituation() {
 // ========================
 
 function updateFace() {
-  if (!sliceEyebrow || !sliceEyes || !sliceMouth || !faceWrapper) return;
+    if (!sliceEyebrow || !sliceEyes || !sliceMouth || !faceWrapper) return;
 
-  const anySelected =
-    selectedEyebrows >= 0 || selectedEyes >= 0 || selectedLips >= 0;
+    const anySelected =
+        selectedEyebrows >= 0 || selectedEyes >= 0 || selectedLips >= 0;
 
-  // Nếu chưa chọn gì, làm mờ nhẹ khung để thấy là "trống"
-  faceWrapper.style.opacity = anySelected ? "1" : "0.25";
+    // Nếu chưa chọn gì, làm mờ nhẹ khung để thấy là "trống"
+    faceWrapper.style.opacity = anySelected ? "1" : "0.25";
 
-  // Lông mày: 1/3 đầu
-  // Lông mày: partIndex = 0
-  if (selectedEyebrows >= 0) {
-    const spr = eyebrowOptions[selectedEyebrows];
-    setSliceBackground(sliceEyebrow, spr.file, 0);
-  } else {
-    setSliceBackground(sliceEyebrow, null, 0);
-  }
+    // Lông mày: 1/3 đầu
+    // Lông mày: partIndex = 0
+    if (selectedEyebrows >= 0) {
+        const spr = eyebrowOptions[selectedEyebrows];
+        setSliceBackground(sliceEyebrow, spr.file, 0);
+    } else {
+        setSliceBackground(sliceEyebrow, null, 0);
+    }
 
-  // Mắt: partIndex = 1
-  if (selectedEyes >= 0) {
-    const spr = eyeOptions[selectedEyes];
-    setSliceBackground(sliceEyes, spr.file, 1);
-  } else {
-    setSliceBackground(sliceEyes, null, 1);
-  }
+    // Mắt: partIndex = 1
+    if (selectedEyes >= 0) {
+        const spr = eyeOptions[selectedEyes];
+        setSliceBackground(sliceEyes, spr.file, 1);
+    } else {
+        setSliceBackground(sliceEyes, null, 1);
+    }
 
-  // Miệng: partIndex = 2
-  if (selectedLips >= 0) {
-    const spr = lipOptions[selectedLips];
-    setSliceBackground(sliceMouth, spr.file, 2);
-  } else {
-    setSliceBackground(sliceMouth, null, 2);
-  }
+    // Miệng: partIndex = 2
+    if (selectedLips >= 0) {
+        const spr = lipOptions[selectedLips];
+        setSliceBackground(sliceMouth, spr.file, 2);
+    } else {
+        setSliceBackground(sliceMouth, null, 2);
+    }
 }
 
 // ========================
@@ -325,12 +371,12 @@ function updateFace() {
 // ========================
 
 function updateLabels() {
-  eyebrowLabel.textContent =
-    selectedEyebrows === -1 ? "(chưa chọn)" : "🔴 PUSH";
+    eyebrowLabel.textContent =
+        selectedEyebrows === -1 ? "(chưa chọn)" : "🔴 PUSH";
 
-  eyesLabel.textContent = selectedEyes === -1 ? "(chưa chọn)" : "🔴 PUSH";
+    eyesLabel.textContent = selectedEyes === -1 ? "(chưa chọn)" : "🔴 PUSH";
 
-  lipsLabel.textContent = selectedLips === -1 ? "(chưa chọn)" : "🔴 PUSH";
+    lipsLabel.textContent = selectedLips === -1 ? "(chưa chọn)" : "🔴 PUSH";
 }
 
 // ========================
@@ -338,8 +384,8 @@ function updateLabels() {
 // ========================
 
 function updateStats() {
-  questionNumber.textContent = questionsAnswered + 1;
-  scoreElement.textContent = score;
+    questionNumber.textContent = questionsAnswered + 1;
+    scoreElement.textContent = score;
 }
 
 // ========================
@@ -347,13 +393,13 @@ function updateStats() {
 // ========================
 
 function resetFace() {
-  if (!showingFeedback) {
-    selectedEyebrows = -1;
-    selectedEyes = -1;
-    selectedLips = -1;
-    updateFace();
-    updateLabels();
-  }
+    if (!showingFeedback) {
+        selectedEyebrows = -1;
+        selectedEyes = -1;
+        selectedLips = -1;
+        updateFace();
+        updateLabels();
+    }
 }
 
 // ========================
@@ -361,69 +407,57 @@ function resetFace() {
 // ========================
 
 function checkAnswer() {
-  if (showingFeedback) return;
+    if (showingFeedback) return;
 
-  // Chưa chọn đủ 3 phần
-  if (selectedEyebrows === -1 || selectedEyes === -1 || selectedLips === -1) {
-    feedbackIncorrect.classList.add("show");
-    feedbackIncorrect.querySelector(".feedback-text").textContent =
-      "Hãy chọn đủ lông mày, mắt và miệng nhé!";
-    setTimeout(() => {
-      feedbackIncorrect.classList.remove("show");
-      feedbackIncorrect.querySelector(".feedback-text").textContent = "Thử lại";
-    }, 1500);
-    return;
-  }
+    // Chưa chọn đủ 3 phần
+    if (selectedEyebrows === -1 || selectedEyes === -1 || selectedLips === -1) {
+        feedbackIncorrect.classList.add("show");
+        feedbackIncorrect.querySelector(".feedback-text").textContent =
+            "Hãy chọn đủ lông mày, mắt và miệng nhé!";
+        setTimeout(() => {
+            feedbackIncorrect.classList.remove("show");
+            feedbackIncorrect.querySelector(".feedback-text").textContent = "Thử lại";
+        }, 1500);
+        return;
+    }
 
-  const situation = situations[currentQuestion];
-  const isCorrect =
-    selectedEyebrows === situation.eyebrows &&
-    selectedEyes === situation.eyes &&
-    selectedLips === situation.lips;
+    const situation = situations[currentQuestion];
+    const isCorrect =
+        selectedEyebrows === situation.eyebrows &&
+        selectedEyes === situation.eyes &&
+        selectedLips === situation.lips;
 
-  showingFeedback = true;
+    showingFeedback = true;
 
-  if (isCorrect) {
-    score++;
-    feedbackCorrect.classList.add("show");
-    updateStats();
+    if (isCorrect) {
+        score++;
+        updateStats();
+    }
 
-    setTimeout(() => {
-      feedbackCorrect.classList.remove("show");
-      nextQuestion();
-    }, 2000);
-  } else {
-    feedbackIncorrect.classList.add("show");
-    feedbackIncorrect.querySelector(".feedback-text").textContent = "Thử lại";
-
-    setTimeout(() => {
-      feedbackIncorrect.classList.remove("show");
-      showingFeedback = false;
-      updateButtonStates();
-    }, 1500);
-  }
-
-  updateButtonStates();
+    // Hiển thị popup kết quả
+    showResultPopup(isCorrect);
+    updateButtonStates();
 }
+
 
 // ========================
 // SKIP / NEXT
 // ========================
 
 function skipQuestion() {
-  if (!showingFeedback) {
-    nextQuestion();
-  }
+    if (!showingFeedback) {
+        nextQuestion();
+    }
 }
 
 function nextQuestion() {
-  questionsAnswered++;
-  currentQuestion = (currentQuestion + 1) % situations.length;
-  resetFace();
-  updateSituation();
-  showingFeedback = false;
-  updateStats();
-  updateButtonStates();
+    questionsAnswered++;
+    currentQuestion = (currentQuestion + 1) % situations.length;
+    resetFace();
+    updateSituation();
+    showingFeedback = false;
+    updateStats();
+    updateButtonStates();
 }
 
 // ========================
@@ -431,12 +465,41 @@ function nextQuestion() {
 // ========================
 
 function updateButtonStates() {
-  const disabled = showingFeedback;
-  resetBtn.disabled = disabled;
-  checkBtn.disabled = disabled;
-  skipBtn.disabled =
-    showingFeedback && feedbackCorrect.classList.contains("show");
+    const disabled = showingFeedback;
+    resetBtn.disabled = disabled;
+    checkBtn.disabled = disabled;
+    skipBtn.disabled = disabled;
 }
+
+// ========================
+// POPUP KẾT QUẢ
+// ========================
+
+function showResultPopup(isCorrect) {
+    if (!resultPopup) return;
+
+    if (isCorrect) {
+        popupIcon.textContent = "🎉";
+        popupTitle.textContent = "Tuyệt vời!";
+        popupMessage.textContent =
+            "Bạn đã xây đúng khuôn mặt cho cảm xúc này. Nhấn \"Câu tiếp theo\" để tiếp tục nhé!";
+        if (popupNextBtn) popupNextBtn.style.display = "inline-block";
+    } else {
+        popupIcon.textContent = "🙂";
+        popupTitle.textContent = "Chưa chính xác lắm";
+        popupMessage.textContent =
+            "Khuôn mặt này chưa đúng với cảm xúc. Bạn có muốn thử lại câu này không?";
+        if (popupNextBtn) popupNextBtn.style.display = "none";
+    }
+
+    resultPopup.classList.add("show");
+}
+
+function hideResultPopup() {
+    if (!resultPopup) return;
+    resultPopup.classList.remove("show");
+}
+
 
 // ========================
 // START GAME
