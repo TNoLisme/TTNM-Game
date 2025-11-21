@@ -1,74 +1,156 @@
+// Dữ liệu levels
+const levels = [
+    { num: 1, icon: '😊', name: 'Dễ' },
+    { num: 2, icon: '❤️', name: 'Vui' },
+    { num: 3, icon: '⭐', name: 'Hay' },
+    { num: 4, icon: '✨', name: 'Giỏi' },
+    { num: 5, icon: '☀️', name: 'Xuất sắc' },
+    { num: 6, icon: '🌸', name: 'Tuyệt vời' },
+    { num: 7, icon: '🌈', name: 'Siêu đẳng' },
+    { num: 8, icon: '🎮', name: 'Cao thủ' }
+];
 
+// Trạng thái game
+let unlockedLevel = 1; // Level cao nhất đã mở khóa
+let selectedLevel = null;
 
-const GAME_DATA = {
-    'GC1': { name: 'Nhận diện cảm xúc (Cơ bản)', description: 'Nhận diện các cảm xúc cơ bản qua hình ảnh, âm thanh, video.' },
-    'GC2': { name: 'Xưởng Lắp Ghép Cảm Xúc', description: 'Lắp ghép các bộ phận khuôn mặt để tạo ra cảm xúc được yêu cầu.' },
-    'GC3': { name: 'Ai đang biểu hiện cảm xúc gì', description: 'Ghép tên người với biểu cảm khuôn mặt phù hợp trong nhóm.' },
-    'GC4': { name: 'Chọn cảm xúc theo tình huống', description: 'Xem các tình huống đời sống và chọn cảm xúc phù hợp.' },
-    'GV1': { name: 'Biểu Cảm Theo Tình Huống', description: 'Biểu hiện cảm xúc khuôn mặt đúng với tình huống cho trước qua camera.' },
-    'GV2': { name: 'Biểu Cảm Theo Yêu Cầu', description: 'Thể hiện cảm xúc khuôn mặt cụ thể được yêu cầu qua camera.' }
-};
+// Khởi tạo game
+function initGame() {
+    const levelGrid = document.getElementById('levelGrid');
+    
+    // Tạo các nút level
+    levels.forEach(level => {
+        const levelButton = createLevelButton(level);
+        levelGrid.appendChild(levelButton);
+    });
+    
+    updateUI();
+}
 
-// Map gameId tới file HTML thực tế của game
-const GAME_HTML_FILES = {
-    'GC1': './game_click_1.html',
-    'GC2': './game_click_2.html',
-    'GC3': './game_click_3.html',
-    'GC4': './game_click_4.html',
-    'GV1': './gameCV.html',
-    'GV2': './game_cv_2.html',
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameId = urlParams.get('gameId');
-    const gameInfo = GAME_DATA[gameId];
-    const gameHtmlFile = GAME_HTML_FILES[gameId]; 
-
-    const levelGrid = document.getElementById('level-grid');
-    const startGameBtn = document.getElementById('start-game-btn');
-    let selectedLevel = null;
-    const NUMBER_OF_LEVELS = 8; // Tổng số cấp độ
-
-    if (!gameId || !gameInfo || !gameHtmlFile) {
-        document.getElementById('selected-game-name').textContent = 'Lỗi: Không tìm thấy game hoặc đường dẫn.';
-        document.getElementById('game-description').textContent = 'Vui lòng quay lại trang chọn game.';
-        return;
+// Tạo nút level
+function createLevelButton(level) {
+    const button = document.createElement('div');
+    button.className = `level-button level-${level.num}`;
+    button.dataset.level = level.num;
+    
+    const isUnlocked = level.num <= unlockedLevel;
+    const isCompleted = level.num < unlockedLevel;
+    
+    if (!isUnlocked) {
+        button.classList.add('locked');
     }
+    
+    // Badge hoàn thành
+    if (isCompleted) {
+        const badge = document.createElement('div');
+        badge.className = 'completed-badge';
+        badge.innerHTML = '🏆';
+        button.appendChild(badge);
+    }
+    
+    // Icon
+    const icon = document.createElement('div');
+    icon.className = 'level-icon';
+    icon.textContent = isUnlocked ? level.icon : '🔒';
+    button.appendChild(icon);
+    
+    // Số level
+    const number = document.createElement('div');
+    number.className = 'level-number';
+    number.textContent = level.num;
+    button.appendChild(number);
+    
+    // Tên level
+    const name = document.createElement('div');
+    name.className = 'level-name';
+    name.textContent = isUnlocked ? level.name : 'Đã khóa';
+    button.appendChild(name);
+    
+    // Sự kiện click
+    if (isUnlocked) {
+        button.addEventListener('click', () => selectLevel(level.num));
+    }
+    
+    return button;
+}
 
-    // Cập nhật thông tin game
-    document.getElementById('selected-game-name').textContent = gameInfo.name;
-    document.getElementById('game-description').textContent = gameInfo.description;
+// Chọn level
+function selectLevel(levelNum) {
+    selectedLevel = levelNum;
+    updateUI();
+}
 
-    // Tạo các nút cấp độ (1-8)
-    for (let i = 1; i <= NUMBER_OF_LEVELS; i++) {
-        const button = document.createElement('button');
-        button.textContent = i;
-        button.classList.add('level-btn');
-        button.setAttribute('data-level', i);
+// Cập nhật giao diện
+function updateUI() {
+    // Cập nhật các nút level
+    const allButtons = document.querySelectorAll('.level-button');
+    allButtons.forEach(button => {
+        const levelNum = parseInt(button.dataset.level);
         
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            selectedLevel = i;
-            startGameBtn.disabled = false;
-        });
-        levelGrid.appendChild(button);
-    }
-
-    // Xử lý nút Bắt đầu Game
-    startGameBtn.addEventListener('click', () => {
-        if (selectedLevel !== null) {
-            // Chuyển hướng đến trang game thực tế, truyền ID game và cấp độ đã chọn
-            window.location.href = `${gameHtmlFile}?gameId=${gameId}&level=${selectedLevel}`;
+        if (levelNum === selectedLevel) {
+            button.classList.add('selected');
         } else {
-            alert('Vui lòng chọn một cấp độ trước khi bắt đầu.');
+            button.classList.remove('selected');
         }
     });
     
-    // Xử lý nút Đăng xuất (Nav bar)
-    document.querySelector('#logout-button')?.addEventListener('click', () => {
-        localStorage.removeItem('currentUser');
-        window.location.href = '/src/pages/login.html'; 
-    });
+    // Cập nhật nút bắt đầu
+    const startButton = document.getElementById('startButton');
+    if (selectedLevel) {
+        startButton.disabled = false;
+        startButton.classList.remove('disabled');
+        startButton.textContent = `🚀 Bắt Đầu Cấp ${selectedLevel}!`;
+    } else {
+        startButton.disabled = true;
+        startButton.classList.add('disabled');
+        startButton.textContent = '👆 Chọn level để chơi';
+    }
+    
+    // Cập nhật thông báo đã chọn
+    const selectedMessage = document.getElementById('selectedMessage');
+    const selectedLevelNum = document.getElementById('selectedLevelNum');
+    if (selectedLevel) {
+        selectedMessage.classList.remove('hidden');
+        selectedLevelNum.textContent = selectedLevel;
+    } else {
+        selectedMessage.classList.add('hidden');
+    }
+    
+    // Cập nhật thanh tiến độ
+    document.getElementById('unlockedCount').textContent = unlockedLevel;
+    document.getElementById('currentLevel').textContent = unlockedLevel;
+}
+
+// Bắt đầu game
+function startGame() {
+    if (!selectedLevel) return;
+    
+    alert(`🎮 Bắt đầu cấp độ ${selectedLevel}!\n\n(Demo: Sau khi chơi xong, level tiếp theo sẽ tự động mở khóa)`);
+    
+    // Nếu hoàn thành level hiện tại, mở khóa level tiếp theo
+    if (selectedLevel === unlockedLevel && unlockedLevel < 8) {
+        setTimeout(() => {
+            unlockedLevel++;
+            alert(`🎉 Chúc mừng! Bạn đã mở khóa Level ${unlockedLevel}!`);
+            
+            // Làm mới giao diện
+            const levelGrid = document.getElementById('levelGrid');
+            levelGrid.innerHTML = '';
+            levels.forEach(level => {
+                const levelButton = createLevelButton(level);
+                levelGrid.appendChild(levelButton);
+            });
+            
+            selectedLevel = null;
+            updateUI();
+        }, 1000);
+    }
+}
+
+// Sự kiện nút bắt đầu
+document.getElementById('startButton').addEventListener('click', startGame);
+
+// Khởi động game khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    initGame();
 });
