@@ -1,9 +1,11 @@
+from typing import List
 from uuid import UUID
 from sqlalchemy.orm import Session
 from app.repository.child_progress_repo import ChildProgressRepository
 from app.domain.analytics.child_progress import ChildProgress
 from app.domain.sessions.session import Session, SessionStateEnum
 from app.mapper.child_progress_mapper import ChildProgressMapper
+
 
 class ChildProgressService:
     def __init__(self, progress_repo: ChildProgressRepository):
@@ -40,6 +42,15 @@ class ChildProgressService:
         )
         return session
 
+    # Lấy mảng ratio của user theo từng game 
+    def get_ratio(self, user_id: UUID, game_id: UUID) -> List[float]:
+        progress = self.progress_repo.get_progress(user_id, game_id)
+        default_ratio = [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1665]  # 6 emotions
+
+        if not progress or not progress.ratio or all(r == 0 for r in progress.ratio):
+            return default_ratio
+        return progress.ratio
+    
     # update và trả về progress đã cập nhật
     def update_progress_after_session(self, child_id: UUID, game_id: UUID, session: Session) -> ChildProgress:
         """
