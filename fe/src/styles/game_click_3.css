@@ -1,0 +1,503 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #e0f2fe 0%, #fae8ff 50%, #fce7f3 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Game Screen */
+.game-container {
+    max-width: 1200px;
+    width: 100%;
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.game-title {
+    font-size: 2rem;
+    color: #1e293b;
+    margin: 0;
+}
+
+.difficulty-badge {
+    padding: 12px 24px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Hint Section */
+.hint-section {
+    background: #c28bf2;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 16px;
+}
+
+.speaker-btn {
+    width: 48px;
+    height: 48px;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.speaker-btn:hover {
+    background: #2563eb;
+}
+
+.hint-content {
+    flex: 1;
+}
+
+.hint-content h3 {
+    margin-bottom: 12px;
+    font-size: 1.125rem;
+}
+
+#hints-list p {
+    font-size: 1.125rem;
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+#hints-list strong {
+    color: #1e40af;
+}
+
+/* Faces Grid */
+.faces-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+    .faces-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.face-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.face-image {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 12px;
+    background: #f1f5f9;
+}
+
+.drop-zone {
+    min-height: 60px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.drop-zone.drag-over {
+    border-color: #3b82f6;
+    background: #dbeafe;
+}
+
+.drop-zone.filled {
+    border-color: #22c55e;
+    border-style: solid;
+}
+
+.drop-zone-placeholder {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.dropped-name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: #64748b;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-btn:hover {
+    color: #ef4444;
+}
+
+.status-icon {
+    font-size: 1.25rem;
+}
+
+.answer-hint {
+    margin-top: 8px;
+    padding: 8px;
+    background: #dcfce7;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+/* Name Cards */
+.names-section {
+    margin-bottom: 32px;
+}
+
+.names-section h3 {
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 1.125rem;
+}
+
+.name-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+}
+
+.name-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: move;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.name-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.name-card.dragging {
+    opacity: 0.5;
+}
+
+.name-card.disabled {
+    cursor: not-allowed;
+    background: #f1f5f9;
+    opacity: 0.6;
+}
+
+.name-speaker-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+}
+
+.name-speaker-btn:hover {
+    transform: scale(1.1);
+}
+
+.name-text {
+    font-size: 1.125rem;
+}
+
+.no-names-msg {
+    text-align: center;
+    color: #64748b;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-warning,
+.btn-info,
+.btn-success {
+    padding: 16px 32px;
+    font-size: 1.125rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-primary:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.submit-btn {
+    background: #22c55e;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #16a34a;
+}
+
+.retry-btn {
+    background: #eab308;
+}
+
+.retry-btn:hover {
+    background: #ca8a04;
+}
+
+.reset-btn {
+    background: #3b82f6;
+}
+
+.reset-btn:hover {
+    background: #2563eb;
+}
+
+.next-btn {
+    background: #10b981;
+}
+
+.next-btn:hover {
+    background: #059669;
+}
+
+/* Result Message */
+.result-message {
+    text-align: center;
+    padding: 24px;
+    border-radius: 12px;
+    font-size: 1.5rem;
+}
+
+.result-message.success {
+    background: #dcfce7;
+    border: 2px solid #22c55e;
+}
+
+.result-message.partial {
+    background: #fef3c7;
+    border: 2px solid #eab308;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .game-container {
+        padding: 16px;
+    }
+
+    .hint-section {
+        flex-direction: column;
+    }
+
+    .faces-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+/* Popup Overlay */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.popup-content {
+    background: white;
+    border-radius: 24px;
+    padding: 48px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-in-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.popup-icon {
+    font-size: 5rem;
+    margin-bottom: 24px;
+    animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.popup-title {
+    font-size: 2rem;
+    margin-bottom: 16px;
+    color: #1e293b;
+}
+
+.popup-message {
+    font-size: 1.25rem;
+    color: #64748b;
+    margin-bottom: 32px;
+    line-height: 1.6;
+}
+
+.popup-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.popup-btn {
+    padding: 16px 32px;
+    font-size: 1.125rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: white;
+    min-width: 150px;
+}
+
+.popup-btn.replay-btn {
+    background: #3b82f6;
+}
+
+.popup-btn.replay-btn:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+}
+
+.popup-btn.next-btn {
+    background: #10b981;
+}
+
+.popup-btn.next-btn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 640px) {
+    .popup-content {
+        padding: 32px 24px;
+    }
+
+    .popup-icon {
+        font-size: 4rem;
+    }
+
+    .popup-title {
+        font-size: 1.5rem;
+    }
+
+    .popup-message {
+        font-size: 1rem;
+    }
+
+    .popup-buttons {
+        flex-direction: column;
+    }
+
+    .popup-btn {
+        width: 100%;
+    }
+}
