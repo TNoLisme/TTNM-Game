@@ -12,7 +12,8 @@ import string  # Thêm cho OTP
 import smtplib  # Thêm cho gửi email
 from email.mime.text import MIMEText  # Thêm cho message email
 from dotenv import load_dotenv  # Thêm để load .env
-import os  # Thêm cho os.getenv
+import os
+from app.current_user import set_current_user
 
 load_dotenv()  # Load .env ngay đầu file
 
@@ -85,18 +86,52 @@ class UsersService:
     def login(self, username: str, password: str) -> dict:
         """Kiểm tra đăng nhập dựa trên username và password."""
         user = self.user_repo.get_by_username_and_password(username, password)
-        if user:
-            return {
-                "success": True,
-                "message": "Đăng nhập thành công",
-                "user": {
-                    "user_id": str(user.user_id),
-                    "username": user.username,
-                    "fullName": user.name,
-                    "accountType": user.role.value
-                }
+        
+        if not user:
+            return {"success": False, "message": "Sai tên đăng nhập hoặc mật khẩu."}
+
+        # Nếu là child, lấy thông tin chi tiết và tạo instance Child
+        if user.role == RoleEnum.child:
+            child_data = self.child_repo.get_by_user_id(user.user_id)
+            if not child_data:
+                return {"success": False, "message": "Không tìm thấy thông tin trẻ em tương ứng."}
+
+            user_instance = Child(
+                user_id=str(user.user_id),
+                age=child_data.age,
+                last_played=child_data.last_played,
+                report_preferences=child_data.report_preferences,
+                created_at=child_data.created_at,
+                last_login=datetime.now(),
+                gender=child_data.gender,
+                date_of_birth=child_data.date_of_birth,
+                phone_number=child_data.phone_number,
+                progress=[],
+            )
+        else:
+            # Nếu là admin → chỉ cần instance User cơ bản
+            user_instance = User(
+                user_id=str(user.user_id),
+                username=user.username,
+                email=user.email,
+                password=user.password,
+                role=user.role,
+                name=user.name,
+            )
+
+        set_current_user(user_instance)
+
+        # Trả kết quả
+        return {
+            "success": True,
+            "message": "Đăng nhập thành công",
+            "user": {
+                "user_id": str(user.user_id),
+                "username": user.username,
+                "fullName": user.name,
+                "accountType": user.role.value,
             }
-        return {"success": False, "message": "Sai tên đăng nhập hoặc mật khẩu."}
+        }
     
         # Thêm mới cho quên mật khẩu (gửi email thật)
     def forgot_password(self, data: dict) -> dict:

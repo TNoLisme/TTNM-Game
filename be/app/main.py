@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from app.controllers.users import user_router
+from app.controllers.games.game_controller import router as game_router
+# from app.controllers.games.recognize_emotion_controller import router as recognize_emotion_router
 from app.controllers.games.cv_controller import router as cv_router
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -38,6 +40,8 @@ def home():
     }
 
 app.include_router(user_router)
+app.include_router(game_router)
+# app.include_router(recognize_emotion_router)
 app.include_router(cv_router)
 
 # CHẠY SERVER (BỎ COMMENT)

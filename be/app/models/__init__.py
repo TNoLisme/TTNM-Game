@@ -17,7 +17,7 @@ from .games.game import Game
 from .games.game_content import GameContent
 from .games.game_data import GameData
 from .games.question import Question
-from .games.game_data_contents import GameDataContents
+from .games.game_data_question import GameDataContents
 
 # Models -> Sessions
 from .sessions.session import Session

@@ -7,6 +7,7 @@ from app.database import get_db
 from pydantic import BaseModel
 from uuid import UUID
 from typing import Optional, Any
+from app.current_user import logout
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -41,6 +42,10 @@ async def login(request: LoginRequest, db=Depends(get_db)):
 
     return result
 
+@router.post("/logout")
+async def api_logout():
+    logout()
+    return {"success": True, "message": "Đăng xuất thành công"}
 
 @router.post("/forgot-password")
 async def forgot_password(request: UserSchema.ForgotPasswordRequest, db=Depends(get_db)):

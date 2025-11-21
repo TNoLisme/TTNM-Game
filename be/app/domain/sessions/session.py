@@ -26,7 +26,8 @@ class Session:
         level_threshold: int,
         ratio: List[float],
         time_limit: int,
-        questions: List['Question']
+        questions: List['Question'], 
+        level: int
     ):
         self.session_id = session_id
         self.user_id = user_id
@@ -41,6 +42,7 @@ class Session:
         self.ratio = ratio
         self.time_limit = time_limit
         self.questions = questions  # Danh sách 10 câu hỏi random từ đầu level
+        self.level = level
 
     def start_session(self, user_id: UUID, game_id: UUID) -> None:
         """Bắt đầu phiên chơi mới, random 10 câu hỏi."""
@@ -54,6 +56,7 @@ class Session:
         self.score = 0
         self.emotion_errors = {}
         self.ratio = []
+        self.level = 1
 
         # Random 10 câu hỏi (placeholder)
         self.questions = [Question.get_random_contents(game_id, 1)[0] for _ in range(10)]

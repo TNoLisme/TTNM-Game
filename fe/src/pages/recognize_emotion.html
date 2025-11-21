@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAME CLICK - Level 1</title>
     <link rel="stylesheet" href="../styles/home.css">
-    <link rel="stylesheet" href="../styles/game_click_1.css">
+    <!-- 
+      Chúng ta sẽ cần CSS cho game này, đặc biệt là .question-image, .correct, .incorrect 
+    -->
+    <link rel="stylesheet" href="../styles/recognize_emotion.css">
 </head>
+
 <body>
     <main class="game-main-content">
         <header class="game-header">
+            <!-- Tiêu đề và nút sẽ được cập nhật bởi JS -->
             <h1 id="game-name">GAME CLICK (Level 1)</h1>
             <div class="header-actions">
                 <span id="score-display" class="score-box">Câu 1/10 | ĐIỂM: 0</span>
@@ -22,15 +28,24 @@
         </header>
 
         <section class="game-area-grid">
+
+            <!-- 
+              KHU VỰC SỬA 1: Xóa <p> placeholder.
+              JS (hàm loadQuestion) sẽ tự động tạo <img> và <p> vào đây.
+            -->
             <div id="question-area" class="question-box">
-                <p class="question-text">PHẦN CÂU HỎI</p>
+                <!-- Nội dung động (ảnh/text câu hỏi) sẽ được JS chèn vào đây -->
             </div>
 
+            <!-- 
+              KHU VỰC SỬA 2: Xóa text "Đáp án A/B/C/D".
+              JS (hàm loadQuestion) sẽ tìm 4 nút này và gán text mới.
+            -->
             <div id="answer-grid" class="answer-area-grid">
-                <button class="answer-option" data-answer-id="A">Đáp án A</button>
-                <button class="answer-option" data-answer-id="B">Đáp án B</button>
-                <button class="answer-option" data-answer-id="C">Đáp án C</button>
-                <button class="answer-option" data-answer-id="D">Đáp án D</button>
+                <button class="answer-option" data-answer-id="A"></button>
+                <button class="answer-option" data-answer-id="B"></button>
+                <button class="answer-option" data-answer-id="C"></button>
+                <button class="answer-option" data-answer-id="D"></button>
             </div>
         </section>
 
@@ -39,13 +54,12 @@
                 <div id="hint-content-box" class="hint-box">
                     <p id="hint-content">Hãy chọn đáp án của bạn.</p>
                 </div>
-                <!-- NÚT CÂU TIẾP THEO BÊN CẠNH HINT -->
                 <button id="next-question-btn" class="next-hint-btn" disabled>Câu tiếp theo</button>
             </div>
         </footer>
     </main>
 
-    <!-- POPUP LUÔN CÓ 2 NÚT -->
+    <!-- Các Modal (giữ nguyên) -->
     <div id="feedback-modal" class="modal hidden">
         <div class="modal-content">
             <h2 id="modal-title">CHÍNH XÁC!</h2>
@@ -57,7 +71,6 @@
         </div>
     </div>
 
-    <!-- POPUP CẢNH BÁO CHƯA TRẢ LỜI -->
     <div id="warning-modal" class="modal hidden">
         <div class="modal-content warning">
             <h2>Chưa trả lời!</h2>
@@ -66,6 +79,10 @@
         </div>
     </div>
 
-    <script src="../components/game_click_1.js"></script>
+    <!-- 
+      File JS đã được sửa ở bước trước, chỉ cần đảm bảo đường dẫn đúng 
+    -->
+    <script src="../components/recognize_emotion.js"></script>
 </body>
+
 </html>

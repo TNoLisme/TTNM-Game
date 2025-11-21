@@ -19,16 +19,21 @@ class SessionsService:
             level_threshold=data.get("level_threshold"),
             ratio=[],
             time_limit=data.get("time_limit"),
-            questions=data.get("questions", [])
+            questions=data.get("questions", []), 
+            level=data.get("level")
         )
-        self.repo.save_session(session)
-        return {"status": "success", "message": f"Session {session.session_id} started", "session_id": str(session.session_id)}
+        if self.repo.get_by_id(session.session_id):
+            self.repo.update(session)
+        else:
+            self.repo.create(session)
+
+        return {"status": "success", "data": session}
 
     def end_session(self, session_id: UUID) -> dict:
-        session = self.repo.get_session_by_id(session_id)
+        session = self.repo.get_by_id(session_id)
         if session:
             session.state = "end"
             session.end_time = datetime.now()
-            self.repo.update_session(session)
-            return {"status": "success", "message": f"Session {session_id} ended"}
+            self.repo.update(session)
+            return {"status": "success", "data": session}
         return {"status": "failed", "message": "Session not found"}

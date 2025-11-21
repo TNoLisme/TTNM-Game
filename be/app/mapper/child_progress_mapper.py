@@ -1,8 +1,9 @@
 from uuid import UUID
 from datetime import datetime
+import json
 from app.models.analytics.child_progress import ChildProgress as ChildProgressModel
 from app.domain.analytics.child_progress import ChildProgress
-from app.schemas.analytics.child_progress_schema import ChildProgressSchema  # Giả định schema
+from app.schemas.analytics.child_progress_schema import ChildProgressSchema
 
 class ChildProgressMapper:
     @staticmethod
@@ -10,6 +11,21 @@ class ChildProgressMapper:
         """Chuyển đổi từ model sang domain entity."""
         if not child_progress_model:
             return None
+        
+        ratio_list = []
+        emotions_list = []
+        try:
+            # child_progress_model.ratio là chuỗi "[0.1, 0.2]"
+            ratio_list = json.loads(child_progress_model.ratio or "[]")
+        except (json.JSONDecodeError, TypeError):
+            ratio_list = [] # Mặc định nếu DB rỗng hoặc sai
+            
+        try:
+            # child_progress_model.review_emotions là chuỗi "[uuid1, uuid2]"
+            emotions_list = json.loads(child_progress_model.review_emotions or "[]")
+        except (json.JSONDecodeError, TypeError):
+            emotions_list = []
+
         return ChildProgress(
             progress_id=child_progress_model.progress_id,
             child_id=child_progress_model.child_id,
@@ -19,8 +35,8 @@ class ChildProgressMapper:
             avg_response_time=child_progress_model.avg_response_time,
             score=child_progress_model.score,
             last_played=child_progress_model.last_played,
-            ratio=child_progress_model.ratio,
-            review_emotions=child_progress_model.review_emotions
+            ratio=ratio_list, # Gán list đã parse
+            review_emotions=emotions_list # Gán list đã parse
         )
 
     @staticmethod
@@ -37,8 +53,8 @@ class ChildProgressMapper:
             avg_response_time=child_progress_domain.avg_response_time,
             score=child_progress_domain.score,
             last_played=child_progress_domain.last_played,
-            ratio=child_progress_domain.ratio,
-            review_emotions=child_progress_domain.review_emotions
+            ratio=json.dumps(child_progress_domain.ratio), 
+            review_emotions=json.dumps([str(e) for e in child_progress_domain.review_emotions])
         )
 
     @staticmethod
@@ -46,6 +62,18 @@ class ChildProgressMapper:
         """Chuyển đổi từ model sang response schema."""
         if not child_progress_model:
             return None
+            
+        ratio_list = []
+        emotions_list = []
+        try:
+            ratio_list = json.loads(child_progress_model.ratio or "[]")
+        except (json.JSONDecodeError, TypeError):
+            ratio_list = []
+        try:
+            emotions_list = json.loads(child_progress_model.review_emotions or "[]")
+        except (json.JSONDecodeError, TypeError):
+            emotions_list = []
+
         return ChildProgressSchema.ChildProgressResponse(
             progress_id=child_progress_model.progress_id,
             child_id=child_progress_model.child_id,
@@ -55,6 +83,6 @@ class ChildProgressMapper:
             avg_response_time=child_progress_model.avg_response_time,
             score=child_progress_model.score,
             last_played=child_progress_model.last_played or datetime(2025, 10, 25, 16, 8),
-            ratio=child_progress_model.ratio,
-            review_emotions=child_progress_model.review_emotions
+            ratio=ratio_list,
+            review_emotions=emotions_list
         )

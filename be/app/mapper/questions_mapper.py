@@ -11,7 +11,7 @@ class QuestionsMapper:
         if not question_model:
             return None
         content = GameContentsMapper.to_domain(question_model.content)
-        answer_options = [GameContentsMapper.to_domain(content) for content in question_model.answer_options]
+        
         return Question(
             question_id=question_model.question_id,
             game_id=question_model.game_id,
