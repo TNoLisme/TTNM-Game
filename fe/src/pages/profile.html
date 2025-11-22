@@ -84,11 +84,26 @@
             </div>
         </div>
 
+        <!-- NEW: Report Section -->
+        <div class="report-section">
+            <h2>📊 Báo cáo tiến độ</h2>
+            <p class="report-desc">Nhận báo cáo chi tiết về tiến độ học tập qua email</p>
+            <div class="report-buttons">
+                <button id="request-weekly-report" class="btn btn-report">
+                    📅 Báo cáo tuần này
+                </button>
+                <button id="request-monthly-report" class="btn btn-report">
+                    📆 Báo cáo tháng này
+                </button>
+            </div>
+        </div>
+
         <div class="action-buttons">
             <button id="edit-btn" class="btn btn-primary">✏️ Chỉnh sửa thông tin</button>
             <a href="home.html" class="btn btn-secondary">🎮 Tiếp tục chơi</a>
         </div>
 
+        <!-- Edit Profile Modal -->
         <div id="edit-modal" class="modal" aria-hidden="true">
             <div class="modal-backdrop" onclick="closeModal()"></div>
             <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
@@ -153,19 +168,18 @@
                                 <span>Số điện thoại</span>
                                 <input type="tel" id="edit-phone" autocomplete="tel" />
                             </label>
-                            </div>
-                            </div>
-                            
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
-                                <button type="button" class="btn btn-secondary" onclick="closeModal()">❌ Hủy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">❌ Hủy</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- FIX SRC: NẾU profile.js Ở components -->
     <script src="../components/profile.js" defer></script>
 </body>
 

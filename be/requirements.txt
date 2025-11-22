@@ -5,3 +5,5 @@ alembic
 python-dotenv
 pydantic
 pyodbc
+reportlab==4.0.7 
+Pillow==10.1.0
