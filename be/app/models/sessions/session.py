@@ -27,6 +27,7 @@ class Session(Base):
     ratio = Column(ARRAY(DOUBLE_PRECISION), nullable=False, default=[])
     time_limit = Column(Integer, nullable=False)
     question_ids = Column(ARRAY(PG_UUID(as_uuid=True)), nullable=False, default=[])
+    level = Column(Integer, nullable=False, default=1)
 
     # Relationships
     user = relationship("User", back_populates="sessions")

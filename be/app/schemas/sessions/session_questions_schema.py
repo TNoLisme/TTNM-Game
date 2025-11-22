@@ -8,7 +8,7 @@ from app.schemas.games.question_schema import QuestionSchema
 class SessionQuestionsSchema(BaseModel):
     class SessionQuestionsRequest(BaseModel):
         session_id: UUID
-        question: QuestionSchema.QuestionRequest
+        question_id: UUID
         user_answer: Dict = Field(...)
         correct_answer: Dict = Field(...)
         is_correct: bool
@@ -26,7 +26,7 @@ class SessionQuestionsSchema(BaseModel):
     class SessionQuestionsResponse(BaseModel):
         id: UUID
         session_id: UUID
-        question: QuestionSchema.QuestionResponse
+        question_id: UUID
         user_answer: Dict
         correct_answer: Dict
         is_correct: bool

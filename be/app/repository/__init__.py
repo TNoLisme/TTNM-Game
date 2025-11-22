@@ -3,7 +3,7 @@
 from .base_repo import BaseRepository 
 from .child_progress_repo import ChildProgressRepository
 from .child_repo import ChildRepository
-from .emotion_concepts_repo import GameContentsRepository
+from .emotion_concepts_repo import EmotionConceptRepository
 from .games_repo import GamesRepository
 from .game_contents_repo import GameContentsRepository
 from .game_data_repo import GameDataRepository
@@ -15,9 +15,8 @@ from .session_history_repo import SessionHistoryRepository
 from .session_questions_repo import SessionQuestionsRepository
 from .users_repo import UsersRepository
 from .game_data_contents_repo import GameDataContentsRepository
-from .question_answer_options_repo import QuestionAnswerOptionsRepository
 
 __all__ = ['BaseRepository', 'ChildProgressRepository', 'ChildRepository', 'EmotionConceptsRepository',
            'GamesRepository', 'GameContentsRepository', 'GameDataRepository', 'GameHistoryRepository',
            'QuestionsRepository', 'ReportRepository', 'SessionsRepository', 'SessionHistoryRepository',
-           'SessionQuestionsRepository', 'UsersRepository', 'GameDataContentsRepository', 'QuestionAnswerOptionsRepository']
+           'SessionQuestionsRepository', 'UsersRepository', 'GameDataContentsRepository']

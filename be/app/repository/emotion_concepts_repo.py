@@ -1,16 +1,33 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from app.models.games import GameContent as GameContentModel
-from app.mapper.game_contents_mapper import GameContentsMapper
-from app.domain.games.game_content import GameContent
-from .base_repo import BaseRepository
+from app.models.sessions.emotion_concept import EmotionConcept as EmotionConceptModel
+from app.domain.sessions.emotion_concept import EmotionConcept
 
-class GameContentsRepository(BaseRepository[GameContentModel, GameContent]):
-    def __init__(self, db_session: Session):
-        super().__init__(db_session, GameContentModel, GameContentsMapper)
+class EmotionConceptRepository:
 
-    def get_by_game_and_level(self, game_id: UUID, level: int) -> list[GameContent]:
-        game_content_models = self.db_session.query(self.model_class).filter(
-            self.model_class.game_id == game_id, self.model_class.level == level
-        ).all()
-        return [self.mapper_class.to_domain(model) for model in game_content_models]
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_by_emotion_and_level(self, emotion: str, level: int) -> EmotionConcept | None:
+        record = (
+            self.db.query(EmotionConceptModel)
+            .filter(
+                EmotionConceptModel.emotion == emotion,
+                EmotionConceptModel.level == level
+            )
+            .first()
+        )
+
+        if not record:
+            return None
+
+        return EmotionConcept(
+            concept_id=record.concept_id,
+            emotion=record.emotion,
+            level=record.level,
+            title=record.title,
+            video_path=record.video_path,
+            image_path=record.image_path,
+            audio_path=record.audio_path,
+            description=record.description
+        )

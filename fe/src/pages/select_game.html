@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn Game - Emo Garden</title>
+    <link rel="stylesheet" href="../styles/home.css">
+    <link rel="stylesheet" href="../styles/navigation.css">
+    <link rel="stylesheet" href="../styles/select_game.css">
+</head>
+
+<body>
+    <nav class="main-nav">
+      <div class="nav-brand">
+        <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
+      </div>
+      <div class="nav-links">
+        <a href="./home.html" class="nav-item active">Trang chủ</a>
+        <a href="./learn.html" class="nav-item">Học</a>
+        <a href="./select_game.html" class="nav-item" id="game-nav-link">Chơi game</a>
+      </div>
+      <div class="nav-user-actions">
+        <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
+          <div class="profile-icon"></div>
+        </a>
+        <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
+      </div>
+    </nav>
+
+    <main class="main-content">
+
+        <div class="game-main-layout">
+            <section class="game-category-section">
+                <h2 class="category-title">🎮 Game Nhận Biết (Click & Kéo thả)</h2>
+                <div class="game-grid" id="game-click-list"></div>
+            </section>
+
+            <section class="game-category-section">
+                <h2 class="category-title">💻 Game Biểu Cảm (Computer Vision)</h2>
+                <div class="game-grid" id="game-cv-list"></div>
+            </section>
+        </div>
+    </main>
+
+    <script src="../components/select_game.js"></script> 
+</body>
+
+</html>

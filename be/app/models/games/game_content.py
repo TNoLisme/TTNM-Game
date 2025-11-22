@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, UUID, Integer, String, Enum, Text, ForeignKey
+from sqlalchemy import Column, UUID, Integer, String, Enum, Text, ForeignKey, UnicodeText
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 import enum
@@ -19,13 +19,11 @@ class GameContent(Base):
     level = Column(Integer, nullable=False)
     content_type = Column(Enum(ContentTypeEnum), nullable=False)
     media_path = Column(String(255))
-    question_text = Column(Text)
-    correct_answer = Column(String(50))
-    emotion = Column(String(50))
-    explanation = Column(Text)
+    question_text = Column(UnicodeText)
+    correct_answer = Column(UnicodeText(50))
+    emotion = Column(UnicodeText(50))
+    explanation = Column(UnicodeText)
 
     # Relationships
     game = relationship("Game", back_populates="game_contents")
-    game_data = relationship("GameData", secondary="game_data_contents", back_populates="contents")
     questions = relationship("Question", back_populates="content")
-    answer_options = relationship("Question", secondary="question_answer_options", back_populates="answer_options")

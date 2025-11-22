@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xưởng Cảm Xúc</title>
+
+    <link rel="stylesheet" href="../styles/game_click_2.css" />
+
+    <!-- THÊM defer Ở ĐÂY -->
+    <script type="module" src="../components/game_click_2.js" defer></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Xưởng Cảm Xúc</h1>
+            <div class="header-stats">
+                <div class="stat-badge">
+                    <span class="stat-text">
+                        Câu hỏi <span id="questionNumber">1</span>
+                    </span>
+                </div>
+                <div class="stat-badge">
+                    <span class="star-icon">⭐</span>
+                    <span class="stat-text"> <span id="score">0</span> Stars </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="game-grid">
+            <!-- Situation Card -->
+            <div class="card situation-card">
+                <div class="situation-content">
+                    <div class="situation-emoji" id="situationEmoji">🎉</div>
+                    <div class="situation-box">
+                        <p class="situation-text" id="situationText">Loading...</p>
+                    </div>
+                    <div class="instruction-box">
+                        <p class="instruction-text">
+                            💡 Hãy xây dựng khuôn mặt cho biểu cảm này
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feedback -->
+                <div class="feedback feedback-correct" id="feedbackCorrect">
+                    <div class="feedback-emoji">🎉</div>
+                    <p class="feedback-text">Tuyệt vời! Bạn đã làm đúng rồi</p>
+                </div>
+
+                <div class="feedback feedback-incorrect" id="feedbackIncorrect">
+                    <div class="feedback-emoji">😊</div>
+                    <p class="feedback-text">Thử lại</p>
+                </div>
+            </div>
+
+            <!-- Face Builder Card -->
+            <div class="card face-card">
+                <!-- JS sẽ tự chèn khối mặt 3 lớp vào đây -->
+                <div class="face-container"></div>
+
+                <!-- Control Buttons -->
+                <div class="controls">
+                    <button class="control-btn eyebrow-btn" id="eyebrowBtn">
+                        <span>👁️ Lông mày</span>
+                        <span class="control-label" id="eyebrowLabel">(chưa chọn)</span>
+                    </button>
+
+                    <button class="control-btn eyes-btn" id="eyesBtn">
+                        <span>👀 Mắt</span>
+                        <span class="control-label" id="eyesLabel">(chưa chọn)</span>
+                    </button>
+
+                    <button class="control-btn lips-btn" id="lipsBtn">
+                        <span>👄 Miệng</span>
+                        <span class="control-label" id="lipsLabel">(chưa chọn)</span>
+                    </button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-outline" id="resetBtn">
+                        <span>↻ Bắt đầu lại</span>
+                    </button>
+                    <button class="btn btn-check" id="checkBtn">
+                        <span>Kiểm tra ✓</span>
+                    </button>
+                    <button class="btn btn-ghost" id="skipBtn">
+                        <span>Bỏ qua →</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup kết quả -->
+    <div id="result-popup" class="popup-overlay">
+        <div class="popup-content">
+            <div id="popup-icon" class="popup-icon"></div>
+            <h2 id="popup-title" class="popup-title"></h2>
+            <p id="popup-message" class="popup-message"></p>
+            <div class="popup-buttons">
+                <button id="popup-replay-btn" class="popup-btn popup-replay-btn">
+                    🔄 Chơi lại câu này
+                </button>
+                <button id="popup-next-btn" class="popup-btn popup-next-btn">
+                    ➡️ Câu tiếp theo
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

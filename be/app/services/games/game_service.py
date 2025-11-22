@@ -1,37 +1,22 @@
 from uuid import UUID
 from datetime import datetime
-from .base_game_service import BaseGameService
 from app.domain.games.game import Game
 from app.repository.games_repo import GamesRepository
+from app.repository.game_contents_repo import GameContentsRepository
+from app.mapper.games_mapper import GamesMapper
 
-class GameService(BaseGameService):
+class GameService():
     def __init__(self, game_repo: GamesRepository):
-        super().__init__(game_repo)
-
-    def create(self, data: dict) -> dict:
-        game = Game(
-            game_id=UUID(data.get("game_id")),
-            game_type=data.get("game_type"),
-            name=data.get("name"),
-            level=data.get("level"),
-            difficulty_level=data.get("difficulty_level"),
-            max_errors=data.get("max_errors"),
-            level_threshold=data.get("level_threshold"),
-            time_limit=data.get("time_limit")
-        )
-        self.repo.save_game(game)
-        return {"status": "success", "message": f"Game {game.name} created", "game_id": str(game.game_id)}
+        self.repo = game_repo
+        self.mapper = GamesMapper
 
     def get_by_id(self, game_id: str) -> dict:
-        game = self.repo.get_game_by_id(UUID(game_id))
-        if game:
-            return {"status": "success", "data": {
-                "game_id": str(game.game_id),
-                "game_type": game.game_type,
-                "name": game.name,
-                "level": game.level
-            }}
-        return {"status": "failed", "message": "Game not found"}
+        game = self.repo.get_game_by_id(game_id)
+        if not game:
+            return {"status": "failed", "message": "Game not found"}
+
+        response = self.mapper.to_response(game)
+        return {"status": "success", "data": response}
 
     def update(self, game_id: str, data: dict) -> dict:
         game = self.repo.get_game_by_id(UUID(game_id))
@@ -42,16 +27,20 @@ class GameService(BaseGameService):
             return {"status": "success", "message": f"Game {game.name} updated"}
         return {"status": "failed", "message": "Game not found"}
 
-    def delete(self, game_id: str) -> dict:
-        game = self.repo.get_game_by_id(UUID(game_id))
-        if game:
-            self.repo.delete_game(UUID(game_id))
-            return {"status": "success", "message": f"Game {game_id} deleted"}
-        return {"status": "failed", "message": "Game not found"}
+    
+    def get_all_games(self) -> dict:
+        games = self.repo.get_all()
+        games_list = []
 
-    def start_game(self, game_id: str) -> dict:
-        game = self.repo.get_game_by_id(UUID(game_id))
-        if game and game.start_game():
-            self.repo.save_game_state(game)
-            return {"status": "success", "message": f"Game {game.name} started at {datetime.now()}"}
-        return {"status": "failed", "message": "Cannot start game"}
+        for game in games:
+            games_list.append({
+                "game_id": str(game.game_id),
+                "game_type": game.game_type,
+                "name": game.name,
+                "level": game.level,
+                "difficulty_level": game.difficulty_level,
+                "max_errors": game.max_errors,
+                "level_threshold": game.level_threshold,
+                "time_limit": game.time_limit
+            })
+        return {"status": "success", "games": games_list}

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Enum, UUID
+from sqlalchemy import Column, String, Enum, UUID, UnicodeText
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from ..base import Base
@@ -13,7 +13,7 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     role = Column(Enum(RoleEnum, native_enum=False), nullable=False)
-    name = Column(String(100), nullable=False)
+    name = Column(UnicodeText(100), nullable=False)
 
 
     # Relationships

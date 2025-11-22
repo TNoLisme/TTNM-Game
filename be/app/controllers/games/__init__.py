@@ -1,7 +1,7 @@
-# app/controllers/__init__.py
-from .analytics_controller import AnalyticsController
-from .games_controller import GamesController
-from .sessions_controller import SessionsController
-from .users_controller import UsersController
+# Games controllers
+from .cv_controller import router as cv_router
+# from .game_controller import router as game_router
+# from .recognize_emotion_controller import router as recognize_emotion_router
 
-__all__ = ['AnalyticsController', 'GamesController', 'SessionsController', 'UsersController']
+# __all__ = ['cv_router', 'game_router', 'recognize_emotion_router']
+__all__ = ['cv_router', 'game_router']  

@@ -49,24 +49,30 @@ class ChildProgress:
         )
 
     def calculate_accuracy(self, sessions: List['Session']) -> float:
-        """Tính tỷ lệ trả lời đúng."""
-        if not sessions:
-            return 0.0
-        correct = sum(1 for s in sessions for q in getattr(s, "session_questions", []) if getattr(q, "is_correct", False))
-        total = sum(len(getattr(s, "session_questions", [])) for s in sessions)
-        return (correct / total) * 100 if total else 0.0
+        """
+        Tính tỷ lệ trả lời đúng (%) dựa trên danh sách các session.
+        Accuracy = (Tổng số câu trả lời đúng) / (Tổng số câu trả lời) * 100
+        """
+        total_questions = 0
+        total_correct = 0
 
-    def update_emotion_distribution(self, session: 'Session') -> None:
+        for session in sessions:
+            questions = getattr(session, "session_questions", [])
+            total_questions += len(questions)
+            total_correct += sum(1 for q in questions if getattr(q, "is_correct", False))
+
+        if total_questions == 0:
+            print("Không có câu hỏi nào, accuracy = 0%")
+            return 0.0
+
+        accuracy = (total_correct / total_questions) * 100
+        print(f"Tổng câu hỏi: {total_questions}, Đúng: {total_correct}, Accuracy mới: {accuracy:.2f}%")
+        return accuracy
+
+
+    def update_emotion_distribution(self) -> None:
         """Cập nhật phân bố cảm xúc."""
-        from app.domain.sessions.session import Session  # import runtime để tránh circular
-        if not isinstance(session, Session):
-            raise ValueError("Expected Session instance")
-        self.ratio = getattr(session, "ratio", [])
-        self.review_emotions = [
-            c.concept_id
-            for c in self.get_review_emotions()
-            if getattr(session, "check_emotion_errors", lambda e, emo: False)(getattr(session, "emotion_errors", {}), getattr(c, "emotion", ""))
-        ]
+        print(" run vào  update_emotion_distribution")
 
     def generate_report(self, report_type: str) -> dict:
         """Tạo báo cáo tiến trình."""

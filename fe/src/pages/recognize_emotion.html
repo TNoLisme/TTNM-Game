@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAME CLICK - Level 1</title>
+    <link rel="stylesheet" href="../styles/home.css">
+    <link rel="stylesheet" href="../styles/recognize_emotion.css">
+    <link rel="stylesheet" href="../styles/navigation.css">
+</head>
+
+<body>
+    <main class="game-main-content">
+        <header class="game-header">
+            <!-- Tiêu đề và nút sẽ được cập nhật bởi JS -->
+            <h1 id="game-name">GAME CLICK (Level 1)</h1>
+            <div class="header-actions">
+                <span id="score-display" class="score-box">Câu 1/10 | ĐIỂM: 0</span>
+                <button id="hint-btn" class="action-btn" title="Gợi ý">Hint</button>
+                <button id="sound-btn" class="action-btn" title="Đọc câu hỏi">Sound</button>
+                <button id="exit-btn" class="action-btn exit-btn" title="Thoát game">
+                    <img src="../../assets/icons/exit.svg" alt="Exit" class="exit-icon">
+                </button>
+            </div>
+        </header>
+
+        <section class="game-area-grid">
+
+            <!-- 
+              KHU VỰC SỬA 1: Xóa <p> placeholder.
+              JS (hàm loadQuestion) sẽ tự động tạo <img> và <p> vào đây.
+            -->
+            <div id="question-area" class="question-box">
+                <!-- Nội dung động (ảnh/text câu hỏi) sẽ được JS chèn vào đây -->
+            </div>
+
+            <!-- 
+              KHU VỰC SỬA 2: Xóa text "Đáp án A/B/C/D".
+              JS (hàm loadQuestion) sẽ tìm 4 nút này và gán text mới.
+            -->
+            <div id="answer-grid" class="answer-area-grid">
+                <button class="answer-option" data-answer-id="A"></button>
+                <button class="answer-option" data-answer-id="B"></button>
+                <button class="answer-option" data-answer-id="C"></button>
+                <button class="answer-option" data-answer-id="D"></button>
+            </div>
+        </section>
+
+        <footer class="game-footer">
+            <div class="hint-next-container">
+                <div id="hint-content-box" class="hint-box">
+                    <p id="hint-content">Hãy chọn đáp án của bạn.</p>
+                </div>
+                <button id="next-question-btn" class="next-hint-btn" disabled>Câu tiếp theo</button>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Các Modal (giữ nguyên) -->
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">CHÍNH XÁC!</h2>
+            <p id="modal-message">Chúc mừng bạn!</p>
+            <div class="modal-actions">
+                <button id="review-btn" class="modal-btn review-btn">Xem lại</button>
+                <button id="next-btn" class="modal-btn next-btn">Câu tiếp theo</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="warning-modal" class="modal hidden">
+        <div class="modal-content warning">
+            <h2>Chưa trả lời!</h2>
+            <p>Vui lòng chọn đáp án cho câu hỏi này trước khi sang câu tiếp theo.</p>
+            <button id="close-warning" class="modal-btn">Đóng</button>
+        </div>
+    </div>
+
+    <!-- 
+      File JS đã được sửa ở bước trước, chỉ cần đảm bảo đường dẫn đúng 
+    -->
+    <script src="../components/recognize_emotion.js"></script>
+</body>
+
+</html>

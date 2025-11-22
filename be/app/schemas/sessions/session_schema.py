@@ -20,7 +20,8 @@ class SessionSchema(BaseModel):
         level_threshold: int = Field(..., ge=0)
         ratio: List[float] = Field(..., min_items=1)
         time_limit: int = Field(..., ge=1)
-        questions: List[QuestionSchema.QuestionRequest] = Field(..., min_items=1, max_items=10)
+        questions: List[QuestionSchema.QuestionRequest] = Field(..., min_items=1, max_items=10),
+        score: int = Field(..., ge=1)
 
         @validator("time_limit")
         def time_limit_must_be_positive(cls, v):
@@ -42,3 +43,8 @@ class SessionSchema(BaseModel):
         time_limit: int
         questions: List[QuestionSchema.QuestionResponse]
         end_time: Optional[datetime] = None
+        level:int
+
+    class StartGameRequest(BaseModel):
+        game_id: UUID
+        level: int = Field(1, ge=1)
