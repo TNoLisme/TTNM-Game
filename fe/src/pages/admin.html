@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EmoGarden</title>
+    <link rel="stylesheet" href="../styles/admin.css" />
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="logo">
+            <img src="/assets/images/logo.png" alt="Logo" class="logo-image" />
+            <span class="admin-badge">ADMIN</span>
+        </div>
+        <div class="header-right">
+            <span class="admin-name" id="admin-name">Admin User</span>
+            <a href="#" id="logout-btn" class="btn-logout">🚪 Đăng xuất</a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <span class="icon">📊</span>
+                    <span class="text">Dashboard</span>
+                </a>
+                <a href="#users" class="nav-item" data-section="users">
+                    <span class="icon">👥</span>
+                    <span class="text">Quản lý Users</span>
+                </a>
+                <a href="#emotions" class="nav-item" data-section="emotions">
+                    <span class="icon">😊</span>
+                    <span class="text">Quản lý Cảm xúc</span>
+                </a>
+                <a href="#questions" class="nav-item" data-section="questions">
+                    <span class="icon">❓</span>
+                    <span class="text">Quản lý Câu hỏi</span>
+                </a>
+                <a href="#settings" class="nav-item" data-section="settings">
+                    <span class="icon">⚙️</span>
+                    <span class="text">Cài đặt</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section active">
+                <h1>📊 Dashboard Tổng Quan</h1>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3 id="total-users">0</h3>
+                            <p>Tổng Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">😊</div>
+                        <div class="stat-info">
+                            <h3 id="total-emotions">0</h3>
+                            <p>Cảm xúc</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">❓</div>
+                        <div class="stat-info">
+                            <h3 id="total-questions">0</h3>
+                            <p>Câu hỏi</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-info">
+                            <h3 id="total-games">0</h3>
+                            <p>Lượt chơi</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>📈 Người dùng mới (7 ngày qua)</h3>
+                        <div id="users-chart" class="chart-placeholder">
+                            <p>Biểu đồ sẽ được hiển thị ở đây</p>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>🎯 Hoạt động gần đây</h3>
+                        <div id="activity-log" class="activity-list">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Management Section -->
+            <section id="users-section" class="content-section">
+                <div class="section-header">
+                    <h1>👥 Quản lý Users</h1>
+                    <button class="btn btn-primary" id="add-user-btn">
+                        <span>➕</span> Thêm User
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <input type="text" id="search-users" placeholder="🔍 Tìm kiếm user..." class="search-input" />
+                    <select id="filter-role" class="filter-select">
+                        <option value="">Tất cả vai trò</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                    <select id="filter-status" class="filter-select">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="active">Hoạt động</option>
+                        <option value="inactive">Không hoạt động</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Vai trò</th>
+                                <th>Tuổi</th>
+                                <th>Ngày tham gia</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="users-pagination">
+                    <!-- Dynamic pagination -->
+                </div>
+            </section>
+
+            <!-- Emotions Management Section -->
+            <section id="emotions-section" class="content-section">
+                <div class="section-header">
+                    <h1>😊 Quản lý Cảm xúc</h1>
+                    <button class="btn btn-primary" id="add-emotion-btn">
+                        <span>➕</span> Thêm Cảm xúc
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <input type="text" id="search-emotions" placeholder="🔍 Tìm kiếm cảm xúc..." class="search-input" />
+                    <select id="filter-category" class="filter-select">
+                        <option value="">Tất cả danh mục</option>
+                        <option value="happy">Vui vẻ</option>
+                        <option value="sad">Buồn</option>
+                        <option value="angry">Giận dữ</option>
+                        <option value="scared">Sợ hãi</option>
+                        <option value="surprised">Ngạc nhiên</option>
+                    </select>
+                </div>
+
+                <div class="cards-grid" id="emotions-grid">
+                    <!-- Dynamic emotion cards -->
+                </div>
+            </section>
+
+            <!-- Questions Management Section -->
+            <section id="questions-section" class="content-section">
+                <div class="section-header">
+                    <h1>❓ Quản lý Câu hỏi</h1>
+                    <button class="btn btn-primary" id="add-question-btn">
+                        <span>➕</span> Thêm Câu hỏi
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <input type="text" id="search-questions" placeholder="🔍 Tìm kiếm câu hỏi..." class="search-input" />
+                    <select id="filter-difficulty" class="filter-select">
+                        <option value="">Tất cả độ khó</option>
+                        <option value="easy">Dễ</option>
+                        <option value="medium">Trung bình</option>
+                        <option value="hard">Khó</option>
+                    </select>
+                    <select id="filter-emotion-type" class="filter-select">
+                        <option value="">Tất cả cảm xúc</option>
+                        <option value="happy">Vui vẻ</option>
+                        <option value="sad">Buồn</option>
+                        <option value="angry">Giận dữ</option>
+                        <option value="scared">Sợ hãi</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="questions-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Câu hỏi</th>
+                                <th>Cảm xúc</th>
+                                <th>Độ khó</th>
+                                <th>Đáp án đúng</th>
+                                <th>Lượt chơi</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="questions-tbody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="content-section">
+                <h1>⚙️ Cài đặt Hệ thống</h1>
+                
+                <div class="settings-card">
+                    <h3>🔐 Bảo mật</h3>
+                    <div class="setting-item">
+                        <label>Yêu cầu xác thực 2 yếu tố</label>
+                        <label class="switch">
+                            <input type="checkbox" id="two-factor-auth">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>Thời gian phiên làm việc (phút)</label>
+                        <input type="number" value="30" min="10" max="120" class="setting-input">
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>📧 Email & Thông báo</h3>
+                    <div class="setting-item">
+                        <label>Gửi email báo cáo hàng tuần</label>
+                        <label class="switch">
+                            <input type="checkbox" id="weekly-report" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal: Add/Edit User -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-user-modal">×</span>
+            <h2 id="user-modal-title">➕ Thêm User Mới</h2>
+            <form id="user-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-username">Username *</label>
+                        <input type="text" id="user-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-email">Email *</label>
+                        <input type="email" id="user-email" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-password">Mật khẩu *</label>
+                        <input type="password" id="user-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-role">Vai trò *</label>
+                        <select id="user-role" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-name">Tên hiển thị *</label>
+                        <input type="text" id="user-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-age">Tuổi</label>
+                        <input type="number" id="user-age" min="3" max="18">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-gender">Giới tính</label>
+                        <select id="user-gender">
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-status">Trạng thái</label>
+                        <select id="user-status">
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-user-btn">❌ Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Emotion -->
+    <div id="emotion-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-emotion-modal">×</span>
+            <h2 id="emotion-modal-title">➕ Thêm Cảm xúc Mới</h2>
+            <form id="emotion-form">
+                <div class="form-group">
+                    <label for="emotion-name">Tên cảm xúc *</label>
+                    <input type="text" id="emotion-name" required placeholder="VD: Vui vẻ">
+                </div>
+
+                <div class="form-group">
+                    <label for="emotion-name-en">Tên tiếng Anh *</label>
+                    <input type="text" id="emotion-name-en" required placeholder="VD: Happy">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="emotion-icon">Icon/Emoji *</label>
+                        <input type="text" id="emotion-icon" required placeholder="😊">
+                    </div>
+                    <div class="form-group">
+                        <label for="emotion-color">Màu sắc *</label>
+                        <input type="color" id="emotion-color" value="#ffd700" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="emotion-category">Danh mục *</label>
+                    <select id="emotion-category" required>
+                        <option value="happy">Vui vẻ</option>
+                        <option value="sad">Buồn</option>
+                        <option value="angry">Giận dữ</option>
+                        <option value="scared">Sợ hãi</option>
+                        <option value="surprised">Ngạc nhiên</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="emotion-description">Mô tả</label>
+                    <textarea id="emotion-description" rows="3" placeholder="Mô tả về cảm xúc này..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-emotion-btn">❌ Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Question -->
+    <div id="question-modal" class="modal">
+        <div class="modal-content large">
+            <span class="close" id="close-question-modal">×</span>
+            <h2 id="question-modal-title">➕ Thêm Câu hỏi Mới</h2>
+            <form id="question-form">
+                <div class="form-group">
+                    <label for="question-text">Câu hỏi *</label>
+                    <textarea id="question-text" rows="3" required placeholder="Nhập câu hỏi..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="question-emotion">Cảm xúc liên quan *</label>
+                        <select id="question-emotion" required>
+                            <option value="">Chọn cảm xúc</option>
+                            <option value="happy">Vui vẻ 😊</option>
+                            <option value="sad">Buồn 😢</option>
+                            <option value="angry">Giận dữ 😠</option>
+                            <option value="scared">Sợ hãi 😨</option>
+                            <option value="surprised">Ngạc nhiên 😲</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="question-difficulty">Độ khó *</label>
+                        <select id="question-difficulty" required>
+                            <option value="easy">Dễ</option>
+                            <option value="medium">Trung bình</option>
+                            <option value="hard">Khó</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Đáp án *</label>
+                    <div class="answers-container">
+                        <div class="answer-item">
+                            <input type="text" id="answer-1" placeholder="Đáp án A" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="1" required> Đúng
+                            </label>
+                        </div>
+                        <div class="answer-item">
+                            <input type="text" id="answer-2" placeholder="Đáp án B" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="2"> Đúng
+                            </label>
+                        </div>
+                        <div class="answer-item">
+                            <input type="text" id="answer-3" placeholder="Đáp án C" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="3"> Đúng
+                            </label>
+                        </div>
+                        <div class="answer-item">
+                            <input type="text" id="answer-4" placeholder="Đáp án D" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="4"> Đúng
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="question-explanation">Giải thích (tùy chọn)</label>
+                    <textarea id="question-explanation" rows="2" placeholder="Giải thích tại sao đây là đáp án đúng..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-question-btn">❌ Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../components/admin.js" defer></script>
+</body>
+
+</html>

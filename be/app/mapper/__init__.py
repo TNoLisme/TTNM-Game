@@ -14,8 +14,9 @@ from .session_history_mapper import SessionHistoryMapper
 from .session_questions_mapper import SessionQuestionsMapper
 from .users_mapper import UsersMapper
 from .game_data_contents_mapper import GameDataContentsMapper
+from .admin_mapper import AdminMapper
 
 __all__ = [ 'ChildMapper', 'ChildProgressMapper', 'EmotionConceptsMapper', 'GamesMapper',
            'GameContentsMapper', 'GameDataMapper', 'GameHistoryMapper', 'QuestionsMapper', 'ReportMapper',
            'SessionsMapper', 'SessionHistoryMapper', 'SessionQuestionsMapper', 'UsersMapper',
-           'GameDataContentsMapper']
+           'GameDataContentsMapper', 'AdminMapper']

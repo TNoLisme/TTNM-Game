@@ -6,7 +6,6 @@ const showError = (message) => {
     if (errorEl) errorEl.textContent = message || '';
 };
 
-
 const showToast = (message, type = 'success') => {
     let container = document.querySelector('.toast-container');
     if (!container) {
@@ -28,8 +27,7 @@ const showToast = (message, type = 'success') => {
     }, 3000);
 };
 
-// REDIRECT + LƯU USER ĐẦY ĐỦ
-const redirectToHome = (userFromAPI) => {
+const redirectBasedOnRole = (userFromAPI, accessToken) => {
     if (!userFromAPI || typeof userFromAPI !== 'object') {
         showError('Không thể đọc dữ liệu người dùng.');
         return;
@@ -41,22 +39,58 @@ const redirectToHome = (userFromAPI) => {
         return;
     }
 
-    const saveUser = { ...userFromAPI, user_id };
+    // Lấy role từ accountType hoặc role field
+    const role = (userFromAPI.accountType || userFromAPI.role || '').toLowerCase();
+    
+    // Lưu user info đầy đủ vào localStorage
+    const saveUser = { ...userFromAPI, user_id, role };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
-    console.log('%c🚀 LƯU USER_ID:', 'color: blue;', saveUser);
-    showToast('Chào mừng ' + (saveUser.name || saveUser.username || 'bạn'), 'success');
-    setTimeout(() => location.href = '/src/pages/home.html', 1500);
+    
+    // ⭐⭐⭐ LƯU ACCESS_TOKEN RIÊNG (QUAN TRỌNG!) ⭐⭐⭐
+    if (accessToken) {
+        localStorage.setItem('token', accessToken);
+        console.log('%c✅ ACCESS_TOKEN ĐÃ LƯU:', 'color: green; font-weight: bold; font-size: 14px;', accessToken);
+    } else {
+        console.warn('⚠️ WARNING: No access_token received!');
+    }
 
+    console.log('%c🚀 LƯU USER:', 'color: blue; font-weight: bold;', saveUser);
+    console.log('%c🔑 ROLE:', 'color: green; font-weight: bold;', role);
+
+    // Redirect dựa trên role
+    let redirectUrl = '/src/pages/home.html'; // Default cho child
+    let welcomeMsg = 'Chào mừng ' + (saveUser.fullName || saveUser.name || saveUser.username || 'bạn');
+
+    if (role === 'admin') {
+        redirectUrl = '/src/pages/admin.html'; 
+        welcomeMsg = '👋 Chào Admin ' + (saveUser.fullName || saveUser.username);
+        console.log('%c🎯 REDIRECT TO ADMIN DASHBOARD', 'color: red; font-weight: bold;');
+    } else if (role === 'child') {
+        redirectUrl = '/src/pages/home.html'; // Trang home cho child
+        console.log('%c🎯 REDIRECT TO HOME', 'color: blue; font-weight: bold;');
+    } else {
+        // Unknown role - redirect to default
+        console.warn('⚠️ Unknown role:', role, '- redirecting to home');
+    }
+
+    showToast(welcomeMsg, 'success');
+    
+    // Redirect sau 1.5 giây
+    setTimeout(() => {
+        location.href = redirectUrl;
+    }, 1500);
 };
 
-
-// HANDLE LOGIN CHUẨN
+// HANDLE LOGIN CHUẨN (FIXED)
 const handleLogin = async (e) => {
     e.preventDefault();
     showError('');
     const username = document.querySelector('#username').value.trim();
     const password = document.querySelector('#password').value.trim();
-    if (!username || !password) return showError('Nhập đầy đủ thông tin!');
+    
+    if (!username || !password) {
+        return showError('Nhập đầy đủ thông tin!');
+    }
 
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
@@ -70,17 +104,51 @@ const handleLogin = async (e) => {
         });
 
         const data = await res.json();
-        console.log('Login response:', data);  // DEBUG
+        console.log('%c📥 LOGIN RESPONSE:', 'color: purple; font-weight: bold;', data);
+        console.log('%c📥 FULL DATA STRUCTURE:', 'color: orange; font-weight: bold;', JSON.stringify(data, null, 2));
 
-        if (res.ok && (data.success || data.user)) {
-            const user = data.user || data.data || data;
-            redirectToHome(user);
+        if (res.ok && (data.success || data.user || data.data)) {
+            // ⭐ XỬ LÝ NHIỀU CẤU TRÚC RESPONSE KHÁC NHAU
+            let user = null;
+            let accessToken = null;
+            
+            // Cấu trúc 1: {success: true, user: {...}, access_token: "..."}
+            if (data.user) {
+                user = data.user;
+                accessToken = data.access_token || data.token;
+            }
+            // Cấu trúc 2: {data: {user: {...}, access_token: "..."}}
+            else if (data.data) {
+                user = data.data.user || data.data;
+                accessToken = data.data.access_token || data.data.token;
+            }
+            // Cấu trúc 3: Flat object {user_id, username, ..., access_token}
+            else {
+                user = data;
+                accessToken = data.access_token || data.token;
+            }
+            
+            // Kiểm tra có đủ dữ liệu không
+            if (!user || !user.user_id) {
+                throw new Error('Response thiếu thông tin user');
+            }
+            
+            if (!accessToken) {
+                console.error('⚠️ CRITICAL: No access_token in response!');
+                throw new Error('Server không trả về access token');
+            }
+            
+            console.log('%c✅ EXTRACTED USER:', 'color: blue; font-weight: bold;', user);
+            console.log('%c✅ EXTRACTED TOKEN:', 'color: green; font-weight: bold;', accessToken);
+            
+            // Redirect dựa trên role (TRUYỀN TOKEN VÀO)
+            redirectBasedOnRole(user, accessToken);
             return;
         } else {
             throw new Error(data.message || data.detail || 'Sai tài khoản hoặc mật khẩu.');
         }
     } catch (err) {
-        console.error('Login error:', err);
+        console.error('%c❌ LOGIN ERROR:', 'color: red; font-weight: bold;', err);
         showError(err.message || 'Lỗi kết nối server.');
     } finally {
         btn.disabled = false;
@@ -88,7 +156,7 @@ const handleLogin = async (e) => {
     }
 };
 
-// === QUÊN MẬT KHẨU (GIỮ NGUYÊN, CHỈ FIX NHỎ) ===
+// === QUÊN MẬT KHẨU (GIỮ NGUYÊN) ===
 function openForgotModal(e) {
     e.preventDefault();
     const modal = document.getElementById('forgot-modal');
@@ -191,4 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('send-otp-btn')?.addEventListener('click', sendOTP);
     document.getElementById('reset-pass-btn')?.addEventListener('click', resetPasswordWithOTP);
     document.getElementById('forgot-modal')?.addEventListener('click', (e) => e.target === e.currentTarget && closeForgotModal());
+    
+    // DEBUG: Log current storage on page load
+    console.log('%c🔍 DEBUG - Current Storage:', 'color: purple; font-weight: bold;');
+    console.log('access_token:', localStorage.getItem('access_token'));
+    console.log('currentUser:', localStorage.getItem('currentUser'));
 });

@@ -62,7 +62,7 @@ async function saveProfile(e) {
         phone_number: $("edit-phone").value.trim(),
         gender: $("edit-gender").value,
         date_of_birth: $("edit-dob").value,
-        password: newPassword || undefined  // Chỉ gửi nếu có nhập
+        password: newPassword || undefined
     };
 
     Object.keys(update).forEach(key => {
@@ -94,6 +94,81 @@ async function saveProfile(e) {
     }
 }
 
+// ==================== REPORT FUNCTIONS ====================
+
+async function requestReport(period) {
+    const token = localStorage.getItem("token");
+    
+    console.log("%c=== REQUEST REPORT DEBUG ===", "color: yellow; font-size: 14px;");
+    console.log("Token exists:", !!token);
+    console.log("Token preview:", token ? token.substring(0, 20) + "..." : "NULL");
+    console.log("Period:", period);
+    console.log("Current profile:", window.currentProfile);
+    
+    if (!token) {
+        showToast("Vui lòng đăng nhập để nhận báo cáo!", "error");
+        console.error("❌ No token found in localStorage");
+        return;
+    }
+
+    if (!window.currentProfile) {
+        showToast("Đang tải thông tin người dùng...", "info");
+        await loadProfile();
+        if (!window.currentProfile) {
+            showToast("Không thể tải thông tin người dùng", "error");
+            return;
+        }
+    }
+
+    const periodText = period === "weekly" ? "tuần" : "tháng";
+    const userEmail = window.currentProfile?.email || 'email của bạn';
+
+    if (!confirm(`Gửi báo cáo ${periodText} này qua email?\n\nBáo cáo sẽ được gửi đến: ${userEmail}`)) {
+        return;
+    }
+
+    showToast(`Đang tạo báo cáo ${periodText}... Vui lòng đợi`, "info");
+
+    try {
+        console.log(`🚀 Calling API: POST ${API_URL}/reports/request-report?period=${period}`);
+        
+        const res = await fetch(`${API_URL}/reports/request-report?period=${period}`, {
+            method: "POST",
+            headers: { 
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        console.log("📥 Response status:", res.status);
+        
+        const data = await res.json();
+        console.log("📦 Response data:", data);
+
+        if (!res.ok) {
+            if (res.status === 401) {
+                console.error("❌ 401 Unauthorized - Token invalid/expired");
+                showToast("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!", "error");
+                setTimeout(() => {
+                    localStorage.clear();
+                    location.href = "/src/pages/login.html";
+                }, 2000);
+                return;
+            }
+            throw new Error(data.detail || data.message || "Lỗi khi tạo báo cáo");
+        }
+
+        showToast(`✅ Báo cáo ${periodText} đang được gửi đến email của bạn!`, "success");
+        console.log("✅ Report requested successfully:", data);
+
+    } catch (err) {
+        console.error("❌ Report error:", err);
+        showToast(`❌ Lỗi: ${err.message}`, "error");
+    }
+}
+
+// ==================== EXISTING FUNCTIONS ====================
+
 function showError(msg) {
     const el = document.getElementById("error-message");
     if (!el) return;
@@ -118,7 +193,7 @@ function openEditModal() {
     $("edit-gender").value = d.gender || "male";
     $("edit-dob").value = d.date_of_birth || "";
     $("edit-phone").value = d.phone_number || "";
-    $("edit-password").value = ""; // Luôn để trống
+    $("edit-password").value = "";
     $("edit-password-confirm").value = "";
 
     const firstField = $("edit-name");
@@ -145,31 +220,6 @@ function animate(id, end) {
     }, 60);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("%cPROFILE.JS 100% SỐNG!", "color: gold; font-size: 20px;");
-    loadProfile();
-
-    const editBtn = document.getElementById("edit-btn");
-    const form = document.getElementById("edit-form");
-    const closeBtn = document.querySelector(".modal-close");
-    const logout = document.getElementById("logout-btn");
-
-    if (editBtn) editBtn.onclick = openEditModal;
-    if (form) form.onsubmit = saveProfile;
-    if (closeBtn) closeBtn.onclick = closeModal;
-    if (logout) logout.onclick = () => confirm("Đăng xuất?") && (localStorage.clear(), location.href = "/src/pages/login.html");
-
-    document.addEventListener("keydown", e => {
-        const modal = document.getElementById("edit-modal");
-        if (e.key === "Escape" && modal && modal.getAttribute("aria-hidden") === "false") {
-            closeModal();
-        }
-    });
-});
-
-window.closeModal = closeModal;
-
-// Toast (shared behavior like login)
 function showToast(message, type = "success") {
     let container = document.querySelector('.toast-container');
     if (!container) {
@@ -190,3 +240,41 @@ function showToast(message, type = "success") {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
+
+// ==================== EVENT LISTENERS ====================
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("%c🚀 PROFILE.JS LOADED WITH DEBUG", "color: gold; font-size: 16px;");
+    console.log("Token in localStorage:", localStorage.getItem("token") ? "EXISTS" : "NULL");
+    
+    loadProfile();
+
+    const editBtn = document.getElementById("edit-btn");
+    const form = document.getElementById("edit-form");
+    const closeBtn = document.querySelector(".modal-close");
+    const logout = document.getElementById("logout-btn");
+
+    const weeklyReportBtn = document.getElementById("request-weekly-report");
+    const monthlyReportBtn = document.getElementById("request-monthly-report");
+
+    if (editBtn) editBtn.onclick = openEditModal;
+    if (form) form.onsubmit = saveProfile;
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (logout) logout.onclick = () => confirm("Đăng xuất?") && (localStorage.clear(), location.href = "/src/pages/login.html");
+
+    if (weeklyReportBtn) {
+        weeklyReportBtn.onclick = () => requestReport("weekly");
+    }
+    if (monthlyReportBtn) {
+        monthlyReportBtn.onclick = () => requestReport("monthly");
+    }
+
+    document.addEventListener("keydown", e => {
+        const modal = document.getElementById("edit-modal");
+        if (e.key === "Escape" && modal && modal.getAttribute("aria-hidden") === "false") {
+            closeModal();
+        }
+    });
+});
+
+window.closeModal = closeModal;

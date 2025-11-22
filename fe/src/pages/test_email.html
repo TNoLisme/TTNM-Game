@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Email - EmoGarden</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .test-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-entry.success {
+            color: #00ff00;
+        }
+
+        .log-entry.error {
+            color: #ff4444;
+        }
+
+        .log-entry.info {
+            color: #00bfff;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.waiting {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-badge.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge.error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Email System</h1>
+        <p class="subtitle">Kiểm tra chức năng gửi email và báo cáo</p>
+
+        <!-- Test 1: Simple Email Test -->
+        <div class="test-section">
+            <h2>
+                <span>📧</span> 
+                Test 1: Gửi Email Đơn Giản
+                <span id="test1-status"></span>
+            </h2>
+            <div class="info-box">
+                <p><strong>Mục đích:</strong> Kiểm tra cấu hình SMTP cơ bản</p>
+                <p><strong>Endpoint:</strong> POST /reports/test-email</p>
+            </div>
+            <div class="form-group">
+                <label for="test-email">Email nhận test:</label>
+                <input type="email" id="test-email" placeholder="your.email@gmail.com" required>
+            </div>
+            <button class="btn btn-primary" onclick="testSimpleEmail()">
+                🚀 Gửi Email Test
+            </button>
+        </div>
+
+        <!-- Test 2: Weekly Report -->
+        <div class="test-section">
+            <h2>
+                <span>📅</span> 
+                Test 2: Báo Cáo Tuần
+                <span id="test2-status"></span>
+            </h2>
+            <div class="info-box">
+                <p><strong>Mục đích:</strong> Gửi báo cáo tiến độ tuần (có file PDF)</p>
+                <p><strong>Endpoint:</strong> POST /reports/request-report?period=weekly</p>
+            </div>
+            <div class="form-group">
+                <label for="child-id-weekly">Child User ID:</label>
+                <input type="text" id="child-id-weekly" placeholder="UUID của trẻ" required>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    💡 Lấy từ localStorage currentUser hoặc database
+                </small>
+            </div>
+            <button class="btn btn-secondary" onclick="testWeeklyReport()">
+                📊 Gửi Báo Cáo Tuần
+            </button>
+        </div>
+
+        <!-- Test 3: Monthly Report -->
+        <div class="test-section">
+            <h2>
+                <span>📆</span> 
+                Test 3: Báo Cáo Tháng
+                <span id="test3-status"></span>
+            </h2>
+            <div class="info-box">
+                <p><strong>Mục đích:</strong> Gửi báo cáo tiến độ tháng (có file PDF)</p>
+                <p><strong>Endpoint:</strong> POST /reports/request-report?period=monthly</p>
+            </div>
+            <div class="form-group">
+                <label for="child-id-monthly">Child User ID:</label>
+                <input type="text" id="child-id-monthly" placeholder="UUID của trẻ" required>
+            </div>
+            <button class="btn btn-secondary" onclick="testMonthlyReport()">
+                📊 Gửi Báo Cáo Tháng
+            </button>
+        </div>
+
+        <!-- Console Log -->
+        <div class="test-section">
+            <h2>📝 Console Log</h2>
+            <div class="log" id="log"></div>
+        </div>
+
+        <a href="profile.html" class="back-link">← Quay lại Profile</a>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        const logEl = document.getElementById('log');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(testId, status) {
+            const statusEl = document.getElementById(`test${testId}-status`);
+            statusEl.className = `status-badge ${status}`;
+            statusEl.textContent = status === 'waiting' ? '⏳ Đang gửi...' : 
+                                   status === 'success' ? '✅ Thành công' : 
+                                   '❌ Thất bại';
+        }
+
+        async function testSimpleEmail() {
+            const email = document.getElementById('test-email').value.trim();
+            
+            if (!email) {
+                alert('Vui lòng nhập email!');
+                return;
+            }
+
+            updateStatus(1, 'waiting');
+            log(`📧 Gửi test email đến: ${email}`, 'info');
+
+            try {
+                const res = await fetch(`${API_URL}/reports/test-email?email=${encodeURIComponent(email)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    updateStatus(1, 'success');
+                    log('✅ Email test đã được gửi thành công!', 'success');
+                    log(`Response: ${JSON.stringify(data)}`, 'info');
+                } else {
+                    throw new Error(data.detail || data.message || 'Unknown error');
+                }
+
+            } catch (err) {
+                updateStatus(1, 'error');
+                log(`❌ Lỗi: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        async function testWeeklyReport() {
+            const childId = document.getElementById('child-id-weekly').value.trim();
+            
+            if (!childId) {
+                alert('Vui lòng nhập Child User ID!');
+                return;
+            }
+
+            updateStatus(2, 'waiting');
+            log(`📅 Gửi báo cáo tuần cho child: ${childId}`, 'info');
+
+            try {
+                const res = await fetch(`${API_URL}/reports/request-report?period=weekly`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${childId}`
+                    }
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    updateStatus(2, 'success');
+                    log('✅ Báo cáo tuần đã được gửi!', 'success');
+                    log(`Response: ${JSON.stringify(data)}`, 'info');
+                    log('📧 Kiểm tra email của bạn (có thể mất vài giây)', 'info');
+                } else {
+                    throw new Error(data.detail || data.message || 'Unknown error');
+                }
+
+            } catch (err) {
+                updateStatus(2, 'error');
+                log(`❌ Lỗi: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        async function testMonthlyReport() {
+            const childId = document.getElementById('child-id-monthly').value.trim();
+            
+            if (!childId) {
+                alert('Vui lòng nhập Child User ID!');
+                return;
+            }
+
+            updateStatus(3, 'waiting');
+            log(`📆 Gửi báo cáo tháng cho child: ${childId}`, 'info');
+
+            try {
+                const res = await fetch(`${API_URL}/reports/request-report?period=monthly`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${childId}`
+                    }
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    updateStatus(3, 'success');
+                    log('✅ Báo cáo tháng đã được gửi!', 'success');
+                    log(`Response: ${JSON.stringify(data)}`, 'info');
+                    log('📧 Kiểm tra email của bạn (có thể mất vài giây)', 'info');
+                } else {
+                    throw new Error(data.detail || data.message || 'Unknown error');
+                }
+
+            } catch (err) {
+                updateStatus(3, 'error');
+                log(`❌ Lỗi: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        // Auto-fill from localStorage if available
+        window.addEventListener('DOMContentLoaded', () => {
+            log('🚀 Test Email System initialized', 'success');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userId = currentUser.user_id || currentUser.userId || currentUser.id;
+            
+            if (userId) {
+                document.getElementById('child-id-weekly').value = userId;
+                document.getElementById('child-id-monthly').value = userId;
+                log(`✅ Auto-filled User ID: ${userId}`, 'success');
+            }
+
+            if (currentUser.email) {
+                document.getElementById('test-email').value = currentUser.email;
+                log(`✅ Auto-filled Email: ${currentUser.email}`, 'success');
+            }
+        });
+    </script>
+</body>
+</html>
