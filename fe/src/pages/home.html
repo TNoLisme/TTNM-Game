@@ -5,14 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TTNM Game - Trang Chủ</title>
-  <link rel="stylesheet" href="../styles/home.css">
+  <link rel="stylesheet" href="/src/styles/home.css">
+  <link rel="stylesheet" href="/src/styles/navigation.css">
 </head>
 
 <body>
+
   <nav class="main-nav">
     <div class="nav-brand">
       <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
-      <span class="brand-name">Emo Garden</span>
     </div>
     <div class="nav-links">
       <a href="./home.html" class="nav-item active">Trang chủ</a>
@@ -21,14 +22,13 @@
     </div>
     <div class="nav-user-actions">
       <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
-        <span class="profile-icon">&#128100;</span>
+        <div class="profile-icon"></div>
       </a>
       <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
     </div>
   </nav>
 
   <main class="main-content">
-    <h1 class="page-title">Trang chủ</h1>
 
     <div class="emotion-section">
       <div class="banner-text">Cảm xúc cần rèn luyện nhiều hơn</div>
@@ -81,11 +81,13 @@
       <h2 class="section-title">Khám phá cảm xúc cùng bạn nhỏ</h2>
 
       <div class="learning-container">
+
         <div class="learning-card">
           <div class="card-icon">😊</div>
           <h3 class="card-title">Học 6 cảm xúc cơ bản</h3>
           <p class="card-desc">Nhận biết và hiểu các cảm xúc vui, buồn, sợ, tức giận, ngạc nhiên và ghê tởm qua hình ảnh
-            sinh động.</p>
+            sinh
+            động.</p>
           <button class="card-btn"><a href="./learn.html">Bắt đầu học</a></button>
         </div>
 
@@ -95,8 +97,10 @@
           <p class="card-desc">Rèn luyện khả năng cảm xúc qua các trò chơi tương tác vui nhộn.</p>
           <button class="card-btn" id="go-to-game-select">Vào chơi</button>
         </div>
+
       </div>
     </section>
+
 
     <section class="emotion-stats-section">
       <h2 class="section-title">Hành trình cảm xúc của bạn nhỏ</h2>
@@ -123,7 +127,9 @@
     </section>
   </main>
 
+
   <script type="module" src="/src/components/home.js"></script>
+
 </body>
 
 </html>
