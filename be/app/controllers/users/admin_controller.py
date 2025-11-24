@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 from uuid import UUID
 from app.services.users.admin_service import AdminService
 from app.repository.admin_repo import AdminRepository
-from app.repository.emotion_concepts_repo import GameContentsRepository
+from app.repository.emotion_concepts_repo import EmotionConceptRepository
 from app.repository.questions_repo import QuestionsRepository
 from app.repository.game_contents_repo import GameContentsRepository as GameContentRepo
 from app.database import get_db
@@ -22,6 +23,16 @@ class UpdateUserRequest(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     role: Optional[str] = None
+
+class CreateUserRequest(BaseModel):
+    username: str
+    email: str
+    name: str
+    role: str
+    age: int | None = None
+    gender: str | None = None
+    status: str | None = None
+    password: str
 
 class CreateEmotionRequest(BaseModel):
     concept_id: str
@@ -58,7 +69,7 @@ async def list_users(
 ):
     """Lấy danh sách tất cả users với pagination"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -70,6 +81,21 @@ async def list_users(
     
     return result
 
+@router.post("/users")
+async def create_user(request: CreateUserRequest, db=Depends(get_db)):
+    admin_repo = AdminRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
+    question_repo = QuestionsRepository(db)
+    game_content_repo = GameContentRepo(db)
+
+    service = AdminService(admin_repo, emotion_repo, question_repo, game_content_repo)
+    result = service.create_user(request.dict())
+
+    if result["status"] != "success":
+        raise HTTPException(status_code=400, detail=result["message"])
+
+    return result
+
 @router.get("/users/{user_id}")
 async def get_user_detail(
     user_id: UUID,
@@ -77,7 +103,7 @@ async def get_user_detail(
 ):
     """Lấy thông tin chi tiết của một user"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -97,7 +123,7 @@ async def update_user(
 ):
     """Cập nhật thông tin user"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -116,7 +142,7 @@ async def delete_user(
 ):
     """Xóa user"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -136,7 +162,7 @@ async def list_children(
 ):
     """Lấy danh sách tất cả children"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -157,7 +183,7 @@ async def search_users(
 ):
     """Tìm kiếm users theo tên"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -169,6 +195,64 @@ async def search_users(
     
     return result
 
+@router.get("/dashboard/stats")
+async def get_dashboard_stats(db: Session = Depends(get_db)):
+    """Lấy thống kê tổng quan cho dashboard"""
+    try:
+        admin_repo = AdminRepository(db)
+        emotion_repo = EmotionConceptRepository(db)
+        question_repo = QuestionsRepository(db)
+        game_content_repo = GameContentRepo(db)
+        
+        service = AdminService(admin_repo, emotion_repo, question_repo, game_content_repo)
+        
+        # Lấy tất cả users (không phân trang)
+        users_result = service.get_all_users(skip=0, limit=10000)
+        
+        if users_result["status"] != "success":
+            raise HTTPException(status_code=400, detail="Không thể lấy dữ liệu users")
+        
+        users = users_result["data"]["users"]
+        
+        # Đếm emotions (giả sử có game_id và level mặc định)
+        # Bạn có thể điều chỉnh logic này tùy theo yêu cầu
+        try:
+            # Lấy emotions từ tất cả các level
+            total_emotions = 0
+            for level in range(1, 11):  # Giả sử có 10 level
+                emotions_result = emotion_repo.get_by_level(level)
+                if emotions_result:
+                    total_emotions += len(emotions_result)
+        except:
+            total_emotions = 0
+        
+        # Đếm questions
+        try:
+            # Lấy questions từ tất cả các level
+            total_questions = 0
+            for level in range(1, 11):
+                questions_result = question_repo.get_by_level(level)
+                if questions_result:
+                    total_questions += len(questions_result)
+        except:
+            total_questions = 0
+        
+        # Đếm active users
+        total_active = len([u for u in users if u.get("status") == "active"])
+        
+        return {
+            "status": "success",
+            "data": {
+                "total_users": len(users),
+                "total_emotions": total_emotions,
+                "total_questions": total_questions,
+                "total_active": total_active
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi lấy thống kê: {str(e)}")
+
 # ==================== Emotion Concepts Management ====================
 @router.get("/emotions")
 async def list_emotions(
@@ -178,7 +262,7 @@ async def list_emotions(
 ):
     """Lấy danh sách emotion concepts"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -197,7 +281,7 @@ async def create_emotion(
 ):
     """Tạo emotion concept mới"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -219,7 +303,7 @@ async def list_questions(
 ):
     """Lấy danh sách câu hỏi"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -238,7 +322,7 @@ async def create_question(
 ):
     """Tạo câu hỏi mới"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -258,7 +342,7 @@ async def update_question(
 ):
     """Cập nhật câu hỏi"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -277,7 +361,7 @@ async def delete_question(
 ):
     """Xóa câu hỏi"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -296,9 +380,8 @@ async def list_game_contents(
     level: int = Query(..., ge=1, le=10),
     db=Depends(get_db)
 ):
-    """Lấy danh sách game contents"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -315,9 +398,8 @@ async def create_game_content(
     request: CreateGameContentRequest,
     db=Depends(get_db)
 ):
-    """Tạo game content mới"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -335,9 +417,8 @@ async def update_game_content(
     request: CreateGameContentRequest,
     db=Depends(get_db)
 ):
-    """Cập nhật game content"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     
@@ -354,9 +435,8 @@ async def delete_game_content(
     content_id: UUID,
     db=Depends(get_db)
 ):
-    """Xóa game content"""
     admin_repo = AdminRepository(db)
-    emotion_repo = GameContentsRepository(db)
+    emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
     

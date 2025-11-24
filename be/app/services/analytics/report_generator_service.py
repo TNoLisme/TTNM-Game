@@ -1,130 +1,271 @@
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak, KeepTogether
+from reportlab.lib.units import inch, cm
+from reportlab.platypus import (
+    SimpleDocTemplate, Table, TableStyle, Paragraph, 
+    Spacer, Image, PageBreak, KeepTogether, Frame
+)
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
 from reportlab.graphics.shapes import Drawing, Rect, String, Line
 from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics.charts.linecharts import HorizontalLineChart
 from datetime import datetime
 from io import BytesIO
-from typing import Dict, List
+from typing import Dict, List, Optional
 import os
 
-class ReportGeneratorService:
-    def __init__(self):
-        # Register Vietnamese font (cần download font)
-        try:
-            font_path = os.path.join(os.path.dirname(__file__), r'D:\TTNM\TTNM-Game\fe\assets\fonts\DejaVuSans.ttf')
 
-            pdfmetrics.registerFont(TTFont('DejaVu', font_path))
-        except:
-            print("⚠️ Warning: Vietnamese font not found, using default")
+class FontManager:
+    """Quản lý font cho PDF - hỗ trợ tiếng Việt và Emoji"""
     
-    def _create_header_box(self, text: str, color: str = '#667eea') -> Drawing:
-        """Tạo header box đẹp cho section"""
-        d = Drawing(6.5*inch, 0.5*inch)
-        rect = Rect(0, 0, 6.5*inch, 0.5*inch)
-        rect.fillColor = colors.HexColor(color)
-        rect.strokeColor = None
-        d.add(rect)
-        
-        label = String(0.2*inch, 0.18*inch, text)
-        label.fontName = 'Helvetica-Bold'
-        label.fontSize = 14
-        label.fillColor = colors.white
-        d.add(label)
-        return d
+    FONTS = {
+        'regular': 'VNFont',
+        'bold': 'VNFont-Bold',
+        'italic': 'VNFont-Italic'
+    }
     
-    def _create_stat_card(self, label: str, value: str, icon: str = "📊") -> Drawing:
-        """Tạo card thống kê đẹp"""
-        d = Drawing(3*inch, 1*inch)
-        
-        # Background
-        rect = Rect(0, 0, 3*inch, 1*inch)
-        rect.fillColor = colors.HexColor('#f8f9fa')
-        rect.strokeColor = colors.HexColor('#e9ecef')
-        rect.strokeWidth = 1
-        d.add(rect)
-        
-        # Icon
-        icon_text = String(0.2*inch, 0.6*inch, icon)
-        icon_text.fontSize = 20
-        d.add(icon_text)
-        
-        # Value
-        value_text = String(0.2*inch, 0.35*inch, value)
-        value_text.fontName = 'Helvetica-Bold'
-        value_text.fontSize = 16
-        value_text.fillColor = colors.HexColor('#667eea')
-        d.add(value_text)
-        
-        # Label
-        label_text = String(0.2*inch, 0.15*inch, label)
-        label_text.fontName = 'Helvetica'
-        label_text.fontSize = 9
-        label_text.fillColor = colors.HexColor('#6c757d')
-        d.add(label_text)
-        
-        return d
+    @classmethod
+    def initialize(cls) -> bool:
+        """Khởi tạo font - tự động tìm và load font hỗ trợ Unicode"""
+        try:
+            # Danh sách font hỗ trợ Unicode/Emoji tốt
+            possible_paths = [
+                # Windows - Segoe UI Emoji + Arial Unicode
+                (r'C:\Windows\Fonts\seguiemj.ttf', r'C:\Windows\Fonts\arialbd.ttf', r'C:\Windows\Fonts\ariali.ttf'),
+                (r'C:\Windows\Fonts\arial.ttf', r'C:\Windows\Fonts\arialbd.ttf', r'C:\Windows\Fonts\ariali.ttf'),
+                # Linux - DejaVu hỗ trợ Unicode tốt
+                ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 
+                 '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+                 '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf'),
+                # macOS
+                ('/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
+                 '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
+                 '/System/Library/Fonts/Supplemental/Arial.ttf'),
+            ]
+            
+            # Tìm bộ font có sẵn
+            regular_font = None
+            bold_font = None
+            italic_font = None
+            
+            for regular, bold, italic in possible_paths:
+                if os.path.exists(regular):
+                    regular_font = regular
+                    bold_font = bold if os.path.exists(bold) else regular
+                    italic_font = italic if os.path.exists(italic) else regular
+                    break
+            
+            # Nếu không tìm thấy, dùng font mặc định
+            if not regular_font:
+                print("⚠️ Using default fonts (limited emoji support)")
+                cls.FONTS = {
+                    'regular': 'Helvetica',
+                    'bold': 'Helvetica-Bold',
+                    'italic': 'Helvetica-Oblique'
+                }
+                return False
+            
+            # Đăng ký font
+            pdfmetrics.registerFont(TTFont(cls.FONTS['regular'], regular_font))
+            pdfmetrics.registerFont(TTFont(cls.FONTS['bold'], bold_font))
+            pdfmetrics.registerFont(TTFont(cls.FONTS['italic'], italic_font))
+            
+            print(f"✅ Fonts loaded: {regular_font}")
+            return True
+            
+        except Exception as e:
+            print(f"⚠️ Font loading error: {e}")
+            cls.FONTS = {
+                'regular': 'Helvetica',
+                'bold': 'Helvetica-Bold',
+                'italic': 'Helvetica-Oblique'
+            }
+            return False
+
+
+class ColorPalette:
+    """Bảng màu hiện đại cho report"""
+    PRIMARY = colors.HexColor('#6366f1')      # Indigo
+    SECONDARY = colors.HexColor('#8b5cf6')    # Purple
+    SUCCESS = colors.HexColor('#10b981')      # Green
+    WARNING = colors.HexColor('#f59e0b')      # Orange
+    DANGER = colors.HexColor('#ef4444')       # Red
+    INFO = colors.HexColor('#3b82f6')         # Blue
     
-    def _create_progress_bar(self, percentage: float, width: float = 4*inch) -> Drawing:
-        """Tạo thanh tiến độ"""
-        d = Drawing(width, 0.3*inch)
+    GRAY_50 = colors.HexColor('#f9fafb')
+    GRAY_100 = colors.HexColor('#f3f4f6')
+    GRAY_200 = colors.HexColor('#e5e7eb')
+    GRAY_300 = colors.HexColor('#d1d5db')
+    GRAY_600 = colors.HexColor('#4b5563')
+    GRAY_900 = colors.HexColor('#111827')
+
+
+class ReportGeneratorService:
+    """Service tạo báo cáo PDF hiện đại cho EmoGarden"""
+    
+    def __init__(self):
+        """Khởi tạo service"""
+        self.font_available = FontManager.initialize()
+        self.fonts = FontManager.FONTS
+        self.colors = ColorPalette
+        self.styles = self._create_styles()
+    
+    def _create_styles(self) -> Dict:
+        """Tạo các style cho document"""
+        base_styles = getSampleStyleSheet()
         
-        # Background bar
-        bg_rect = Rect(0, 0, width, 0.3*inch)
-        bg_rect.fillColor = colors.HexColor('#e9ecef')
-        bg_rect.strokeColor = None
-        d.add(bg_rect)
+        custom_styles = {
+            'Title': ParagraphStyle(
+                'CustomTitle',
+                parent=base_styles['Heading1'],
+                fontName=self.fonts['bold'],
+                fontSize=28,
+                textColor=self.colors.PRIMARY,
+                alignment=TA_CENTER,
+                spaceAfter=8,
+                spaceBefore=0
+            ),
+            
+            'Subtitle': ParagraphStyle(
+                'CustomSubtitle',
+                parent=base_styles['Normal'],
+                fontName=self.fonts['italic'],
+                fontSize=12,
+                textColor=self.colors.GRAY_600,
+                alignment=TA_CENTER,
+                spaceAfter=20
+            ),
+            
+            'SectionHeader': ParagraphStyle(
+                'SectionHeader',
+                parent=base_styles['Heading2'],
+                fontName=self.fonts['bold'],
+                fontSize=16,
+                textColor=colors.white,
+                alignment=TA_LEFT,
+                leftIndent=10,
+                spaceAfter=0,
+                spaceBefore=0
+            ),
+            
+            'Normal': ParagraphStyle(
+                'CustomNormal',
+                parent=base_styles['Normal'],
+                fontName=self.fonts['regular'],
+                fontSize=10,
+                textColor=self.colors.GRAY_900,
+                alignment=TA_LEFT
+            ),
+            
+            'TableHeader': ParagraphStyle(
+                'TableHeader',
+                parent=base_styles['Normal'],
+                fontName=self.fonts['bold'],
+                fontSize=10,
+                textColor=colors.white,
+                alignment=TA_CENTER
+            ),
+            
+            'TableCell': ParagraphStyle(
+                'TableCell',
+                parent=base_styles['Normal'],
+                fontName=self.fonts['regular'],
+                fontSize=9,
+                textColor=self.colors.GRAY_900,
+                alignment=TA_CENTER
+            ),
+            
+            'Footer': ParagraphStyle(
+                'Footer',
+                parent=base_styles['Normal'],
+                fontName=self.fonts['italic'],
+                fontSize=8,
+                textColor=self.colors.GRAY_600,
+                alignment=TA_CENTER
+            )
+        }
         
-        # Progress bar
-        progress_width = width * (percentage / 100)
-        progress_rect = Rect(0, 0, progress_width, 0.3*inch)
+        return custom_styles
+    
+    def _create_section_header(self, text: str, icon: str = "", bg_color=None) -> Table:
+        """Tạo header cho section với màu nền"""
+        if bg_color is None:
+            bg_color = self.colors.PRIMARY
         
-        # Gradient color based on percentage
+        full_text = f"{icon} {text}" if icon else text
+        header_para = Paragraph(full_text, self.styles['SectionHeader'])
+        
+        table = Table([[header_para]], colWidths=[7*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), bg_color),
+            ('LEFTPADDING', (0, 0), (-1, -1), 15),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+            ('TOPPADDING', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        return table
+    
+    def _create_info_card(self, label: str, value: str, icon: str = "•") -> List:
+        """Tạo card thông tin đẹp"""
+        data = [
+            [Paragraph(f"<b>{icon} {label}</b>", self.styles['Normal'])],
+            [Paragraph(f"<font size=14 color='#6366f1'><b>{value}</b></font>", self.styles['Normal'])]
+        ]
+        
+        table = Table(data, colWidths=[3.2*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), self.colors.GRAY_50),
+            ('BOX', (0, 0), (-1, -1), 1, self.colors.GRAY_200),
+            ('LEFTPADDING', (0, 0), (-1, -1), 15),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 1), (-1, 1), 10),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ]))
+        
+        return table
+    
+    def _create_progress_indicator(self, percentage: float) -> str:
+        """Tạo thanh tiến độ bằng text"""
+        filled = int(percentage / 10)
+        empty = 10 - filled
+        
         if percentage >= 80:
-            progress_rect.fillColor = colors.HexColor('#10b981')
+            color = '#10b981'  # Green
         elif percentage >= 60:
-            progress_rect.fillColor = colors.HexColor('#3b82f6')
+            color = '#3b82f6'  # Blue
         elif percentage >= 40:
-            progress_rect.fillColor = colors.HexColor('#f59e0b')
+            color = '#f59e0b'  # Orange
         else:
-            progress_rect.fillColor = colors.HexColor('#ef4444')
-        progress_rect.strokeColor = None
-        d.add(progress_rect)
+            color = '#ef4444'  # Red
         
-        # Percentage text
-        text = String(width/2, 0.08*inch, f"{percentage:.0f}%")
-        text.fontName = 'Helvetica-Bold'
-        text.fontSize = 10
-        text.fillColor = colors.white if percentage > 30 else colors.black
-        text.textAnchor = 'middle'
-        d.add(text)
-        
-        return d
+        bar = '█' * filled + '░' * empty
+        return f"<font color='{color}'>{bar}</font> {percentage:.0f}%"
     
-    def _create_emotion_chart(self, emotion_stats: Dict) -> Drawing:
+    def _create_emotion_bar_chart(self, emotion_stats: Dict) -> Drawing:
         """Tạo biểu đồ cột cho thống kê cảm xúc"""
-        d = Drawing(400, 200)
+        d = Drawing(450, 200)
         
         if not emotion_stats:
             return d
         
         chart = VerticalBarChart()
-        chart.x = 30
+        chart.x = 50
         chart.y = 30
         chart.height = 150
-        chart.width = 350
+        chart.width = 380
         
         emotions = list(emotion_stats.keys())
         accuracies = [stats.get('accuracy', 0) for stats in emotion_stats.values()]
         
         chart.data = [accuracies]
-        chart.categoryAxis.categoryNames = emotions
+        chart.categoryAxis.categoryNames = [e.capitalize() for e in emotions]
         chart.categoryAxis.labels.angle = 0
         chart.categoryAxis.labels.fontSize = 9
         chart.categoryAxis.labels.boxAnchor = 'n'
@@ -134,26 +275,16 @@ class ReportGeneratorService:
         chart.valueAxis.valueStep = 20
         chart.valueAxis.labels.fontSize = 9
         
-        # Gradient colors for bars
-        colors_list = [
-            colors.HexColor('#667eea'),
-            colors.HexColor('#764ba2'),
-            colors.HexColor('#f093fb'),
-            colors.HexColor('#4facfe'),
-            colors.HexColor('#43e97b')
-        ]
-        
-        for i in range(len(emotions)):
-            chart.bars[0].fillColor = colors_list[i % len(colors_list)]
-        
+        # Màu gradient đẹp
+        chart.bars[0].fillColor = self.colors.PRIMARY
         chart.bars.strokeColor = None
         
         d.add(chart)
         return d
     
     def _create_games_pie_chart(self, games_stats: List[Dict]) -> Drawing:
-        """Tạo biểu đồ tròn cho thời gian chơi các trò chơi"""
-        d = Drawing(300, 200)
+        """Tạo biểu đồ tròn cho phân bố trò chơi"""
+        d = Drawing(350, 220)
         
         if not games_stats:
             return d
@@ -164,240 +295,281 @@ class ReportGeneratorService:
         pie.width = 140
         pie.height = 140
         
-        pie.data = [game.get('sessions', 0) for game in games_stats[:5]]  # Top 5 games
-        pie.labels = [game.get('game_name', 'N/A')[:15] for game in games_stats[:5]]
+        # Lấy top 5 games
+        top_games = games_stats[:5]
+        pie.data = [game.get('sessions', 0) for game in top_games]
+        pie.labels = [game.get('game_name', 'N/A')[:20] for game in top_games]
         
-        # Beautiful color scheme
+        # Màu sắc đẹp
+        color_scheme = [
+            self.colors.PRIMARY,
+            self.colors.SECONDARY,
+            self.colors.INFO,
+            self.colors.SUCCESS,
+            self.colors.WARNING
+        ]
+        
         pie.slices.strokeColor = colors.white
         pie.slices.strokeWidth = 2
-        pie.slices[0].fillColor = colors.HexColor('#667eea')
-        pie.slices[1].fillColor = colors.HexColor('#764ba2')
-        pie.slices[2].fillColor = colors.HexColor('#f093fb')
-        pie.slices[3].fillColor = colors.HexColor('#4facfe')
-        pie.slices[4].fillColor = colors.HexColor('#43e97b')
+        for i, color in enumerate(color_scheme):
+            if i < len(top_games):
+                pie.slices[i].fillColor = color
         
         pie.slices.fontSize = 8
-        pie.slices.fontColor = colors.black
+        pie.slices.fontName = self.fonts['regular']
         
         d.add(pie)
         return d
     
-    def _create_score_trend_chart(self, games_stats: List[Dict]) -> Drawing:
-        """Tạo biểu đồ xu hướng điểm số"""
-        d = Drawing(400, 200)
+    def _create_score_trend_drawing(self, games_stats: List[Dict]) -> Drawing:
+        """Tạo visualization cho xu hướng điểm số"""
+        d = Drawing(450, 150)
         
         if not games_stats:
             return d
         
-        chart = HorizontalLineChart()
-        chart.x = 40
-        chart.y = 30
-        chart.height = 150
-        chart.width = 340
+        # Vẽ mini bar chart cho điểm số
+        max_games = min(len(games_stats), 10)
+        bar_width = 35
+        spacing = 5
+        start_x = 30
         
-        scores = [game.get('avg_score', 0) for game in games_stats[:10]]
-        chart.data = [scores]
+        for i, game in enumerate(games_stats[:max_games]):
+            score = game.get('avg_score', 0)
+            bar_height = (score / 10) * 100  # Scale to 100px max
+            
+            # Màu theo điểm
+            if score >= 8:
+                bar_color = self.colors.SUCCESS
+            elif score >= 6:
+                bar_color = self.colors.INFO
+            elif score >= 4:
+                bar_color = self.colors.WARNING
+            else:
+                bar_color = self.colors.DANGER
+            
+            # Vẽ bar
+            rect = Rect(
+                start_x + (i * (bar_width + spacing)),
+                30,
+                bar_width,
+                bar_height
+            )
+            rect.fillColor = bar_color
+            rect.strokeColor = None
+            d.add(rect)
+            
+            # Label điểm
+            label = String(
+                start_x + (i * (bar_width + spacing)) + bar_width/2,
+                bar_height + 35,
+                f"{score:.1f}"
+            )
+            label.fontSize = 8
+            label.textAnchor = 'middle'
+            label.fontName = self.fonts['bold']
+            d.add(label)
         
-        chart.categoryAxis.categoryNames = [f"G{i+1}" for i in range(len(scores))]
-        chart.categoryAxis.labels.fontSize = 8
-        
-        chart.valueAxis.valueMin = 0
-        chart.valueAxis.valueMax = 10
-        chart.valueAxis.valueStep = 2
-        chart.valueAxis.labels.fontSize = 9
-        
-        chart.lines[0].strokeColor = colors.HexColor('#667eea')
-        chart.lines[0].strokeWidth = 2
-        chart.lines[0].symbol = None
-        
-        d.add(chart)
         return d
+    
+    def _create_stat_summary_table(self, stats: Dict) -> Table:
+        data = [
+            [
+                self._create_info_card("Tổng số phiên", str(stats.get('total_sessions', 0)), "🎮"),
+                self._create_info_card("Thời gian chơi", f"{stats.get('total_playtime', 0)}p", "⏱️")
+            ],
+            [
+                self._create_info_card("Điểm trung bình", f"{stats.get('avg_score', 0):.1f}/10", "⭐"),
+                self._create_info_card("Số trò chơi", str(len(stats.get('games_stats', []))), "🎯")
+            ]
+        ]
+        
+        table = Table(data, colWidths=[3.5*inch, 3.5*inch], rowHeights=[1.2*inch, 1.2*inch])
+        table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        
+        return table
     
     def generate_progress_report(self, child_data: Dict, progress_data: Dict) -> BytesIO:
         """
-        Tạo báo cáo tiến độ PDF
+        Tạo báo cáo tiến độ PDF hiện đại
         
         Args:
-            child_data: {user_id, name, age, email, phone_number}
+            child_data: {
+                'user_id': str,
+                'name': str,
+                'age': int,
+                'email': str,
+                'phone_number': str (optional)
+            }
             progress_data: {
-                period: "weekly/monthly",
-                start_date, end_date,
-                total_sessions, total_playtime,
-                games_stats: [{game_name, sessions, avg_score, level}],
-                emotion_stats: {emotion: {correct, incorrect, accuracy}},
-                achievements: [...]
+                'period': 'weekly' | 'monthly',
+                'start_date': str,
+                'end_date': str,
+                'total_sessions': int,
+                'total_playtime': int (minutes),
+                'avg_score': float,
+                'games_stats': [
+                    {
+                        'game_name': str,
+                        'sessions': int,
+                        'avg_score': float,
+                        'level': int
+                    }
+                ],
+                'emotion_stats': {
+                    'emotion_name': {
+                        'correct': int,
+                        'incorrect': int,
+                        'accuracy': float
+                    }
+                },
+                'achievements': [str]
             }
         
         Returns:
-            BytesIO: PDF file in memory
+            BytesIO: PDF file buffer
         """
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, 
-                              rightMargin=40, leftMargin=40,
-                              topMargin=40, bottomMargin=40)
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=1.5*cm,
+            leftMargin=1.5*cm,
+            topMargin=2*cm,
+            bottomMargin=2*cm
+        )
         
         elements = []
-        styles = getSampleStyleSheet()
-        
-        # Custom styles
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=26,
-            textColor=colors.HexColor('#667eea'),
-            spaceAfter=10,
-            alignment=1,
-            fontName='Helvetica-Bold'
-        )
-        
-        subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=styles['Normal'],
-            fontSize=11,
-            textColor=colors.HexColor('#6c757d'),
-            spaceAfter=30,
-            alignment=1,
-            fontName='Helvetica-Oblique'
-        )
-        
-        section_style = ParagraphStyle(
-            'SectionStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            spaceAfter=10,
-            spaceBefore=5
-        )
         
         # ==================== HEADER ====================
-        # Decorative header line
-        header_line = Drawing(6.5*inch, 0.1*inch)
-        line1 = Line(0, 0, 6.5*inch, 0)
-        line1.strokeColor = colors.HexColor('#667eea')
-        line1.strokeWidth = 3
-        header_line.add(line1)
-        elements.append(header_line)
-        elements.append(Spacer(1, 20))
-        
-        # Logo
-        try:
-            logo_path = os.path.join(os.path.dirname(__file__), '../../static/logo.png')
-            if os.path.exists(logo_path):
-                logo = Image(logo_path, width=1.2*inch, height=1.2*inch)
-                logo.hAlign = 'CENTER'
-                elements.append(logo)
-                elements.append(Spacer(1, 15))
-        except:
-            pass
+        # Decorative line
+        line_table = Table([['']], colWidths=[7*inch])
+        line_table.setStyle(TableStyle([
+            ('LINEABOVE', (0, 0), (-1, -1), 4, self.colors.PRIMARY),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+        ]))
+        elements.append(line_table)
+        elements.append(Spacer(1, 0.3*inch))
         
         # Title
-        title = Paragraph("BÁO CÁO TIẾN ĐỘ HỌC TẬP", title_style)
+        title = Paragraph("BÁO CÁO TIẾN ĐỘ HỌC TẬP", self.styles['Title'])
         elements.append(title)
         
         # Subtitle
         period_text = "TUẦN" if progress_data.get("period") == "weekly" else "THÁNG"
-        subtitle = Paragraph(
-            f"{period_text}: {progress_data.get('start_date')} đến {progress_data.get('end_date')}",
-            subtitle_style
-        )
+        subtitle_text = f"{period_text}: {progress_data.get('start_date')} đến {progress_data.get('end_date')}"
+        subtitle = Paragraph(subtitle_text, self.styles['Subtitle'])
         elements.append(subtitle)
         
+        elements.append(Spacer(1, 0.2*inch))
+        
         # ==================== THÔNG TIN HỌC VIÊN ====================
-        elements.append(self._create_header_box("👤 THÔNG TIN HỌC VIÊN"))
-        elements.append(Spacer(1, 15))
+        elements.append(self._create_section_header("THÔNG TIN HỌC VIÊN", "👤"))
+        elements.append(Spacer(1, 0.15*inch))
         
-        child_info = [
-            ['Họ và tên:', child_data.get('name', 'N/A')],
-            ['Tuổi:', str(child_data.get('age', 'N/A')) + ' tuổi'],
-            ['Mã học viên:', child_data.get('user_id', 'N/A')[:12] + '...'],
-            ['Email:', child_data.get('email', 'N/A')],
+        child_info_data = [
+            [
+                Paragraph("<b>Họ và tên:</b>", self.styles['Normal']),
+                Paragraph(child_data.get('name', 'N/A'), self.styles['Normal'])
+            ],
+            [
+                Paragraph("<b>Tuổi:</b>", self.styles['Normal']),
+                Paragraph(f"{child_data.get('age', 'N/A')} tuổi", self.styles['Normal'])
+            ],
+            [
+                Paragraph("<b>Mã học viên:</b>", self.styles['Normal']),
+                Paragraph(child_data.get('user_id', 'N/A')[:15] + '...', self.styles['Normal'])
+            ],
+            [
+                Paragraph("<b>Email:</b>", self.styles['Normal']),
+                Paragraph(child_data.get('email', 'N/A'), self.styles['Normal'])
+            ]
         ]
         
-        child_table = Table(child_info, colWidths=[2*inch, 4.5*inch])
-        child_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f8f9fa')),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#212529')),
-            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('LEFTPADDING', (0, 0), (-1, -1), 12),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
-        ]))
-        elements.append(child_table)
-        elements.append(Spacer(1, 25))
-        
-        # ==================== TỔNG QUAN - CARDS ====================
-        elements.append(self._create_header_box("📊 TỔNG QUAN HOẠT ĐỘNG", '#764ba2'))
-        elements.append(Spacer(1, 15))
-        
-        # Stats cards in table layout
-        stats_row1 = [
-            [self._create_stat_card("Tổng số phiên", str(progress_data.get('total_sessions', 0)), "🎮"),
-             self._create_stat_card("Thời gian chơi", f"{progress_data.get('total_playtime', 0)}p", "⏱️")]
-        ]
-        stats_row2 = [
-            [self._create_stat_card("Điểm trung bình", f"{progress_data.get('avg_score', 0):.1f}/10", "⭐"),
-             self._create_stat_card("Số trò chơi", str(len(progress_data.get('games_stats', []))), "🎯")]
-        ]
-        
-        stats_table1 = Table(stats_row1, colWidths=[3.25*inch, 3.25*inch])
-        stats_table1.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        child_info_table = Table(child_info_data, colWidths=[2.2*inch, 4.8*inch])
+        child_info_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), self.colors.GRAY_50),
+            ('BACKGROUND', (1, 0), (1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, self.colors.GRAY_200),
+            ('LEFTPADDING', (0, 0), (-1, -1), 15),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+            ('TOPPADDING', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
-        elements.append(stats_table1)
-        elements.append(Spacer(1, 10))
+        elements.append(child_info_table)
+        elements.append(Spacer(1, 0.3*inch))
         
-        stats_table2 = Table(stats_row2, colWidths=[3.25*inch, 3.25*inch])
-        stats_table2.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        elements.append(stats_table2)
-        elements.append(Spacer(1, 25))
+        # ==================== TỔNG QUAN ====================
+        elements.append(self._create_section_header("TỔNG QUAN HOẠT ĐỘNG", "📊", self.colors.SECONDARY))
+        elements.append(Spacer(1, 0.15*inch))
         
-        # ==================== BIỂU ĐỒ TRÒ CHƠI ====================
+        stats_table = self._create_stat_summary_table(progress_data)
+        elements.append(stats_table)
+        elements.append(Spacer(1, 0.3*inch))
+        
+        # ==================== CHI TIẾT TRÒ CHƠI ====================
         games_stats = progress_data.get('games_stats', [])
         if games_stats:
-            elements.append(self._create_header_box("🎮 PHÂN BỐ THỜI GIAN CHƠI", '#f093fb'))
-            elements.append(Spacer(1, 15))
-            elements.append(self._create_games_pie_chart(games_stats))
-            elements.append(Spacer(1, 20))
+            elements.append(self._create_section_header("CHI TIẾT TRÒ CHƠI", "🎮", self.colors.INFO))
+            elements.append(Spacer(1, 0.15*inch))
             
-            # Games detail table
-            games_data = [['Tên trò chơi', 'Phiên', 'Điểm TB', 'Level', 'Tiến độ']]
+            # Thêm biểu đồ tròn phân bố
+            pie_chart = self._create_games_pie_chart(games_stats)
+            pie_table = Table([[pie_chart]], colWidths=[7*inch])
+            pie_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            elements.append(pie_table)
+            elements.append(Spacer(1, 0.1*inch))
             
-            for game in games_stats[:5]:  # Top 5 games
+            # Bảng chi tiết
+            game_header = [
+                Paragraph("<b>Tên trò chơi</b>", self.styles['TableHeader']),
+                Paragraph("<b>Phiên</b>", self.styles['TableHeader']),
+                Paragraph("<b>Điểm TB</b>", self.styles['TableHeader']),
+                Paragraph("<b>Level</b>", self.styles['TableHeader']),
+                Paragraph("<b>Tiến độ</b>", self.styles['TableHeader'])
+            ]
+            
+            game_data = [game_header]
+            
+            for game in games_stats[:10]:  # Top 10 games
                 progress_pct = min(game.get('avg_score', 0) * 10, 100)
-                games_data.append([
-                    game.get('game_name', 'N/A')[:20],
-                    str(game.get('sessions', 0)),
-                    f"{game.get('avg_score', 0):.1f}",
-                    str(game.get('level', 1)),
-                    self._create_progress_bar(progress_pct, 1.5*inch)
+                progress_bar = self._create_progress_indicator(progress_pct)
+                
+                game_data.append([
+                    Paragraph(game.get('game_name', 'N/A'), self.styles['TableCell']),
+                    Paragraph(str(game.get('sessions', 0)), self.styles['TableCell']),
+                    Paragraph(f"{game.get('avg_score', 0):.1f}", self.styles['TableCell']),
+                    Paragraph(str(game.get('level', 1)), self.styles['TableCell']),
+                    Paragraph(progress_bar, self.styles['TableCell'])
                 ])
             
-            games_table = Table(games_data, colWidths=[2*inch, 0.8*inch, 0.8*inch, 0.7*inch, 2.2*inch])
-            games_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#667eea')),
+            game_table = Table(game_data, colWidths=[2.2*inch, 0.8*inch, 0.9*inch, 0.8*inch, 2.3*inch])
+            game_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), self.colors.INFO),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-                ('TOPPADDING', (0, 0), (-1, 0), 10),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f8f9fa')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-                ('TOPPADDING', (0, 1), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 0.5, self.colors.GRAY_200),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, self.colors.GRAY_50]),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
             ]))
-            elements.append(games_table)
-            elements.append(Spacer(1, 25))
+            elements.append(game_table)
+            elements.append(Spacer(1, 0.3*inch))
         
         # ==================== PAGE BREAK ====================
         elements.append(PageBreak())
@@ -405,127 +577,148 @@ class ReportGeneratorService:
         # ==================== THỐNG KÊ CẢM XÚC ====================
         emotion_stats = progress_data.get('emotion_stats', {})
         if emotion_stats:
-            elements.append(self._create_header_box("😊 THỐNG KÊ NHẬN DIỆN CẢM XÚC", '#4facfe'))
-            elements.append(Spacer(1, 15))
+            elements.append(self._create_section_header("THỐNG KÊ NHẬN DIỆN CẢM XÚC", "😊", self.colors.SUCCESS))
+            elements.append(Spacer(1, 0.15*inch))
             
-            # Emotion chart
-            elements.append(self._create_emotion_chart(emotion_stats))
-            elements.append(Spacer(1, 20))
+            # Biểu đồ cột
+            bar_chart = self._create_emotion_bar_chart(emotion_stats)
+            chart_table = Table([[bar_chart]], colWidths=[7*inch])
+            chart_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            elements.append(chart_table)
+            elements.append(Spacer(1, 0.15*inch))
             
-            # Emotion detail table
-            emotion_data = [['Cảm xúc', 'Đúng', 'Sai', 'Tổng', 'Độ chính xác']]
-            
+            # Bảng chi tiết
             emotion_icons = {
                 'vui': '😊',
-                'buồn': '😢',
-                'giận': '😠',
-                'sợ': '😨',
-                'ngạc nhiên': '😲'
+                'buon': '😢',
+                'gian': '😠',
+                'so': '😨',
+                'ngac nhien': '😲'
             }
+            
+            emotion_header = [
+                Paragraph("<b>Cảm xúc</b>", self.styles['TableHeader']),
+                Paragraph("<b>Đúng</b>", self.styles['TableHeader']),
+                Paragraph("<b>Sai</b>", self.styles['TableHeader']),
+                Paragraph("<b>Tổng</b>", self.styles['TableHeader']),
+                Paragraph("<b>Độ chính xác</b>", self.styles['TableHeader'])
+            ]
+            
+            emotion_data = [emotion_header]
             
             for emotion, stats in emotion_stats.items():
                 correct = stats.get('correct', 0)
                 incorrect = stats.get('incorrect', 0)
                 total = correct + incorrect
                 accuracy = stats.get('accuracy', 0)
-                icon = emotion_icons.get(emotion.lower(), '😐')
+                
+                # Tìm icon phù hợp
+                icon = '😐'
+                emotion_lower = emotion.lower().replace(' ', '')
+                for key, emoji in emotion_icons.items():
+                    if key in emotion_lower:
+                        icon = emoji
+                        break
+                
+                progress_bar = self._create_progress_indicator(accuracy)
                 
                 emotion_data.append([
-                    f"{icon} {emotion.capitalize()}",
-                    str(correct),
-                    str(incorrect),
-                    str(total),
-                    self._create_progress_bar(accuracy, 1.5*inch)
+                    Paragraph(f"{icon} {emotion.capitalize()}", self.styles['TableCell']),
+                    Paragraph(str(correct), self.styles['TableCell']),
+                    Paragraph(str(incorrect), self.styles['TableCell']),
+                    Paragraph(str(total), self.styles['TableCell']),
+                    Paragraph(progress_bar, self.styles['TableCell'])
                 ])
             
-            emotion_table = Table(emotion_data, colWidths=[1.5*inch, 1*inch, 1*inch, 1*inch, 2*inch])
+            emotion_table = Table(emotion_data, colWidths=[1.5*inch, 1*inch, 1*inch, 1*inch, 2.5*inch])
             emotion_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#764ba2')),
+                ('BACKGROUND', (0, 0), (-1, 0), self.colors.SUCCESS),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-                ('TOPPADDING', (0, 0), (-1, 0), 10),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f8f9fa')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-                ('TOPPADDING', (0, 1), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 0.5, self.colors.GRAY_200),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, self.colors.GRAY_50]),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
             ]))
             elements.append(emotion_table)
-            elements.append(Spacer(1, 25))
+            elements.append(Spacer(1, 0.3*inch))
         
         # ==================== THÀNH TỰU ====================
-        elements.append(self._create_header_box("🏆 THÀNH TỰU ĐẠT ĐƯỢC", '#43e97b'))
-        elements.append(Spacer(1, 15))
+        elements.append(self._create_section_header("THÀNH TỰU ĐẠT ĐƯỢC", "🏆", self.colors.WARNING))
+        elements.append(Spacer(1, 0.15*inch))
         
         achievements = progress_data.get('achievements', [])
         if achievements:
-            achievement_data = [[f"🏆 {ach}"] for ach in achievements]
-            achievement_table = Table(achievement_data, colWidths=[6.5*inch])
+            achievement_data = []
+            for ach in achievements:
+                achievement_data.append([Paragraph(f"🏆 {ach}", self.styles['Normal'])])
+            
+            achievement_table = Table(achievement_data, colWidths=[7*inch])
             achievement_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8f9fa')),
-                ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#212529')),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 0), (-1, -1), self.colors.GRAY_50),
+                ('GRID', (0, 0), (-1, -1), 0.5, self.colors.GRAY_200),
                 ('LEFTPADDING', (0, 0), (-1, -1), 15),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ]))
             elements.append(achievement_table)
         else:
-            no_achievement = Paragraph("Chưa có thành tựu nào. Hãy tiếp tục cố gắng! 💪", section_style)
-            elements.append(no_achievement)
+            no_ach = Paragraph(
+                "Chưa có thành tựu nào. Hãy tiếp tục cố gắng! 💪",
+                self.styles['Normal']
+            )
+            elements.append(no_ach)
         
-        elements.append(Spacer(1, 25))
+        elements.append(Spacer(1, 0.3*inch))
         
         # ==================== NHẬN XÉT ====================
-        elements.append(self._create_header_box("💬 NHẬN XÉT VÀ KHUYẾN NGHỊ", '#f59e0b'))
-        elements.append(Spacer(1, 15))
+        elements.append(self._create_section_header("NHẬN XÉT VÀ KHUYẾN NGHỊ", "💬", self.colors.SECONDARY))
+        elements.append(Spacer(1, 0.15*inch))
         
-        comments = self._generate_comments(progress_data) or []
-        comment_data = [[f"• {comment}"] for comment in comments]
+        comments = self._generate_auto_comments(progress_data)
         
-        if comment_data:
-            comment_table = Table(comment_data, colWidths=[6.5*inch])
+        if comments:
+            comment_data = []
+            for i, comment in enumerate(comments, 1):
+                comment_data.append([Paragraph(f"{i}. {comment}", self.styles['Normal'])])
+            
+            comment_table = Table(comment_data, colWidths=[7*inch])
             comment_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#fffbeb')),
-                ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#212529')),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                ('TOPPADDING', (0, 0), (-1, -1), 8),
                 ('LEFTPADDING', (0, 0), (-1, -1), 15),
                 ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ]))
             elements.append(comment_table)
-        else:
-            elements.append(Paragraph("Chưa có nhận xét nào.", styles['Normal']))
         
-        elements.append(Spacer(1, 30))
+        elements.append(Spacer(1, 0.4*inch))
         
         # ==================== FOOTER ====================
-        footer_line = Drawing(6.5*inch, 0.1*inch)
-        line2 = Line(0, 0, 6.5*inch, 0)
-        line2.strokeColor = colors.HexColor('#dee2e6')
-        line2.strokeWidth = 1
-        footer_line.add(line2)
+        footer_line = Table([['']], colWidths=[7*inch])
+        footer_line.setStyle(TableStyle([
+            ('LINEABOVE', (0, 0), (-1, -1), 1, self.colors.GRAY_200),
+        ]))
         elements.append(footer_line)
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 0.15*inch))
         
         footer_text = f"""
-        <para align=center fontSize=8 textColor=#6c757d>
+        <para align=center>
         <i>Báo cáo được tạo tự động bởi hệ thống EmoGarden</i><br/>
         <i>Ngày tạo: {datetime.now().strftime('%d/%m/%Y lúc %H:%M')}</i><br/>
         <i>📧 support@emogarden.com | 📞 Hotline: 1900-xxxx | 🌐 www.emogarden.com</i>
         </para>
         """
-        footer = Paragraph(footer_text, styles['Normal'])
+        footer = Paragraph(footer_text, self.styles['Footer'])
         elements.append(footer)
         
         # Build PDF
@@ -533,30 +726,49 @@ class ReportGeneratorService:
         buffer.seek(0)
         return buffer
     
-    def _generate_comments(self, progress_data: Dict) -> List[str]:
+    def _generate_auto_comments(self, progress_data: Dict) -> List[str]:
         """Tạo nhận xét tự động dựa trên dữ liệu"""
         comments = []
         
         total_sessions = progress_data.get('total_sessions', 0)
         avg_score = progress_data.get('avg_score', 0)
         
-        # Nhận xét về tần suất chơi
+        # Nhận xét về tần suất
         if total_sessions >= 20:
-            comments.append("Bé rất chăm chỉ và đều đặn trong việc học tập. Đây là một thói quen tuyệt vời! 👏")
+            comments.append(
+                "Bé rất chăm chỉ và đều đặn trong việc học tập. "
+                "Đây là một thói quen tuyệt vời cần duy trì!"
+            )
         elif total_sessions >= 10:
-            comments.append("Bé có tần suất học tập tốt. Hãy tiếp tục duy trì và cố gắng tăng thêm nhé!")
+            comments.append(
+                "Bé có tần suất học tập tốt. "
+                "Hãy tiếp tục duy trì và cố gắng tăng thêm nhé!"
+            )
         else:
-            comments.append("Khuyến khích bé dành nhiều thời gian hơn để học tập và rèn luyện kỹ năng.")
+            comments.append(
+                "Khuyến khích bé dành nhiều thời gian hơn để học tập "
+                "và rèn luyện kỹ năng mỗi ngày."
+            )
         
         # Nhận xét về điểm số
         if avg_score >= 8:
-            comments.append("Kết quả học tập xuất sắc! Bé đang tiến bộ rất tốt và nắm vững kiến thức. 🌟")
+            comments.append(
+                "Kết quả học tập xuất sắc! Bé đang tiến bộ rất tốt "
+                "và nắm vững kiến thức."
+            )
         elif avg_score >= 6:
-            comments.append("Kết quả khá tốt. Bé đang trên đà phát triển và cải thiện từng ngày.")
+            comments.append(
+                "Kết quả khá tốt. Bé đang trên đà phát triển "
+                "và cải thiện từng ngày."
+            )
         elif avg_score >= 4:
-            comments.append("Bé đang làm quen với các bài học. Cần thêm thời gian để nắm vững kiến thức.")
+            comments.append(
+                "Bé đang làm quen với các bài học. "
+                "Cần thêm thời gian để nắm vững kiến thức."
+            )
         else:
-            comments.append("Bé cần được hỗ trợ và khuyến khích nhiều hơn trong quá trình học tập.")
+            comments.append(
+                "Bé cần được hỗ trợ và khuyến khích nhiều hơn trong quá trình học tập.")
         
         # Nhận xét về cảm xúc
         emotion_stats = progress_data.get('emotion_stats', {})
