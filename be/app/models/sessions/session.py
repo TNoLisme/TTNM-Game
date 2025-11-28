@@ -1,5 +1,4 @@
-from sqlalchemy import Column, UUID, TIMESTAMP, String, Integer, Enum, JSON, ARRAY, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, DOUBLE_PRECISION
+from sqlalchemy import Column, UUID, TIMESTAMP, String, Integer, Enum, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 import enum
@@ -21,12 +20,12 @@ class Session(Base):
     end_time = Column(TIMESTAMP)
     state = Column(Enum(SessionStateEnum), nullable=False)
     score = Column(Integer, nullable=False, default=0)
-    emotion_errors = Column(JSON, nullable=False, default={})
+    emotion_errors = Column(Text, nullable=False, default="{}")
     max_errors = Column(Integer, nullable=False)
     level_threshold = Column(Integer, nullable=False)
-    ratio = Column(ARRAY(DOUBLE_PRECISION), nullable=False, default=[])
+    ratio = Column(Text, nullable=False, default="[]")
     time_limit = Column(Integer, nullable=False)
-    question_ids = Column(ARRAY(PG_UUID(as_uuid=True)), nullable=False, default=[])
+    question_ids = Column(Text, nullable=False, default="[]")
 
     # Relationships
     user = relationship("User", back_populates="sessions")

@@ -6,7 +6,7 @@ from ..base import Base
 
 class GameTypeEnum(enum.Enum):
     GameClick = "GameClick"
-    GameCV = "GameCV"
+    GameCV = "GameCV"  # Game CV - Biểu cảm theo tình huống (scenarios)
 
 class Game(Base):
     __tablename__ = "games"
