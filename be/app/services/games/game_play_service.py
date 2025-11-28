@@ -9,24 +9,25 @@ from app.domain.sessions.session_questions import SessionQuestions
 
 # Repositories
 from app.repository.games_repo import GamesRepository
-from app.repository.child_progress_repo import ChildProgressRepository
 from app.repository.sessions_repo import SessionsRepository
 from app.repository.session_questions_repo import SessionQuestionsRepository
 
 # Service
 from app.services.analytics.child_progress_service import ChildProgressService
 from app.services.games.question_service import QuestionService
+from app.services.sessions.emotion_concepts_service import EmotionConceptsService
+from app.services.analytics.child_progress_service import ChildProgressService
 
 
 class GamePlayService:
     def __init__(self, db: Session):
         self.db = db
         self.games_repo = GamesRepository(db)
-        self.progress_repo = ChildProgressRepository(db)
         self.session_repo = SessionsRepository(db)
         self.session_questions_repo = SessionQuestionsRepository(db)
         self.question_service = QuestionService(db)
-        self.child_progress_service = ChildProgressService(self.progress_repo)
+        self.child_progress_service = ChildProgressService(db)
+        self.emotion_concepts_service = EmotionConceptsService(db)
 
     def start_session(self, game_id: str, level: int, user_id: str) -> Dict:
         user_uuid = UUID(user_id)
@@ -54,6 +55,23 @@ class GamePlayService:
             game_id=game_uuid,
             level=level
         )
+        # Lấy session gần nhất
+        latest_session = self.session_repo.get_latest_session(user_uuid, game_uuid)
+        # Nếu có session cũ → dùng emotion_errors để FE hiển thị thẻ học
+        emotion_errors = latest_session.emotion_errors if latest_session else {}
+
+        learning_cards = self.emotion_concepts_service.get_all_concepts()
+        
+        print("=== Emotion Errors ===")
+        print(emotion_errors)
+
+        print("=== Learning Cards ===")
+        for emotion, levels in learning_cards.items():
+            print(f"Emotion: {emotion}")
+            for level, cards in levels.items():
+                print(f"  Level {level}:")
+                for card in cards:
+                    print(f"    - {card['title']} ({card['concept_id']})")
 
         # Tạo Session domain
         session = Session(
@@ -63,7 +81,7 @@ class GamePlayService:
             start_time=datetime.now(),
             state=SessionStateEnum.playing,
             score=0,
-            emotion_errors={},
+            emotion_errors={},  # khi kết thúc level sẽ update
             max_errors=game.max_errors,
             level_threshold=game.level_threshold,
             ratio=ratio,
@@ -78,7 +96,9 @@ class GamePlayService:
             "session_id": str(saved_session.session_id),
             "questions": formatted_questions,
             "max_errors": game.max_errors,
-            "time_limit": game.time_limit
+            "time_limit": game.time_limit,
+            "emotion_errors": emotion_errors, 
+            "learning_cards": learning_cards
         }
 
     def end_session_and_update_progress(self, session_id: str, results: List[Dict[str, Any]]) -> Dict:

@@ -1,30 +1,38 @@
 from typing import List
-from uuid import UUID
+from uuid import UUID, uuid4
+from datetime import datetime
 from sqlalchemy.orm import Session
 from app.repository.child_progress_repo import ChildProgressRepository
 from app.domain.analytics.child_progress import ChildProgress
 from app.domain.sessions.session import Session, SessionStateEnum
-from app.mapper.child_progress_mapper import ChildProgressMapper
 
 
 class ChildProgressService:
-    def __init__(self, progress_repo: ChildProgressRepository):
-        self.progress_repo = progress_repo
-        self.mapper = ChildProgressMapper
+    def __init__(self, db: Session):
+        self.progress_repo = ChildProgressRepository(db)
 
-    # Lấy tiến trình hiện tại hoặc tạo mới nếu chưa có.
+    # Lấy tiến trình hiện tại hoặc tạo mới nếu chưa có
     def get_progress(self, child_id: UUID, game_id: UUID) -> ChildProgress:
-        progress  = self.progress_repo.get_progress(child_id, game_id)
+        progress = self.progress_repo.get_progress(child_id, game_id)
+        print("=== get_progress ===")
+        print(f"Child: {child_id}, Game: {game_id}, Level: {progress.level}, Score: {progress.score}, Ratio: {progress.ratio}")
         return progress
 
+    # Lấy level hiện tại của user
     def get_current_level(self, child_id: UUID, game_id: UUID) -> int:
         progress = self.get_progress(child_id, game_id)
         return progress.level
 
-    def start_session(self, child_id: UUID, game_id: UUID, level: int) -> Session:
-        from uuid import uuid4
-        from datetime import datetime
+    # Lấy ratio hiện tại của user
+    def get_ratio(self, child_id: UUID, game_id: UUID) -> List[float]:
+        progress = self.get_progress(child_id, game_id)
+        default_ratio = [0.1667]*5 + [0.1665]
+        if not progress or not progress.ratio or all(r == 0 for r in progress.ratio):
+            return default_ratio
+        return progress.ratio
 
+    # Tạo session mới cho user
+    def start_session(self, child_id: UUID, game_id: UUID, level: int) -> Session:
         session = Session(
             session_id=uuid4(),
             user_id=child_id,
@@ -34,56 +42,37 @@ class ChildProgressService:
             score=0,
             emotion_errors={},
             max_errors=3,
-            level_threshold=100,
-            ratio=[0.0]*6,
+            level_threshold=100,  # có thể lấy từ game config
+            ratio=self.get_ratio(child_id, game_id),
             time_limit=60,
             questions=[],
-            level=1
+            level=level
         )
+        print("=== start_session ===")
+        print(f"SessionID: {session.session_id}, User: {child_id}, Game: {game_id}, Level: {level}")
         return session
 
-    # Lấy mảng ratio của user theo từng game 
-    def get_ratio(self, user_id: UUID, game_id: UUID) -> List[float]:
-        progress = self.progress_repo.get_progress(user_id, game_id)
-        default_ratio = [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1665]  # 6 emotions
-
-        if not progress or not progress.ratio or all(r == 0 for r in progress.ratio):
-            return default_ratio
-        return progress.ratio
-    
-    # update và trả về progress đã cập nhật
+    # Cập nhật tiến trình sau khi kết thúc session
     def update_progress_after_session(self, child_id: UUID, game_id: UUID, session: Session) -> ChildProgress:
-        """
-        Cập nhật tiến trình sau khi chơi xong một session.
-        Tính lại accuracy, score, ratio, review_emotions, level...
-        """
-        print("a")
         progress = self.progress_repo.get_progress(child_id, game_id)
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score, ". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
-        print("aa ", progress.child_id)
-        progress.accuracy = progress.calculate_accuracy([session]) # mất acc
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
+        print("=== Before update_progress_after_session ===")
+        print(f"ProgressID: {progress.progress_id}, Level: {progress.level}, Score: {progress.score}, Ratio: {progress.ratio}")
+
+        # Tính accuracy dựa trên session
+        progress.accuracy = progress.calculate_accuracy([session])
+        # Cộng score từ các session_questions
         progress.score += sum(getattr(q, "score", 0) for q in getattr(session, "session_questions", []))
-        print("a1")
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
-        # Cập nhật phân bố cảm xúc và review_emotions
+        # Cập nhật review_emotions và ratio
         progress.update_emotion_distribution()
-        print("a2")
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
+
         # Kiểm tra lên level nếu đạt threshold
         level_threshold = getattr(session, "level_threshold", 70)
-        print(";level thread:", level_threshold)
         if progress.check_level_advance(progress.score, level_threshold):
             progress.level += 1
+            print(f"Level advanced! New Level: {progress.level}")
 
-        # Lưu tiến trình vào DB
-        print("a4")
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
-        self.progress_repo.update(progress)
-        print("a5")
-        return progress
+        # Lưu tiến trình
+        updated_progress = self.progress_repo.update(progress)
+        print("=== After update_progress_after_session ===")
+        print(f"ProgressID: {updated_progress.progress_id}, Level: {updated_progress.level}, Score: {updated_progress.score}, Ratio: {updated_progress.ratio}")
+        return updated_progress

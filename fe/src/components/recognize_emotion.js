@@ -2,14 +2,22 @@
 
 let sessionId = null;
 let questions = [];
-let localResults = []; // <-- THÊM: Mảng lưu kết quả local
+let localResults = [];
 let currentIndex = 0;
-let score = 0; // <-- THÊM: Điểm local
+let score = 0;
 let answered = false;
+let usedHint = false;
+
 let elements = {};
 let user = null;
-let gameId = null; // <-- THÊM: Lưu gameId
-let level = null; // <-- THÊM: Lưu level
+let gameId = null;
+let level = null;
+let maxErrors = 1;
+
+let emotionErrors = {};
+let learnedEmotions = [];
+
+let learningCards = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
     user = JSON.parse(localStorage.getItem('currentUser'));
@@ -29,219 +37,261 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // DOM Elements (Lấy trước)
     elements = {
         modal: document.getElementById('feedback-modal'),
         warning: document.getElementById('warning-modal'),
         title: document.getElementById('modal-title'),
         msg: document.getElementById('modal-message'),
-        reviewBtn: document.getElementById('review-btn'),
-        nextBtn: document.getElementById('next-btn'),
+        nextHintBtn: document.getElementById('next-question-btn'),
         closeWarn: document.getElementById('close-warning'),
         score: document.getElementById('score-display'),
-        questionArea: document.getElementById('question-area'), // Sửa: Lấy ID
+        questionArea: document.getElementById('question-area'),
         hintText: document.getElementById('hint-content'),
         hintBtn: document.getElementById('hint-btn'),
         soundBtn: document.getElementById('sound-btn'),
         exitBtn: document.getElementById('exit-btn'),
-        nextHintBtn: document.getElementById('next-question-btn'),
-        answers: document.querySelectorAll('.answer-option') // Lấy 4 nút
+        answers: document.querySelectorAll('.answer-option')
     };
 
-    // Bắt đầu session (SỬA URL thành endpoint chung)
+    // START SESSION API
     try {
-        const res = await fetch(`/games/start/${gameId}`, { // <-- SỬA ENDPOINT
+        const res = await fetch(`/games/start/${gameId}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ user_id: user.user_id, level: level })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: user.user_id, level })
         });
 
-        if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.detail || 'Lỗi khởi động game');
-        }
-
         const data = await res.json();
+
         sessionId = data.session_id;
         questions = data.questions;
-        localResults = []; // Reset mảng kết quả
-        score = 0; // Reset điểm
-        if (!questions || questions.length === 0) {
-            throw new Error("Không thể tải câu hỏi cho level này. (Mảng rỗng)");
-        }
+        learningCards = data.learning_cards || {};
+
+        // Fake emotion errors để test
+        emotionErrors = {
+            "Sợ hãi": 2,
+            "Buồn bã": 1,
+            "Tức giận": 3,
+            "Ghê tởm": 0,
+            "Ngạc nhiên": 4,
+            "Vui vẻ": 0
+        };
+
         loadQuestion(0);
 
     } catch (err) {
-        alert(err.message);
-        console.error(err);
+        alert("Lỗi khởi động game");
+        return;
     }
 
-    // === HÀM MỚI: GỬI KẾT QUẢ KHI KẾT THÚC ===
     async function sendFinalResults() {
-        console.log("Đang gửi kết quả cuối cùng:", localResults);
         try {
-            const res = await fetch('/games/end-level', { // <-- ENDPOINT MỚI
+            await fetch('/games/end-level', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // 'Authorization': `Bearer ${user.token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     session_id: sessionId,
-                    results: localResults // Gửi mảng kết quả
+                    results: localResults
                 })
             });
-
-            if (!res.ok) {
-                throw new Error("Lỗi khi gửi kết quả cuối cùng.");
-            }
-
-            console.log("Đã lưu tiến trình thành công.");
-
         } catch (err) {
-            console.error("Lỗi khi gửi kết quả cuối cùng:", err);
-            alert("Đã xảy ra lỗi khi lưu tiến trình của bạn.");
+            console.error(err);
         }
     }
 
-    // === HÀM LOAD CÂU HỎI (ĐÃ SỬA RENDER) ===
+    // LOAD QUESTION
     async function loadQuestion(i) {
-        // === XỬ LÝ KHI KẾT THÚC LEVEL ===
         if (i >= questions.length) {
-            await sendFinalResults(); // Gửi kết quả
-            alert('Hoàn thành level! Đã lưu tiến trình của bạn.');
+            await sendFinalResults();
+            alert('Hoàn thành level!');
             window.location.href = './select_game.html';
             return;
         }
 
+        usedHint = false;
         const q = questions[i];
 
-        // --- SỬA RENDER ---
-        // 1. Xóa nội dung cũ
         elements.questionArea.innerHTML = '';
 
-        // 2. Thêm ảnh (nếu có)
-        // (Giả sử media_path là đường dẫn tương đối hoặc tuyệt đối đến ảnh)
         if (q.media_path && q.media_path.match(/\.(jpeg|jpg|gif|png)$/)) {
             const img = document.createElement('img');
-            img.src = q.media_path; // (FE cần xử lý đường dẫn này, ví dụ: `../${q.media_path}`)
-            img.alt = q.question_text;
-            img.className = 'question-image'; // (Cần CSS cho class này)
+            img.src = q.media_path;
+            img.className = 'question-image';
             elements.questionArea.appendChild(img);
         }
 
-        // 3. Thêm text câu hỏi
-        const textEl = document.createElement('p');
-        textEl.className = 'question-text';
-        textEl.textContent = q.question_text;
-        elements.questionArea.appendChild(textEl);
+        const text = document.createElement('p');
+        text.className = 'question-text';
+        text.textContent = q.question_text;
+        elements.questionArea.appendChild(text);
 
-        // 4. Render 4 đáp án (Lấy từ q.options)
         elements.answers.forEach((btn, idx) => {
             if (q.options[idx]) {
-                const option = q.options[idx];
-                btn.textContent = option.answer_text; // Lấy text từ API
-                // Lưu câu trả lời đúng vào dataset để check
-                btn.dataset.answer = option.answer_text;
+                btn.textContent = q.options[idx].answer_text;
+                btn.dataset.answer = q.options[idx].answer_text;
                 btn.style.display = 'block';
             } else {
-                btn.style.display = 'none'; // Ẩn nếu game có ít hơn 4 đáp án
+                btn.style.display = 'none';
             }
             btn.className = 'answer-option';
             btn.disabled = false;
         });
-        // --- KẾT THÚC SỬA RENDER ---
 
         elements.hintText.textContent = 'Hãy chọn đáp án của bạn.';
-        elements.score.textContent = `Câu ${i + 1}/${questions.length} | ĐIỂM: ${score}`;
+        elements.score.textContent = `Câu ${i + 1}/${questions.length} | Điểm: ${score}`;
 
-        elements.nextHintBtn.disabled = true;
-        elements.nextHintBtn.style.opacity = '0.6';
         answered = false;
         elements.modal.classList.add('hidden');
     }
 
-    function showFeedback(correct, correctAns) {
+    // FEEDBACK POPUP
+    function showFeedback(correct, correctAns, emotion) {
+        elements.modal.classList.remove('hidden');
         elements.title.textContent = correct ? 'CHÍNH XÁC!' : 'SAI RỒI!';
         elements.title.style.color = correct ? '#10b981' : '#ef4444';
-        elements.msg.textContent = correct ? 'Tuyệt vời!' : `Đáp án đúng là: ${correctAns}`;
-        elements.modal.classList.remove('hidden');
+        elements.msg.textContent = correct ? 'Giỏi lắm!' : `Đáp án đúng: ${correctAns}`;
+
+        const btnContainer = elements.modal.querySelector('.modal-actions');
+        btnContainer.innerHTML = ''; // Xóa nút cũ để render mới
+
+        const bottomContainer = elements.modal.querySelector('.modal-buttons');
+        bottomContainer.innerHTML = '';
+
+        // Trường hợp SAI & đạt max lỗi → chỉ hiện nút Học lại
+        if (!correct && emotionErrors[emotion] >= maxErrors) {
+            const learnBtn = document.createElement('button');
+            learnBtn.textContent = "Học lại cảm xúc";
+            learnBtn.className = "modal-btn learn-btn";
+            learnBtn.onclick = () => showLearningCard(emotion);
+
+            bottomContainer.appendChild(learnBtn);
+            return;
+        }
+
+        // === CÁC TRƯỜNG HỢP CÒN LẠI ===
+        // Bao gồm: trả lời đúng OR trả lời sai nhưng chưa đạt maxError
+        // => hiển thị 2 nút: Xem lại & Câu tiếp theo
+
+        const reviewBtn = document.createElement('button');
+        reviewBtn.textContent = "Xem lại";
+        reviewBtn.className = "modal-btn review-btn";
+        reviewBtn.onclick = () => {
+            elements.modal.classList.add('hidden');
+            // tuỳ bạn muốn xử lý gì trong phần xem lại
+        };
+
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = "Câu tiếp theo";
+        nextBtn.className = "modal-btn next-btn";
+        nextBtn.onclick = handleNextAfterPopup;
+
+        btnContainer.appendChild(reviewBtn);
+        btnContainer.appendChild(nextBtn);
     }
 
+
+    // NEXT QUESTION from popup
+    function handleNextAfterPopup() {
+        elements.modal.classList.add('hidden');
+        currentIndex++;
+        loadQuestion(currentIndex);
+    }
+
+    // POPUP HỌC LẠI
+    function showLearningCard(emotion) {
+        const card = learningCards[emotion]?.[level];
+        if (!card) {
+            alert("Không có thẻ học cho cảm xúc này!");
+            return;
+        }
+
+    // Ẩn feedback cũ
+        elements.modal.classList.remove('hidden');
+        const modalContent = elements.modal.querySelector('.modal-content');
+
+        // Thay nội dung modal thành thẻ học
+        modalContent.innerHTML = `
+        <h2>${card.title}</h2>
+        <p>${card.description}</p>
+        ${card.image_path ? `<img src="${card.image_path}" class="learn-img">` : ''}
+        ${card.audio_path && card.audio_path.length > 0
+                ? `<h3>Video/Audio:</h3>
+            <ul>${card.audio_path.map(a => `<li><a href="${a}" target="_blank">${a.split('/').pop()}</a></li>`).join('')}</ul>`
+                : ''}
+        <div class="modal-buttons">
+            <button id="learn-close-btn" class="btn-next">Tiếp tục</button>
+        </div>
+    `;
+
+        // Tiếp tục
+        document.getElementById('learn-close-btn').onclick = () => {
+            currentIndex++;
+            loadQuestion(currentIndex);
+            elements.modal.classList.add('hidden');
+        };
+    }
+
+
+
+
+    // HINT
     elements.hintBtn.onclick = () => {
+        usedHint = true;
         elements.hintText.textContent = questions[currentIndex].explanation;
     };
 
+    // SOUND
     elements.soundBtn.onclick = () => {
-        const utter = new SpeechSynthesisUtterance(questions[currentIndex].question_text);
-        utter.lang = 'vi-VN';
-        speechSynthesis.speak(utter);
+        const msg = new SpeechSynthesisUtterance(questions[currentIndex].question_text);
+        msg.lang = 'vi-VN';
+        speechSynthesis.speak(msg);
     };
 
+    // EXIT
     elements.exitBtn.onclick = () => {
-        if (confirm('Thoát game? (Tiến trình sẽ không được lưu)')) {
+        if (confirm('Thoát game không lưu tiến trình?')) {
             window.location.href = './select_game.html';
         }
     };
 
-    // === HÀM CLICK ĐÁP ÁN (ĐÃ SỬA: XÓA FETCH) ===
+    // CLICK ANSWER
     elements.answers.forEach(btn => {
-        btn.onclick = async () => {
+        btn.onclick = () => {
             if (answered) return;
             answered = true;
 
-            const selected = btn.dataset.answer; // Lấy từ dataset
             const q = questions[currentIndex];
-            const correct = (selected === q.correct_answer);
+            const chosen = btn.dataset.answer;
+            const correct = (chosen === q.correct_answer);
+            const emotion = q.correct_answer;
 
-            // Cập nhật điểm local
-            if (correct) {
-                score += 10;
-                elements.score.textContent = `Câu ${currentIndex + 1}/${questions.length} | ĐIỂM: ${score}`;
-            }
+            if (correct) score += 10;
 
-            // === THÊM: LƯU KẾT QUẢ VÀO MẢNG LOCAL ===
             localResults.push({
                 question_id: q.question_id,
-                answer: selected,
+                answer: chosen,
                 is_correct: correct,
-                response_time_ms: 5000 // (Tạm thời, bạn cần logic đo thời gian)
+                used_hint: usedHint,
+                response_time_ms: 5000
             });
 
-            // Hiệu ứng UI
-            btn.classList.add(correct ? 'correct' : 'incorrect');
             if (!correct) {
-                elements.answers.forEach(b => {
-                    if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
-                });
+                emotionErrors[emotion] = (emotionErrors[emotion] || 0) + 1;
+
+                if (emotionErrors[emotion] >= maxErrors) {
+                    learnedEmotions.push(emotion);
+                    showFeedback(false, q.correct_answer, emotion);
+                    return;
+                }
             }
-            elements.answers.forEach(b => b.disabled = true);
-            elements.nextHintBtn.disabled = false;
-            elements.nextHintBtn.style.opacity = '1';
 
-            // === XÓA: KHÔNG CẦN GỌI API Ở ĐÂY NỮA ===
-            // await fetch('/api/games/recognize-emotion/answer', ...);
+            elements.answers.forEach(b => {
+                if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
+                else if (b === btn && !correct) b.classList.add('incorrect');
+                b.disabled = true;
+            });
 
-            showFeedback(correct, q.correct_answer);
+            showFeedback(correct, q.correct_answer, emotion);
         };
     });
-
-    // (Các hàm xử lý modal giữ nguyên)
-    elements.nextHintBtn.onclick = () => {
-        if (!answered) {
-            elements.warning.classList.remove('hidden');
-            return;
-        }
-        currentIndex++;
-        loadQuestion(currentIndex);
-    };
-    elements.reviewBtn.onclick = () => elements.modal.classList.add('hidden');
-    elements.nextBtn.onclick = () => {
-        elements.modal.classList.add('hidden');
-        currentIndex++;
-        loadQuestion(currentIndex);
-    };
-    elements.closeWarn.onclick = () => elements.warning.classList.add('hidden');
 });
