@@ -440,19 +440,19 @@
             <form id="question-form">
                 <div class="form-group">
                     <label for="question-text">Câu hỏi *</label>
-                    <textarea id="question-text" rows="3" required placeholder="Nhập câu hỏi..."></textarea>
+                    <textarea id="question-text" rows="3" placeholder="Nhập nội dung câu hỏi..."></textarea>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="question-emotion">Cảm xúc liên quan *</label>
-                        <select id="question-emotion" required>
-                            <option value="">Chọn cảm xúc</option>
-                            <option value="happy">Vui vẻ 😊</option>
-                            <option value="sad">Buồn 😢</option>
-                            <option value="angry">Giận dữ 😠</option>
-                            <option value="scared">Sợ hãi 😨</option>
-                            <option value="surprised">Ngạc nhiên 😲</option>
+                        <label for="question-type">Loại Game *</label>
+                        <select id="question-type" required>
+                            <option value="">Chọn loại game</option>
+                            <option value="face-recognition">👤 Nhìn mặt đoán cảm xúc</option>
+                            <option value="text-scenario">📝 Tình huống → Chọn cảm xúc</option>
+                            <option value="mimic-expression">🎭 Bắt chước biểu cảm</option>
+                            <option value="camera-detection">📷 Camera đoán cảm xúc</option>
+                            <option value="situation-image">🖼️ Nhìn tình huống đoán cảm xúc</option>
+                            <option value="cv-advanced">🤖 Game CV nâng cao</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -465,39 +465,32 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Đáp án *</label>
-                    <div class="answers-container">
-                        <div class="answer-item">
-                            <input type="text" id="answer-1" placeholder="Đáp án A" required>
-                            <label>
-                                <input type="radio" name="correct-answer" value="1" required> Đúng
-                            </label>
-                        </div>
-                        <div class="answer-item">
-                            <input type="text" id="answer-2" placeholder="Đáp án B" required>
-                            <label>
-                                <input type="radio" name="correct-answer" value="2"> Đúng
-                            </label>
-                        </div>
-                        <div class="answer-item">
-                            <input type="text" id="answer-3" placeholder="Đáp án C" required>
-                            <label>
-                                <input type="radio" name="correct-answer" value="3"> Đúng
-                            </label>
-                        </div>
-                        <div class="answer-item">
-                            <input type="text" id="answer-4" placeholder="Đáp án D" required>
-                            <label>
-                                <input type="radio" name="correct-answer" value="4"> Đúng
-                            </label>
-                        </div>
-                    </div>
+                <div class="form-group" id="prompt-section" style="display:none;">
+                    <label for="game-prompt">Đề bài *</label>
+                    <textarea id="game-prompt" rows="2"></textarea>
+                    <small class="form-hint">Hệ thống sẽ đọc đề bài này cho trẻ</small>
+                </div>
+
+                <div class="form-group" id="image-upload-section" style="display:none;">
+                    <label for="question-images">Upload ảnh / video *</label>
+                    <input type="file" id="question-images" accept="image/*,video/*">
+                    <div id="image-preview" class="image-preview-container"></div>
+                    <small class="form-hint" id="upload-hint"></small>
+                </div>
+
+                <div class="form-group" id="hint-section" style="display:none;">
+                    <label for="question-hint">Gợi ý (tùy chọn)</label>
+                    <textarea id="question-hint" rows="2"></textarea>
+                </div>
+
+                <div class="form-group" id="answers-section">
+                    <label id="answers-label">Đáp án *</label>
+                    <div id="answers-container" class="answers-container"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="question-explanation">Giải thích (tùy chọn)</label>
-                    <textarea id="question-explanation" rows="2" placeholder="Giải thích tại sao đây là đáp án đúng..."></textarea>
+                    <textarea id="question-explanation" rows="2"></textarea>
                 </div>
 
                 <div class="form-actions">

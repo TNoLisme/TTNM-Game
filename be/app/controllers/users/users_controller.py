@@ -55,10 +55,6 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 async def login(request: LoginRequest, db=Depends(get_db)):
-    """
-    ⭐ CHUẨN HÓA LOGIN RESPONSE
-    Luôn trả về: {success, message, user, access_token}
-    """
     print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f"🔐 LOGIN ATTEMPT")
     print(f"   Username: {request.username}")

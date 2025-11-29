@@ -133,7 +133,7 @@ class ReportGeneratorService:
                 'CustomSubtitle',
                 parent=base_styles['Normal'],
                 fontName=self.fonts['italic'],
-                fontSize=12,
+                fontSize=13,
                 textColor=self.colors.GRAY_600,
                 alignment=TA_CENTER,
                 spaceAfter=20
@@ -143,7 +143,7 @@ class ReportGeneratorService:
                 'SectionHeader',
                 parent=base_styles['Heading2'],
                 fontName=self.fonts['bold'],
-                fontSize=16,
+                fontSize=18,
                 textColor=colors.white,
                 alignment=TA_LEFT,
                 leftIndent=10,
@@ -155,7 +155,7 @@ class ReportGeneratorService:
                 'CustomNormal',
                 parent=base_styles['Normal'],
                 fontName=self.fonts['regular'],
-                fontSize=10,
+                fontSize=11,
                 textColor=self.colors.GRAY_900,
                 alignment=TA_LEFT
             ),
@@ -164,7 +164,7 @@ class ReportGeneratorService:
                 'TableHeader',
                 parent=base_styles['Normal'],
                 fontName=self.fonts['bold'],
-                fontSize=10,
+                fontSize=13,
                 textColor=colors.white,
                 alignment=TA_CENTER
             ),
@@ -173,7 +173,7 @@ class ReportGeneratorService:
                 'TableCell',
                 parent=base_styles['Normal'],
                 fontName=self.fonts['regular'],
-                fontSize=9,
+                fontSize=11,
                 textColor=self.colors.GRAY_900,
                 alignment=TA_CENTER
             ),
@@ -191,7 +191,6 @@ class ReportGeneratorService:
         return custom_styles
     
     def _create_section_header(self, text: str, icon: str = "", bg_color=None) -> Table:
-        """Tạo header cho section với màu nền"""
         if bg_color is None:
             bg_color = self.colors.PRIMARY
         
@@ -249,58 +248,55 @@ class ReportGeneratorService:
         return f"<font color='{color}'>{bar}</font> {percentage:.0f}%"
     
     def _create_emotion_bar_chart(self, emotion_stats: Dict) -> Drawing:
-        """Tạo biểu đồ cột cho thống kê cảm xúc"""
-        d = Drawing(450, 200)
-        
+        d = Drawing(350, 180)  
+
         if not emotion_stats:
             return d
-        
+
         chart = VerticalBarChart()
-        chart.x = 50
-        chart.y = 30
-        chart.height = 150
-        chart.width = 380
-        
+        chart.x = 40     
+        chart.y = 25
+        chart.width = 260  
+        chart.height = 130
+
         emotions = list(emotion_stats.keys())
         accuracies = [stats.get('accuracy', 0) for stats in emotion_stats.values()]
-        
+
         chart.data = [accuracies]
+
         chart.categoryAxis.categoryNames = [e.capitalize() for e in emotions]
         chart.categoryAxis.labels.angle = 0
-        chart.categoryAxis.labels.fontSize = 9
-        chart.categoryAxis.labels.boxAnchor = 'n'
-        
+        chart.categoryAxis.labels.fontSize = 10
+        chart.categoryAxis.labels.dy = -5
+
         chart.valueAxis.valueMin = 0
         chart.valueAxis.valueMax = 100
         chart.valueAxis.valueStep = 20
-        chart.valueAxis.labels.fontSize = 9
-        
-        # Màu gradient đẹp
+        chart.valueAxis.labels.fontSize = 10
+
         chart.bars[0].fillColor = self.colors.PRIMARY
         chart.bars.strokeColor = None
-        
+
         d.add(chart)
         return d
+
     
     def _create_games_pie_chart(self, games_stats: List[Dict]) -> Drawing:
-        """Tạo biểu đồ tròn cho phân bố trò chơi"""
-        d = Drawing(350, 220)
-        
+        d = Drawing(380, 240)  
+
         if not games_stats:
             return d
-        
+
         pie = Pie()
-        pie.x = 80
-        pie.y = 30
-        pie.width = 140
-        pie.height = 140
-        
-        # Lấy top 5 games
+        pie.x = 110
+        pie.y = 40
+        pie.width = 150
+        pie.height = 150
+
         top_games = games_stats[:5]
         pie.data = [game.get('sessions', 0) for game in top_games]
-        pie.labels = [game.get('game_name', 'N/A')[:20] for game in top_games]
-        
-        # Màu sắc đẹp
+        pie.labels = [game.get('game_name', 'N/A')[:25] for game in top_games]
+
         color_scheme = [
             self.colors.PRIMARY,
             self.colors.SECONDARY,
@@ -308,37 +304,37 @@ class ReportGeneratorService:
             self.colors.SUCCESS,
             self.colors.WARNING
         ]
-        
+
         pie.slices.strokeColor = colors.white
-        pie.slices.strokeWidth = 2
+        pie.slices.strokeWidth = 1.5
+
         for i, color in enumerate(color_scheme):
             if i < len(top_games):
                 pie.slices[i].fillColor = color
-        
-        pie.slices.fontSize = 8
+
+        pie.slices.fontSize = 10       
         pie.slices.fontName = self.fonts['regular']
-        
+        pie.slices.popout = 3         
+
         d.add(pie)
         return d
+
     
     def _create_score_trend_drawing(self, games_stats: List[Dict]) -> Drawing:
-        """Tạo visualization cho xu hướng điểm số"""
-        d = Drawing(450, 150)
-        
+        d = Drawing(380, 160)
+
         if not games_stats:
             return d
-        
-        # Vẽ mini bar chart cho điểm số
+
         max_games = min(len(games_stats), 10)
-        bar_width = 35
-        spacing = 5
-        start_x = 30
-        
+        bar_width = 30
+        spacing = 12
+        start_x = 25
+
         for i, game in enumerate(games_stats[:max_games]):
             score = game.get('avg_score', 0)
-            bar_height = (score / 10) * 100  # Scale to 100px max
-            
-            # Màu theo điểm
+            bar_height = (score / 10) * 110
+
             if score >= 8:
                 bar_color = self.colors.SUCCESS
             elif score >= 6:
@@ -347,30 +343,24 @@ class ReportGeneratorService:
                 bar_color = self.colors.WARNING
             else:
                 bar_color = self.colors.DANGER
-            
-            # Vẽ bar
-            rect = Rect(
-                start_x + (i * (bar_width + spacing)),
-                30,
-                bar_width,
-                bar_height
-            )
+
+            rect = Rect(start_x + (i * (bar_width + spacing)), 30, bar_width, bar_height)
             rect.fillColor = bar_color
             rect.strokeColor = None
             d.add(rect)
-            
-            # Label điểm
+
             label = String(
                 start_x + (i * (bar_width + spacing)) + bar_width/2,
                 bar_height + 35,
                 f"{score:.1f}"
             )
-            label.fontSize = 8
+            label.fontSize = 10 
             label.textAnchor = 'middle'
             label.fontName = self.fonts['bold']
             d.add(label)
-        
+
         return d
+
     
     def _create_stat_summary_table(self, stats: Dict) -> Table:
         data = [

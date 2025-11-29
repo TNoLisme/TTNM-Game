@@ -39,10 +39,8 @@ const redirectBasedOnRole = (userFromAPI, accessToken) => {
         return;
     }
 
-    // Lấy role từ accountType hoặc role field
     const role = (userFromAPI.accountType || userFromAPI.role || '').toLowerCase();
     
-    // Lưu user info đầy đủ vào localStorage
     const saveUser = { ...userFromAPI, user_id, role };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
     
@@ -57,7 +55,6 @@ const redirectBasedOnRole = (userFromAPI, accessToken) => {
     console.log('%c🚀 LƯU USER:', 'color: blue; font-weight: bold;', saveUser);
     console.log('%c🔑 ROLE:', 'color: green; font-weight: bold;', role);
 
-    // Redirect dựa trên role
     let redirectUrl = '/src/pages/home.html'; // Default cho child
     let welcomeMsg = 'Chào mừng ' + (saveUser.fullName || saveUser.name || saveUser.username || 'bạn');
 
@@ -75,7 +72,6 @@ const redirectBasedOnRole = (userFromAPI, accessToken) => {
 
     showToast(welcomeMsg, 'success');
     
-    // Redirect sau 1.5 giây
     setTimeout(() => {
         location.href = redirectUrl;
     }, 1500);

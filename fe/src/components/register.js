@@ -62,7 +62,7 @@ const handleRegister = async () => {
     if (errorMsg) return showError(errorMsg);
 
     try {
-        const res = await fetch(`${API_URL}/register`, {
+        const res = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(user),

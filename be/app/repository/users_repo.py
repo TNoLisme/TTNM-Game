@@ -14,7 +14,7 @@ class UsersRepository(BaseRepository[UserModel, UserDomain]):
     # ================================
     # SIÊU HÀM: LƯU + CẬP NHẬT = 1 PHÁT
     # ================================
-    def save(self, user: UserDomain) -> UserDomain:
+    def save_user(self, user: UserDomain) -> UserDomain:
         """LƯU HOẶC CẬP NHẬT – KHÔNG BAO GIỜ LỖI REFRESH!"""
         user_model = self.mapper_class.to_model(user)
         
