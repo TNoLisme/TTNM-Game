@@ -7,9 +7,28 @@
     <title>Ai là ai & đang cảm xúc gì?</title>
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/game_click_3.css" />
+    <link rel="stylesheet" href="../styles/navigation.css">
 </head>
 
 <body>
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
+        </div>
+
+        <div class="nav-links">
+            <a href="./home.html" class="nav-item">Trang chủ</a>
+            <a href="./learn.html" class="nav-item active">Học</a>
+            <a href="./select_game.html" class="nav-item">Chơi game</a>
+        </div>
+
+        <div class="nav-user-actions">
+            <a href="./profile.html" class="nav-profile-link" id="profile-button">
+                <div class="profile-icon"></div>
+            </a>
+            <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
+        </div>
+    </nav>
     <!-- Màn hình chơi game -->
     <div id="game-screen" class="screen">
         <div class="game-container">
