@@ -55,3 +55,15 @@ class SessionsRepository(BaseRepository[SessionModel, Session]):
             self.db_session.rollback()
             print(f"[SessionsRepository] Failed to update session: {e}")
             raise
+
+    def get_latest_session(self, user_id: UUID, game_id: UUID):
+        return (
+            self.db_session.query(self.model_class)
+            .filter(
+                self.model_class.user_id == user_id,
+                self.model_class.game_id == game_id
+            )
+            .order_by(SessionModel.start_time.desc())
+            .first()
+        )
+

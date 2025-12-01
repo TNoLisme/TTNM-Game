@@ -18,7 +18,7 @@ class ChildProgressService:
         return progress
 
     def get_current_level(self, child_id: UUID, game_id: UUID) -> int:
-        progress = self.get_progress(child_id, game_id)
+        progress = self.progress_repo.get_progress(child_id, game_id)
         return progress.level
 
     def start_session(self, child_id: UUID, game_id: UUID, level: int) -> Session:
@@ -44,7 +44,9 @@ class ChildProgressService:
 
     # Lấy mảng ratio của user theo từng game 
     def get_ratio(self, user_id: UUID, game_id: UUID) -> List[float]:
+        print("A23")
         progress = self.progress_repo.get_progress(user_id, game_id)
+        print("A")
         default_ratio = [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1665]  # 6 emotions
 
         if not progress or not progress.ratio or all(r == 0 for r in progress.ratio):
