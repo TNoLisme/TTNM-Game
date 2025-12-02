@@ -1,5 +1,6 @@
 run fe: cd đến fe và npm run dev
 sau đó truy cập link nó cung cấp
+<<<<<<< HEAD
 
 run be: uvicorn app.main:app --reload
 
@@ -12,3 +13,6 @@ chọn cảm xúc theo tình huống -> cảm xúc đúng chỗ
 gameCV
 biểu hiện cảm xúc theo yêu cầu -> thử thách cảm xúc
 cảm xúc theo tình huống -> câu chuyện trên khuôn mặt
+=======
+uvicorn app.main:app --reload
+>>>>>>> origin/user/tan
