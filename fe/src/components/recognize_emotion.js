@@ -38,19 +38,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     elements = {
-        modal: document.getElementById('feedback-modal'),
-        warning: document.getElementById('warning-modal'),
-        title: document.getElementById('modal-title'),
-        msg: document.getElementById('modal-message'),
-        nextHintBtn: document.getElementById('next-question-btn'),
-        closeWarn: document.getElementById('close-warning'),
+        // Game elements
         score: document.getElementById('score-display'),
         questionArea: document.getElementById('question-area'),
         hintText: document.getElementById('hint-content'),
         hintBtn: document.getElementById('hint-btn'),
         soundBtn: document.getElementById('sound-btn'),
         exitBtn: document.getElementById('exit-btn'),
-        answers: document.querySelectorAll('.answer-option')
+        answers: document.querySelectorAll('.answer-option'),
+        nextHintBtn: document.getElementById('next-question-btn'),
+
+        // Modals
+        feedbackModal: document.getElementById('feedback-modal'),
+        warningModal: document.getElementById('warning-modal'),
+        learningModal: document.getElementById('learning-modal'),
+
+        // Modal Contents
+        modalTitle: document.getElementById('modal-title'),
+        modalMsg: document.getElementById('modal-message'),
+        modalActionsContainer: document.getElementById('feedback-modal-actions'),
+
+        learningTitle: document.getElementById('learning-emotion-title'),
+        learningBody: document.getElementById('learning-card-body'),
+        learningCloseBtn: document.getElementById('learning-close-btn'),
+        closeWarn: document.getElementById('close-warning'),
     };
 
     // START SESSION API
@@ -61,26 +72,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             body: JSON.stringify({ user_id: user.user_id, level })
         });
 
+        if (!res.ok) throw new Error("Lỗi khởi động game");
+
         const data = await res.json();
 
         sessionId = data.session_id;
         questions = data.questions;
         learningCards = data.learning_cards || {};
 
-        // Fake emotion errors để test
+        // Chuẩn hóa key cảm xúc về chữ thường
+        const normalizedLearningCards = {};
+        for (const key in learningCards) {
+            if (learningCards.hasOwnProperty(key)) {
+                normalizedLearningCards[key.trim().toLowerCase()] = learningCards[key];
+            }
+        }
+        learningCards = normalizedLearningCards;
+
+        // Khởi tạo emotionErrors với các key đã chuẩn hóa
         emotionErrors = {
-            "Sợ hãi": 2,
-            "Buồn bã": 1,
-            "Tức giận": 3,
-            "Ghê tởm": 0,
-            "Ngạc nhiên": 4,
-            "Vui vẻ": 0
+            "sợ hãi": 0,
+            "buồn bã": 0,
+            "tức giận": 0,
+            "ghê tởm": 0,
+            "ngạc nhiên": 0,
+            "vui vẻ": 0
         };
+
 
         loadQuestion(0);
 
     } catch (err) {
-        alert("Lỗi khởi động game");
+        console.error(err);
+        alert("Lỗi khởi động game: " + err.message);
         return;
     }
 
@@ -111,11 +135,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         usedHint = false;
         const q = questions[i];
 
+        // Reset Question Area
         elements.questionArea.innerHTML = '';
 
         if (q.media_path && q.media_path.match(/\.(jpeg|jpg|gif|png)$/)) {
             const img = document.createElement('img');
-            img.src = q.media_path;
+            // Dùng logic thay thế đường dẫn tương đối đã sửa ở bước trước
+            const relativePath = q.media_path.replace('/fe/', '../../');
+            img.src = relativePath;
             img.className = 'question-image';
             elements.questionArea.appendChild(img);
         }
@@ -133,6 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 btn.style.display = 'none';
             }
+            // Reset style và trạng thái nút
             btn.className = 'answer-option';
             btn.disabled = false;
         });
@@ -141,97 +169,90 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.score.textContent = `Câu ${i + 1}/${questions.length} | Điểm: ${score}`;
 
         answered = false;
-        elements.modal.classList.add('hidden');
+        elements.feedbackModal.classList.add('hidden'); // Đảm bảo Modal Feedback ẩn
+        elements.learningModal.classList.add('hidden'); // Đảm bảo Modal Học tập ẩn
     }
 
     // FEEDBACK POPUP
-    function showFeedback(correct, correctAns, emotion) {
-        elements.modal.classList.remove('hidden');
-        elements.title.textContent = correct ? 'CHÍNH XÁC!' : 'SAI RỒI!';
-        elements.title.style.color = correct ? '#10b981' : '#ef4444';
-        elements.msg.textContent = correct ? 'Giỏi lắm!' : `Đáp án đúng: ${correctAns}`;
+    function showFeedback(correct, correctAns, emotionKey) {
+        elements.modalTitle.textContent = correct ? 'CHÍNH XÁC!' : 'SAI RỒI!';
+        elements.modalTitle.style.color = correct ? '#10b981' : '#ef4444';
+        elements.modalMsg.textContent = correct ? 'Giỏi lắm!' : `Đáp án đúng: ${correctAns}`;
 
-        const btnContainer = elements.modal.querySelector('.modal-actions');
-        btnContainer.innerHTML = ''; // Xóa nút cũ để render mới
-
-        const bottomContainer = elements.modal.querySelector('.modal-buttons');
-        bottomContainer.innerHTML = '';
+        // Reset container
+        elements.modalActionsContainer.innerHTML = '';
 
         // Trường hợp SAI & đạt max lỗi → chỉ hiện nút Học lại
-        if (!correct && emotionErrors[emotion] >= maxErrors) {
+        if (!correct && emotionErrors[emotionKey.trim().toLowerCase()] >= maxErrors) {
             const learnBtn = document.createElement('button');
             learnBtn.textContent = "Học lại cảm xúc";
             learnBtn.className = "modal-btn learn-btn";
-            learnBtn.onclick = () => showLearningCard(emotion);
+            learnBtn.onclick = () => showLearningCard(emotionKey);
 
-            bottomContainer.appendChild(learnBtn);
-            return;
+            elements.modalActionsContainer.appendChild(learnBtn);
+        } else {
+            // === CÁC TRƯỜNG HỢP CÒN LẠI ===
+            // Hiển thị 2 nút: Xem lại & Câu tiếp theo
+
+            const reviewBtn = document.createElement('button');
+            reviewBtn.textContent = "Xem lại";
+            reviewBtn.className = "modal-btn review-btn";
+            reviewBtn.onclick = () => elements.feedbackModal.classList.add('hidden'); // Đóng modal
+
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = "Câu tiếp theo";
+            nextBtn.className = "modal-btn next-btn";
+            nextBtn.onclick = handleNextAfterPopup;
+
+            elements.modalActionsContainer.appendChild(reviewBtn);
+            elements.modalActionsContainer.appendChild(nextBtn);
         }
 
-        // === CÁC TRƯỜNG HỢP CÒN LẠI ===
-        // Bao gồm: trả lời đúng OR trả lời sai nhưng chưa đạt maxError
-        // => hiển thị 2 nút: Xem lại & Câu tiếp theo
-
-        const reviewBtn = document.createElement('button');
-        reviewBtn.textContent = "Xem lại";
-        reviewBtn.className = "modal-btn review-btn";
-        reviewBtn.onclick = () => {
-            elements.modal.classList.add('hidden');
-            // tuỳ bạn muốn xử lý gì trong phần xem lại
-        };
-
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = "Câu tiếp theo";
-        nextBtn.className = "modal-btn next-btn";
-        nextBtn.onclick = handleNextAfterPopup;
-
-        btnContainer.appendChild(reviewBtn);
-        btnContainer.appendChild(nextBtn);
+        elements.feedbackModal.classList.remove('hidden');
     }
 
 
     // NEXT QUESTION from popup
     function handleNextAfterPopup() {
-        elements.modal.classList.add('hidden');
+        elements.feedbackModal.classList.add('hidden');
         currentIndex++;
         loadQuestion(currentIndex);
     }
 
     // POPUP HỌC LẠI
     function showLearningCard(emotion) {
-        const card = learningCards[emotion]?.[level];
-        if (!card) {
-            alert("Không có thẻ học cho cảm xúc này!");
-            return;
+        elements.feedbackModal.classList.add('hidden'); // Ẩn Modal Feedback
+
+        const emotionKey = emotion.trim().toLowerCase();
+        const cards = learningCards[emotionKey]?.[level]; // Lấy danh sách thẻ học theo level
+
+        elements.learningTitle.textContent = emotion; // Hiển thị tên cảm xúc
+        elements.learningBody.innerHTML = '';
+
+        if (!cards || cards.length === 0) {
+            elements.learningBody.innerHTML = `<p>Hiện không có thẻ học cho cảm xúc <strong>${emotion}</strong> ở level ${level}. Vui lòng tiếp tục.</p>`;
+        } else {
+            cards.forEach(card => {
+                const cardHtml = `
+                    <div class="concept-card">
+                        <h3>${card.title || emotion}</h3>
+                        <p>${card.description || ""}</p>
+                        ${card.image_path ? `<img src="${card.image_path.replace('/fe/', '../../')}" class="learn-img">` : ''}
+                    </div>
+`;
+                elements.learningBody.insertAdjacentHTML('beforeend', cardHtml);
+            });
         }
 
-    // Ẩn feedback cũ
-        elements.modal.classList.remove('hidden');
-        const modalContent = elements.modal.querySelector('.modal-content');
-
-        // Thay nội dung modal thành thẻ học
-        modalContent.innerHTML = `
-        <h2>${card.title}</h2>
-        <p>${card.description}</p>
-        ${card.image_path ? `<img src="${card.image_path}" class="learn-img">` : ''}
-        ${card.audio_path && card.audio_path.length > 0
-                ? `<h3>Video/Audio:</h3>
-            <ul>${card.audio_path.map(a => `<li><a href="${a}" target="_blank">${a.split('/').pop()}</a></li>`).join('')}</ul>`
-                : ''}
-        <div class="modal-buttons">
-            <button id="learn-close-btn" class="btn-next">Tiếp tục</button>
-        </div>
-    `;
-
-        // Tiếp tục
-        document.getElementById('learn-close-btn').onclick = () => {
+        // Gán sự kiện cho nút Đã hiểu/Tiếp tục của Modal Học tập
+        elements.learningCloseBtn.onclick = () => {
+            elements.learningModal.classList.add('hidden');
             currentIndex++;
             loadQuestion(currentIndex);
-            elements.modal.classList.add('hidden');
         };
+
+        elements.learningModal.classList.remove('hidden');
     }
-
-
 
 
     // HINT
@@ -263,7 +284,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const q = questions[currentIndex];
             const chosen = btn.dataset.answer;
             const correct = (chosen === q.correct_answer);
-            const emotion = q.correct_answer;
+            const emotion = q.correct_answer; // Emotion key (Ví dụ: "Vui vẻ")
+            const emotionKey = emotion.trim().toLowerCase(); // Key đã chuẩn hóa ("vui vẻ")
 
             if (correct) score += 10;
 
@@ -276,21 +298,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (!correct) {
-                emotionErrors[emotion] = (emotionErrors[emotion] || 0) + 1;
+                // Tăng lỗi cho cảm xúc, sử dụng key đã chuẩn hóa
+                emotionErrors[emotionKey] = (emotionErrors[emotionKey] || 0) + 1;
 
-                if (emotionErrors[emotion] >= maxErrors) {
-                    learnedEmotions.push(emotion);
+                if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
+                    // Đánh dấu là đã học và không hiện lại
+                    learnedEmotions.push(emotionKey);
+                // Hiển thị Modal Feedback với nút Học lại
                     showFeedback(false, q.correct_answer, emotion);
-                    return;
+                    return; // Chặn logic hiển thị đáp án và chuyển sang feedback thường
                 }
             }
 
+            // Logic tô màu nút (chỉ chạy nếu không bị chặn bởi Học lại bắt buộc)
             elements.answers.forEach(b => {
                 if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
                 else if (b === btn && !correct) b.classList.add('incorrect');
                 b.disabled = true;
             });
 
+            // Hiển thị Modal Feedback thông thường
             showFeedback(correct, q.correct_answer, emotion);
         };
     });

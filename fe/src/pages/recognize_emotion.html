@@ -13,7 +13,6 @@
 <body>
     <main class="game-main-content">
         <header class="game-header">
-            <!-- Tiêu đề và nút sẽ được cập nhật bởi JS -->
             <h1 id="game-name">GAME CLICK (Level 1)</h1>
             <div class="header-actions">
                 <span id="score-display" class="score-box">Câu 1/10 | ĐIỂM: 0</span>
@@ -26,19 +25,9 @@
         </header>
 
         <section class="game-area-grid">
-
-            <!-- 
-              KHU VỰC SỬA 1: Xóa <p> placeholder.
-              JS (hàm loadQuestion) sẽ tự động tạo <img> và <p> vào đây.
-            -->
             <div id="question-area" class="question-box">
-                <!-- Nội dung động (ảnh/text câu hỏi) sẽ được JS chèn vào đây -->
             </div>
 
-            <!-- 
-              KHU VỰC SỬA 2: Xóa text "Đáp án A/B/C/D".
-              JS (hàm loadQuestion) sẽ tìm 4 nút này và gán text mới.
-            -->
             <div id="answer-grid" class="answer-area-grid">
                 <button class="answer-option" data-answer-id="A"></button>
                 <button class="answer-option" data-answer-id="B"></button>
@@ -57,16 +46,12 @@
         </footer>
     </main>
 
-    <!-- Các Modal (giữ nguyên) -->
     <div id="feedback-modal" class="modal hidden">
         <div class="modal-content">
             <h2 id="modal-title">CHÍNH XÁC!</h2>
             <p id="modal-message">Chúc mừng bạn!</p>
-            <div class="modal-actions">
-                <button id="review-btn" class="modal-btn review-btn">Xem lại</button>
-                <button id="next-btn" class="modal-btn next-btn">Câu tiếp theo</button>
+            <div class="modal-actions" id="feedback-modal-actions">
             </div>
-            <div class="modal-buttons"></div>
         </div>
     </div>
 
@@ -78,9 +63,16 @@
         </div>
     </div>
 
-    <!-- 
-      File JS đã được sửa ở bước trước, chỉ cần đảm bảo đường dẫn đúng 
-    -->
+    <div id="learning-modal" class="modal hidden">
+        <div class="modal-content learning-content">
+            <h2>Góc học tập: <span id="learning-emotion-title"></span></h2>
+            <div id="learning-card-body">
+            </div>
+            <button id="learning-close-btn" class="modal-btn next-btn" style="margin-top: 20px;">Đã hiểu, tiếp
+                tục!</button>
+        </div>
+    </div>
+
     <script src="../components/recognize_emotion.js"></script>
 </body>
 

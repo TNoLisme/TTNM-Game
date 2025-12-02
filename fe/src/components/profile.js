@@ -1,3 +1,4 @@
+
 const API_URL = "http://localhost:8000";
 
 const $ = id => document.getElementById(id);
@@ -97,11 +98,8 @@ async function saveProfile(e) {
 // ==================== REPORT FUNCTIONS ====================
 
 async function requestReport(period) {
-    const token = localStorage.getItem("token");
     
     console.log("%c=== REQUEST REPORT DEBUG ===", "color: yellow; font-size: 14px;");
-    console.log("Token exists:", !!token);
-    console.log("Token preview:", token ? token.substring(0, 20) + "..." : "NULL");
     console.log("Period:", period);
     console.log("Current profile:", window.currentProfile);
     
