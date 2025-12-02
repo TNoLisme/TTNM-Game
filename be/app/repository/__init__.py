@@ -19,4 +19,4 @@ from .game_data_contents_repo import GameDataContentsRepository
 __all__ = ['BaseRepository', 'ChildProgressRepository', 'ChildRepository', 'EmotionConceptsRepository',
            'GamesRepository', 'GameContentsRepository', 'GameDataRepository', 'GameHistoryRepository',
            'QuestionsRepository', 'ReportRepository', 'SessionsRepository', 'SessionHistoryRepository',
-           'SessionQuestionsRepository', 'UsersRepository', 'GameDataContentsRepository']
+           'SessionQuestionsRepository', 'UsersRepository', 'GameDataContentsRepository', 'AdminRepository']

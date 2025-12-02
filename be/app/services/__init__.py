@@ -2,9 +2,9 @@
 from .analytics import ChildProgressService, GameHistoryService, ReportService, SessionHistoryService
 from .games import GameService, QuestionService
 from .sessions import EmotionConceptsService, SessionsService, SessionQuestionsService
-from .users import UsersService
+from .users import UsersService, AdminService
 
 __all__ = ['ChildProgressService', 'GameHistoryService', 'ReportService', 'SessionHistoryService',
            'GameService', 'QuestionService',
            'EmotionConceptsService', 'SessionsService', 'SessionQuestionsService',
-           'UsersService']
+           'UsersService', 'AdminService']

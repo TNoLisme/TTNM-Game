@@ -44,9 +44,9 @@ class ChildProgressService:
 
     # Lấy mảng ratio của user theo từng game 
     def get_ratio(self, user_id: UUID, game_id: UUID) -> List[float]:
-        print("A23")
+
         progress = self.progress_repo.get_progress(user_id, game_id)
-        print("A")
+
         default_ratio = [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1665]  # 6 emotions
 
         if not progress or not progress.ratio or all(r == 0 for r in progress.ratio):

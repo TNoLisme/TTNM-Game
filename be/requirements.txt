@@ -5,4 +5,9 @@ alembic
 python-dotenv
 pydantic
 pyodbc
+<<<<<<< HEAD
+reportlab==4.0.7 
+Pillow==10.1.0
+=======
 httpx
+>>>>>>> origin/main
