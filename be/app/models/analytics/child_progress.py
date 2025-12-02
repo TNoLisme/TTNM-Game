@@ -1,4 +1,4 @@
-from sqlalchemy import Column, UUID, Integer, Float, TIMESTAMP, ARRAY, ForeignKey
+from sqlalchemy import Column, UUID, Integer, Float, TIMESTAMP, ARRAY, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, DOUBLE_PRECISION
 from sqlalchemy.orm import relationship
 from uuid import uuid4
@@ -15,8 +15,8 @@ class ChildProgress(Base):
     avg_response_time = Column(Float, nullable=False)
     score = Column(Integer, nullable=False)
     last_played = Column(TIMESTAMP, nullable=False)
-    ratio = Column(ARRAY(DOUBLE_PRECISION), nullable=False, default=[])
-    review_emotions = Column(ARRAY(PG_UUID(as_uuid=True)), nullable=False, default=[])
+    ratio = Column(String, nullable=False, default="[]")
+    review_emotions = Column(String, nullable=False, default="[]")
 
     # Relationships
     child = relationship("Child", back_populates="progress")

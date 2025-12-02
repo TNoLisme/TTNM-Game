@@ -14,7 +14,10 @@
     <div class="navbar">
         <button id="back-button" class="back-btn">&#x2190; Quay lại</button>
         <span>Game CV - Nhận diện cảm xúc</span>
-        <button id="logout-button" class="logout-btn">Đăng xuất</button>
+        <div class="navbar-right">
+            <span id="progress-indicator" class="progress-indicator">Màn 0/10</span>
+            <button id="logout-button" class="logout-btn">Đăng xuất</button>
+        </div>
     </div>
 
     <div id="error-message"></div>
@@ -33,6 +36,12 @@
             <div class="button-group">
                 <button id="hint-btn" class="game-btn hint-btn">💡 Gợi ý</button>
                 <button id="start-btn" class="game-btn start-btn">▶️ Bắt đầu</button>
+            </div>
+            
+            <!-- Hint Space Container -->
+            <div class="hint-space-container">
+                <!-- Hint Animation -->
+                <div id="hint-animation"></div>
             </div>
         </div>
 
@@ -61,11 +70,25 @@
         </div>
     </div>
 
-    <!-- Hint Animation -->
-    <div id="hint-animation"></div>
-
     <!-- Success Animation -->
     <div id="success-animation"></div>
+
+    <!-- Game Complete Modal -->
+    <div id="game-complete-modal" class="game-complete-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎉 Hoàn thành!</h2>
+            </div>
+            <div class="modal-body">
+                <p id="completion-message">Con đã hoàn thành màn chơi!</p>
+                <div class="score-display" id="score-display"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="play-again-btn" class="modal-btn play-again-btn">🔄 Chơi lại</button>
+                <button id="exit-btn" class="modal-btn exit-btn">🏠 Thoát</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/src/components/gameCV.js"></script>
 </body>

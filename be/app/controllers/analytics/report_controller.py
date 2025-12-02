@@ -4,9 +4,9 @@ from app.database import get_db
 from app.repository.users_repo import UsersRepository
 from app.repository.child_repo import ChildRepository
 from app.services.analytics.report_service import ReportService
-from app.middleware.auth_middleware import require_admin, get_current_user
 from pydantic import BaseModel
 from typing import Optional
+from app.current_user import get_current_user
 
 router = APIRouter(
     prefix="/reports",
@@ -19,7 +19,7 @@ class GenerateReportRequest(BaseModel):
 
 # ==================== ADMIN ENDPOINTS ====================
 
-@router.post("/generate-and-send", dependencies=[Depends(require_admin)])
+@router.post("/generate-and-send")
 async def generate_and_send_report(
     request: GenerateReportRequest,
     background_tasks: BackgroundTasks,
@@ -53,7 +53,7 @@ async def generate_and_send_report(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/send-batch", dependencies=[Depends(require_admin)])
+@router.post("/send-batch")
 async def send_batch_reports(
     child_ids: list[str],
     period: str = Query("weekly", regex="^(weekly|monthly)$"),
@@ -107,7 +107,7 @@ async def send_batch_reports(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/preview/{child_user_id}", dependencies=[Depends(require_admin)])
+@router.get("/preview/{child_user_id}")
 async def preview_report(
     child_user_id: UUID,
     period: str = Query("weekly", regex="^(weekly|monthly)$"),
@@ -143,7 +143,7 @@ async def preview_report(
 @router.post("/request-report")
 async def request_own_report(
     period: str = Query("weekly", regex="^(weekly|monthly)$"),
-    current_user = Depends(get_current_user),
+    current_user = get_current_user(),
     background_tasks: BackgroundTasks = None,
     db=Depends(get_db)
 ):

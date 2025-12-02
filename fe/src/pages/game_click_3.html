@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ai là ai & đang cảm xúc gì?</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/game_click_3.css" />
+</head>
+
+<body>
+    <!-- Màn hình chơi game -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <!-- Header -->
+            <div class="game-header">
+                <h1 class="game-title"> Ai là ai 🎭</h1>
+                <div class="difficulty-badge" id="difficulty-badge"></div>
+            </div>
+
+            <!-- Phần tình huống -->
+            <div class="hint-section">
+                <button class="speaker-btn" onclick="speakHints()">
+                    🔊
+                </button>
+                <div class="hint-content">
+                    <h3>💡 Tình huống:</h3>
+                    <div id="hints-list"></div>
+                </div>
+            </div>
+
+            <!-- Lưới khuôn mặt -->
+            <div id="faces-grid" class="faces-grid"></div>
+
+            <!-- Kho thẻ tên -->
+            <div class="names-section">
+                <h3>🎴 Kéo thẻ tên vào ô phía dưới mỗi khuôn mặt:</h3>
+                <div id="name-cards-container" class="name-cards"></div>
+            </div>
+
+            <!-- Nút hành động -->
+            <div class="action-buttons">
+                <!-- Nút nộp bài -->
+                <button id="submit-btn" class="btn-primary submit-btn" onclick="submitAnswer()">
+                    ✓ Nộp bài
+                </button>
+
+                <!-- Nút thử lại (cho cùng câu hỏi) -->
+                <button id="retry-btn" class="retry-btn" onclick="retryAnswer()" style="display: none;">
+                    ↩ Thử lại
+                </button>
+
+                <!-- Nút chơi lại vòng hiện tại (random lại) -->
+                <button id="reset-btn" class="reset-btn" onclick="resetGame()
+                        " style="display: none;">
+                    🔄 Chơi lại vòng này
+                </button>
+
+                <!-- Nút sang câu tiếp theo / level tiếp theo -->
+                <button id="next-btn" class="next-btn" onclick="nextQuestion()" style="display: none;">
+                    ➡️ Câu hỏi mới
+                </button>
+            </div>
+
+            <!-- Thông báo kết quả ngắn (nếu cần dùng) -->
+            <div id="result-message" class="result-message hidden"></div>
+        </div>
+    </div>
+
+    <!-- Popup kết quả -->
+    <div id="result-popup" class="popup-overlay hidden">
+        <div class="popup-content">
+            <div id="popup-icon" class="popup-icon"></div>
+            <h2 id="popup-title" class="popup-title"></h2>
+            <p id="popup-message" class="popup-message"></p>
+            <div class="popup-buttons">
+                <button class="popup-btn replay-btn" onclick="closePopupAndReplay()">
+                    🔄 Chơi lại
+                </button>
+                <button id="popup-next-btn" class="popup-btn next-btn" onclick="closePopupAndNext()">
+                    ➡️ Câu tiếp theo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chỉ load JS MỘT LẦN, KHÔNG dùng type="module" -->
+    <script src="../components/game_click_3.js"></script>
+</body>
+
+</html>

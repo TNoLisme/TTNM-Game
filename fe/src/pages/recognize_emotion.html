@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAME CLICK - Level 1</title>
+    <link rel="stylesheet" href="../styles/home.css">
+    <link rel="stylesheet" href="../styles/recognize_emotion.css">
+    <link rel="stylesheet" href="../styles/navigation.css">
+</head>
+
+<body>
+    <main class="game-main-content">
+        <header class="game-header">
+            <h1 id="game-name">GAME CLICK (Level 1)</h1>
+            <div class="header-actions">
+                <span id="score-display" class="score-box">Câu 1/10 | ĐIỂM: 0</span>
+                <button id="hint-btn" class="action-btn" title="Gợi ý">Hint</button>
+                <button id="sound-btn" class="action-btn" title="Đọc câu hỏi">Sound</button>
+                <button id="exit-btn" class="action-btn exit-btn" title="Thoát game">
+                    <img src="../../assets/icons/exit.svg" alt="Exit" class="exit-icon">
+                </button>
+            </div>
+        </header>
+
+        <section class="game-area-grid">
+            <div id="question-area" class="question-box">
+            </div>
+
+            <div id="answer-grid" class="answer-area-grid">
+                <button class="answer-option" data-answer-id="A"></button>
+                <button class="answer-option" data-answer-id="B"></button>
+                <button class="answer-option" data-answer-id="C"></button>
+                <button class="answer-option" data-answer-id="D"></button>
+            </div>
+        </section>
+
+        <footer class="game-footer">
+            <div class="hint-next-container">
+                <div id="hint-content-box" class="hint-box">
+                    <p id="hint-content">Hãy chọn đáp án của bạn.</p>
+                </div>
+                <button id="next-question-btn" class="next-hint-btn" disabled>Câu tiếp theo</button>
+            </div>
+        </footer>
+    </main>
+
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">CHÍNH XÁC!</h2>
+            <p id="modal-message">Chúc mừng bạn!</p>
+            <div class="modal-actions" id="feedback-modal-actions">
+            </div>
+        </div>
+    </div>
+
+    <div id="warning-modal" class="modal hidden">
+        <div class="modal-content warning">
+            <h2>Chưa trả lời!</h2>
+            <p>Vui lòng chọn đáp án cho câu hỏi này trước khi sang câu tiếp theo.</p>
+            <button id="close-warning" class="modal-btn">Đóng</button>
+        </div>
+    </div>
+
+    <div id="learning-modal" class="modal hidden">
+        <div class="modal-content learning-content">
+            <h2>Góc học tập: <span id="learning-emotion-title"></span></h2>
+            <div id="learning-card-body">
+            </div>
+            <button id="learning-close-btn" class="modal-btn next-btn" style="margin-top: 20px;">Đã hiểu, tiếp
+                tục!</button>
+        </div>
+    </div>
+
+    <script src="../components/recognize_emotion.js"></script>
+</body>
+
+</html>

@@ -6,8 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - EmoGarden</title>
     <link rel="stylesheet" href="../styles/admin.css" />
-    <!-- Thêm Chart.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 
 <body>
@@ -80,59 +78,25 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">⚡</div>
+                        <div class="stat-icon">🎮</div>
                         <div class="stat-info">
-                            <h3 id="total-active">0</h3>
-                            <p>Users Hoạt động</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Biểu đồ thống kê -->
-                <div class="charts-container">
-                    <div class="chart-card">
-                        <h3>📈 Users theo Role</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="usersRoleChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h3>🎭 Phân bố Cảm xúc</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="emotionsChart"></canvas>
+                            <h3 id="total-games">0</h3>
+                            <p>Lượt chơi</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="charts-container">
                     <div class="chart-card">
-                        <h3>📊 Câu hỏi theo Độ khó</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="questionsDifficultyChart"></canvas>
+                        <h3>📈 Người dùng mới (7 ngày qua)</h3>
+                        <div id="users-chart" class="chart-placeholder">
+                            <p>Biểu đồ sẽ được hiển thị ở đây</p>
                         </div>
                     </div>
                     <div class="chart-card">
-                        <h3>👤 Users theo Trạng thái</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="usersStatusChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="charts-container full-width">
-                    <div class="chart-card">
-                        <h3>📅 Users mới theo tháng</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="usersGrowthChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="charts-container full-width">
-                    <div class="chart-card">
-                        <h3>🎯 Top 10 Câu hỏi được chơi nhiều nhất</h3>
-                        <div class="chart-wrapper">
-                            <canvas id="topQuestionsChart"></canvas>
+                        <h3>🎯 Hoạt động gần đây</h3>
+                        <div id="activity-log" class="activity-list">
+                            <!-- Dynamic content -->
                         </div>
                     </div>
                 </div>
@@ -291,95 +255,73 @@
         </main>
     </div>
 
-        <!-- Modal: Add/Edit User -->
-        <div id="user-modal" class="modal">
-            <div class="modal-content">
-                <span class="close" id="close-user-modal">×</span>
-                <h2 id="user-modal-title">➕ Thêm User Mới</h2>
-
-                <form id="user-form">
-
-                    <!-- Username + Email -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="user-username">Username *</label>
-                            <input type="text" id="user-username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="user-email">Email *</label>
-                            <input type="email" id="user-email" required>
-                        </div>
+    <!-- Modal: Add/Edit User -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-user-modal">×</span>
+            <h2 id="user-modal-title">➕ Thêm User Mới</h2>
+            <form id="user-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-username">Username *</label>
+                        <input type="text" id="user-username" required>
                     </div>
-
-                    <!-- Password + Role -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="user-password">Mật khẩu *</label>
-                            <input type="password" id="user-password" placeholder="Nhập mật khẩu">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="user-role">Vai trò *</label>
-                            <select id="user-role" required>
-                                <option value="child">Child</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="user-email">Email *</label>
+                        <input type="email" id="user-email" required>
                     </div>
-
-                    <!-- Name + Age -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="user-name">Tên hiển thị *</label>
-                            <input type="text" id="user-name" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="user-age">Tuổi</label>
-                            <input type="number" id="user-age" min="3" max="18">
-                        </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-password">Mật khẩu *</label>
+                        <input type="password" id="user-password" required>
                     </div>
-
-                    <!-- Gender + Date of Birth -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="user-gender">Giới tính *</label>
-                            <select id="user-gender" required>
-                                <option value="male">Nam</option>
-                                <option value="female">Nữ</option>
-                                <option value="other">Khác</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="user-dob">Ngày sinh *</label>
-                            <input type="date" id="user-dob" required>
-                        </div>
+                    <div class="form-group">
+                        <label for="user-role">Vai trò *</label>
+                        <select id="user-role" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
                     </div>
+                </div>
 
-                    <!-- Phone Number + Status -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="user-phone">Số điện thoại *</label>
-                            <input type="tel" id="user-phone" placeholder="0123456789" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="user-status">Trạng thái</label>
-                            <select id="user-status">
-                                <option value="active">Hoạt động</option>
-                                <option value="inactive">Không hoạt động</option>
-                            </select>
-                        </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-name">Tên hiển thị *</label>
+                        <input type="text" id="user-name" required>
                     </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">💾 Lưu</button>
-                        <button type="button" class="btn btn-secondary" id="cancel-user-btn">❌ Hủy</button>
+                    <div class="form-group">
+                        <label for="user-age">Tuổi</label>
+                        <input type="number" id="user-age" min="3" max="18">
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-gender">Giới tính</label>
+                        <select id="user-gender">
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-status">Trạng thái</label>
+                        <select id="user-status">
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-user-btn">❌ Hủy</button>
+                </div>
+            </form>
         </div>
+    </div>
 
     <!-- Modal: Add/Edit Emotion -->
     <div id="emotion-modal" class="modal">
@@ -440,19 +382,19 @@
             <form id="question-form">
                 <div class="form-group">
                     <label for="question-text">Câu hỏi *</label>
-                    <textarea id="question-text" rows="3" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                    <textarea id="question-text" rows="3" required placeholder="Nhập câu hỏi..."></textarea>
                 </div>
+
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="question-type">Loại Game *</label>
-                        <select id="question-type" required>
-                            <option value="">Chọn loại game</option>
-                            <option value="face-recognition">👤 Nhìn mặt đoán cảm xúc</option>
-                            <option value="text-scenario">📝 Tình huống → Chọn cảm xúc</option>
-                            <option value="mimic-expression">🎭 Bắt chước biểu cảm</option>
-                            <option value="camera-detection">📷 Camera đoán cảm xúc</option>
-                            <option value="situation-image">🖼️ Nhìn tình huống đoán cảm xúc</option>
-                            <option value="cv-advanced">🤖 Game CV nâng cao</option>
+                        <label for="question-emotion">Cảm xúc liên quan *</label>
+                        <select id="question-emotion" required>
+                            <option value="">Chọn cảm xúc</option>
+                            <option value="happy">Vui vẻ 😊</option>
+                            <option value="sad">Buồn 😢</option>
+                            <option value="angry">Giận dữ 😠</option>
+                            <option value="scared">Sợ hãi 😨</option>
+                            <option value="surprised">Ngạc nhiên 😲</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -465,32 +407,39 @@
                     </div>
                 </div>
 
-                <div class="form-group" id="prompt-section" style="display:none;">
-                    <label for="game-prompt">Đề bài *</label>
-                    <textarea id="game-prompt" rows="2"></textarea>
-                    <small class="form-hint">Hệ thống sẽ đọc đề bài này cho trẻ</small>
-                </div>
-
-                <div class="form-group" id="image-upload-section" style="display:none;">
-                    <label for="question-images">Upload ảnh / video *</label>
-                    <input type="file" id="question-images" accept="image/*,video/*">
-                    <div id="image-preview" class="image-preview-container"></div>
-                    <small class="form-hint" id="upload-hint"></small>
-                </div>
-
-                <div class="form-group" id="hint-section" style="display:none;">
-                    <label for="question-hint">Gợi ý (tùy chọn)</label>
-                    <textarea id="question-hint" rows="2"></textarea>
-                </div>
-
-                <div class="form-group" id="answers-section">
-                    <label id="answers-label">Đáp án *</label>
-                    <div id="answers-container" class="answers-container"></div>
+                <div class="form-group">
+                    <label>Đáp án *</label>
+                    <div class="answers-container">
+                        <div class="answer-item">
+                            <input type="text" id="answer-1" placeholder="Đáp án A" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="1" required> Đúng
+                            </label>
+                        </div>
+                        <div class="answer-item">
+                            <input type="text" id="answer-2" placeholder="Đáp án B" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="2"> Đúng
+                            </label>
+                        </div>
+                        <div class="answer-item">
+                            <input type="text" id="answer-3" placeholder="Đáp án C" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="3"> Đúng
+                            </label>
+                        </div>
+                        <div class="answer-item">
+                            <input type="text" id="answer-4" placeholder="Đáp án D" required>
+                            <label>
+                                <input type="radio" name="correct-answer" value="4"> Đúng
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="question-explanation">Giải thích (tùy chọn)</label>
-                    <textarea id="question-explanation" rows="2"></textarea>
+                    <textarea id="question-explanation" rows="2" placeholder="Giải thích tại sao đây là đáp án đúng..."></textarea>
                 </div>
 
                 <div class="form-actions">
@@ -501,7 +450,7 @@
         </div>
     </div>
 
-    <script src="../components/admin.js"></script>
+    <script src="../components/admin.js" defer></script>
 </body>
 
 </html>

@@ -1,25 +1,25 @@
 # app/domain/game_data.py
 from uuid import UUID
 from typing import List, Dict, Optional
-from app.domain.games.game_content import GameContent
+from app.domain.games.question import Question
 
 class GameData:
-    def __init__(self, data_id: UUID, game_id: UUID, user_id: UUID, level: int, contents: List[GameContent]):
+    def __init__(self, data_id: UUID, game_id: UUID, user_id: UUID, level: int, questions: List[Question]):
         self.data_id = data_id
         self.game_id = game_id
         self.user_id = user_id
         self.level = level
-        self.contents = contents  # danh sách GameContent
+        self.questions = questions
 
     @classmethod
-    def load_data_by_game_and_level(cls, game_id: UUID, user_id: UUID, level: int, contents: List[GameContent]) -> 'GameData':
+    def load_data_by_game_and_level(cls, game_id: UUID, user_id: UUID, level: int, contents: List[Question]) -> 'GameData':
         return cls(UUID("456f1234-e89b-12d3-a456-426614174000"), game_id, user_id, level, contents)
 
     def validate_data(self) -> bool:
-        return len(self.contents) >= 50
+        return len(self.questions) >= 10
 
-    def get_random_contents(self, count: int) -> List[GameContent]:
+    def get_random_contents(self, count: int) -> List[Question]:
         """Lấy ngẫu nhiên n câu hỏi (mỗi câu gồm 1 nội dung chính)."""
         if len(self.contents) < count:
             raise ValueError("Not enough contents")
-        return self.contents[:count]
+        return self.questions[:count]

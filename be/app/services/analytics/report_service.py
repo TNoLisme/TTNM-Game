@@ -69,7 +69,7 @@ class ReportService:
             )
             print(f"✅ PDF generated successfully")
             
-            # 4. Gửi email 
+            # 4. Gửi email (✅ LOGIC GIỐNG FORGOT_PASSWORD)
             period_text = "tuần" if period == "weekly" else "tháng"
             email_result = self._send_report_email(
                 to_email=child_data['email'],

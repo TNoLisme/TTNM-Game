@@ -2,7 +2,7 @@ from sqlalchemy import Column, UUID, Integer, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from ..base import Base
-from .game_data_contents import GameDataContents
+from .game_data_question import GameDataContents
 
 class GameData(Base):
     __tablename__ = "game_data"
@@ -14,4 +14,4 @@ class GameData(Base):
 
     # Relationships
     game = relationship("Game", back_populates="game_data")
-    contents = relationship("GameContent", secondary="game_data_contents", back_populates="game_data")
+    questions = relationship("Question", secondary="game_data_question", back_populates="game_data")
