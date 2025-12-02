@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
                     // Đánh dấu là đã học và không hiện lại
                     learnedEmotions.push(emotionKey);
-                // Hiển thị Modal Feedback với nút Học lại
+                    // Hiển thị Modal Feedback với nút Học lại
                     showFeedback(false, q.correct_answer, emotion);
                     return; // Chặn logic hiển thị đáp án và chuyển sang feedback thường
                 }

@@ -12,9 +12,11 @@ class ChildProgressRepository(BaseRepository[ChildProgressModel, ChildProgress])
         super().__init__(db_session, ChildProgressModel, ChildProgressMapper)
 
     def get_progress(self, child_id: UUID, game_id: UUID) -> ChildProgress:
+        print("A123456")
         model = self.db_session.query(self.model_class) \
             .filter(self.model_class.child_id == child_id, self.model_class.game_id == game_id) \
             .first()
+        print("A000")
         if model:
             print("user đã có tiến trình: ", model.ratio, " and ", model.child_id)
             return self.mapper_class.to_domain(model)

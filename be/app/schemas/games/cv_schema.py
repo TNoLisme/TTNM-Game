@@ -36,8 +36,21 @@ class SaveResultRequest(BaseModel):
     detected_emotion: Optional[str]
     success: bool
     time_taken: int
+    confidence_score: Optional[float] = 0.0  # Confidence score từ face-api.js (0-100)
+    check_hint: Optional[bool] = False  # User có dùng hint hay không
 
 
 class SaveResultResponse(BaseModel):
     message: str
+
+
+class EndSessionRequest(BaseModel):
+    session_id: UUID
+
+
+class EndSessionResponse(BaseModel):
+    message: str
+    session_id: UUID
+    score: int
+    emotion_errors: dict
 

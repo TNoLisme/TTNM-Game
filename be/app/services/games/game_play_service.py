@@ -35,16 +35,14 @@ class GamePlayService:
     def start_session(self, game_id: str, level: int, user_id: str) -> Dict:
         user_uuid = UUID(user_id)
         game_uuid = UUID(game_id)
-        print("A1")
-
         # Lấy thông tin game
         game = self.games_repo.get_game_by_id(game_uuid)
         if not game:
             raise ValueError(f"Game not found with ID: {game_id}")
-        print("A")
+
         # Lấy ratio user
         ratio = self.child_progress_service.get_ratio(user_uuid, game_uuid)
-        print("A2")
+
         # Lấy hoặc generate question cho session
         questions = self.question_service.get_or_generate_questions(
             user_id=user_uuid,
@@ -52,7 +50,6 @@ class GamePlayService:
             level=level,
             ratio=ratio
         )
-        print("A3")
         # Format câu hỏi trước khi trả về FE
         formatted_questions = self.question_service.format_questions_for_frontend(
             questions=questions,
@@ -77,7 +74,6 @@ class GamePlayService:
                 print(f"  Level {level}:")
                 for card in cards:
                     print(f"    - {card['title']} ({card['concept_id']})")
-        print("5")
         # Tạo Session domain
         session = Session(
             session_id=uuid4(),
