@@ -13,14 +13,14 @@ const levelsConfig = [
 // Mapping game ID sang file HTML
 function getGameHtmlFile(gameId) {
     const map = {
-        'GC1': './recognize_emotion.html',
-        'GC2': './game_click_2.html',
-        'GC3': './game_click_3.html',
-        'GC4': './game_click_4.html',
-        'GV1': './gameCV.html',
-        'GV2': './game_cv_2.html'
+        '6c2358b3-9720-446a-94a3-111edf1ce9e1': './recognize_emotion.html',
+        'd74bbd1c-8940-4e98-94cf-5d2f29ee57a8': './game_click_2.html',
+        'bc95c5d8-e01a-4895-96fa-ccae65a18dc2': './game_click_3.html',
+        '91c00bab-78bf-4a2c-8d75-ee0b787fec1e': './game_click_4.html',
+        'd9f34ee9-583c-453f-89ff-50f24aaa663b': './gameCV.html',
+        '1c7a0065-7652-4f1f-bdf4-fdcb07cd4fc9': './game_cv_2.html'
     };
-    return map[gameId] || './recognize_emotion.html';
+    return map[gameId];
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -52,12 +52,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!gameRes.ok) throw new Error('Không thể tải thông tin game');
 
         gameInfo = await gameRes.json();
-        const progressData = await progressRes.json();
 
-        // Cập nhật level đã mở khóa từ database
-        unlockedLevel = progressData.level || 1;
+        // Xử lý trường hợp chưa có progress (trả về null hoặc empty)
+        if (progressRes.ok) {
+            const progressData = await progressRes.json();
+            if (progressData) {
+                unlockedLevel = progressData.level || 1;
+            }
+        }
 
-        // Cập nhật giao diện thông tin Game (nếu HTML có chỗ hiển thị tên game)
+        // Cập nhật giao diện thông tin Game
         const headerTitle = document.querySelector('.header h1');
         if (headerTitle && gameInfo.name) headerTitle.textContent = `🎮 ${gameInfo.name} 🎮`;
 
@@ -67,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         unlockedLevel = 1;
     }
 
-    // 4. Render giao diện (Logic của nhánh plinh + data thật)
+    // 4. Render giao diện
     const levelGrid = document.getElementById('levelGrid');
     const unlockedCountElem = document.getElementById('unlockedCount');
     const startButton = document.getElementById('startButton');
@@ -152,36 +156,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectedLevelNum.textContent = selectedLevel;
     }
 
-    // 5. Xử lý nút Bắt đầu Game (Logic gọi API của HEAD)
-    startButton.addEventListener('click', async () => {
+    // 5. Xử lý nút Bắt đầu Game (ĐÃ SỬA: CHỈ CHUYỂN TRANG, KHÔNG GỌI API)
+    startButton.addEventListener('click', () => {
         if (!selectedLevel) return;
 
-        startButton.textContent = '⏳ Đang tải...';
-        startButton.disabled = true;
+        // Hiệu ứng bấm nút
+        startButton.textContent = '🚀 Đang vào game...';
 
-        try {
-            const res = await fetch(`/games/start/${gameId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user.user_id,
-                    game_id: gameId,
-                    level: selectedLevel
-                })
-            });
+        // Lấy đường dẫn file HTML tương ứng
+        const gameFile = getGameHtmlFile(gameId);
 
-            const data = await res.json();
-            if (!data.session_id) throw new Error('Không tạo được session');
-
-            // Điều hướng sang file game tương ứng
-            const gameFile = getGameHtmlFile(gameId);
-            window.location.href = `${gameFile}?sessionId=${data.session_id}&level=${selectedLevel}&gameId=${gameId}`;
-        } catch (err) {
-            alert('Lỗi bắt đầu game: ' + err.message);
-            console.error(err);
-            startButton.textContent = `🚀 Bắt Đầu Cấp ${selectedLevel}!`;
-            startButton.disabled = false;
-        }
+        // Chuyển hướng ngay lập tức kèm tham số
+        // recognize_emotion.js sẽ tự lo việc gọi API start
+        window.location.href = `${gameFile}?level=${selectedLevel}&gameId=${gameId}`;
     });
 
     // 6. Xử lý Đăng xuất

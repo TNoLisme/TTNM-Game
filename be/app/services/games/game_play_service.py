@@ -54,7 +54,7 @@ class GamePlayService:
         # Lấy session gần nhất
         latest_session = self.session_service.get_latest_session(user_uuid, game_uuid)
         # Nếu có session cũ → dùng emotion_errors để FE hiển thị thẻ học
-        emotion_errors = latest_session.emotion_errors if latest_session else {
+        old_emotion_errors = latest_session.emotion_errors if latest_session else {
             "sợ hãi": 0,
             "buồn bã": 0,
             "tức giận": 0,
@@ -73,7 +73,7 @@ class GamePlayService:
             start_time=datetime.now(),
             state=SessionStateEnum.playing,
             score=0,
-            emotion_errors={"sợ hãi": 0, "buồn bã": 0, "tức giận": 0, "ghê tởm": 0, "ngạc nhiên": 0, "vui vẻ": 0},
+            emotion_errors=old_emotion_errors,
             max_errors=game.max_errors,
             level_threshold=game.level_threshold,
             ratio=ratio,
@@ -88,11 +88,11 @@ class GamePlayService:
             "questions": formatted_questions,
             "max_errors": game.max_errors,
             "time_limit": game.time_limit,
-            "emotion_errors": emotion_errors, 
+            "emotion_errors": old_emotion_errors, 
             "learning_cards": learning_cards
         }
     
-    def end_session_and_update_progress(self, session_id: UUID, results: List[Dict[str, Any]]) -> Dict:
+    def end_session_and_update_progress(self, session_id: UUID, results: List[Dict[str, Any]], review_emotions: List[str] = None ) -> Dict:
 
         session = self.session_service.get_by_id(session_id)
         if not session:
@@ -106,6 +106,7 @@ class GamePlayService:
         for res in results:
             question_uuid = res.get("question_id")
             is_correct = res.get("is_correct", False)
+            used_hint = res.get("used_hint", False)
 
             # Lấy câu hỏi bằng QuestionService
             question = self.question_service.get_question_by_id(question_uuid)
@@ -124,7 +125,7 @@ class GamePlayService:
                 correct_answer={"answer": correct_answer_str},
                 is_correct=is_correct,
                 response_time_ms=res.get("response_time_ms", 0),
-                check_hint=False,
+                check_hint=used_hint,
                 cv_confidence=None,
                 timestamp=datetime.now()
             )
@@ -155,7 +156,8 @@ class GamePlayService:
             child_id=session.user_id,
             game_id=session.game_id,
             session=updated_session,
-            old_emotion_error=old_error
+            old_emotion_error=old_error,
+            review_emotions=review_emotions
         )
 
         updated_session = self.session_service.update(session)

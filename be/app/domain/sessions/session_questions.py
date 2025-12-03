@@ -18,16 +18,3 @@ class SessionQuestions:
         self.check_hint = check_hint
         self.cv_confidence = cv_confidence
         self.timestamp = timestamp
-
-    @classmethod
-    def save_question(cls, session_id: UUID, question_id: UUID, user_answer: Dict, correct_answer: Dict,
-                     is_correct: bool, response_time_ms: int, check_hint: bool, cv_confidence: float) -> 'SessionQuestions':
-        """Lưu thông tin câu hỏi và đáp án vào phiên."""
-        return cls(UUID("def45678-e89b-12d3-a456-426614174000"), session_id, question_id, user_answer,
-                   correct_answer, is_correct, response_time_ms, check_hint, cv_confidence, datetime.now())
-
-    @classmethod
-    def get_questions_by_session(cls, session_id: UUID) -> List['SessionQuestions']:
-        """Lấy danh sách câu hỏi trong phiên."""
-        # Placeholder: cần repository
-        return []

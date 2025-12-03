@@ -16,7 +16,6 @@ class ChildProgressRepository(BaseRepository[ChildProgressModel, ChildProgress])
             .filter(self.model_class.child_id == child_id, self.model_class.game_id == game_id) \
             .first()
         if model:
-            print("user đã có tiến trình: ", model.ratio, " and ", model.child_id)
             return self.mapper_class.to_domain(model)
 
         print("user chưa có tiến trình, tạo mới")

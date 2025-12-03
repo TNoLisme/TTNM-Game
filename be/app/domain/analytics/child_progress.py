@@ -67,40 +67,37 @@ class ChildProgress:
         if not session.emotion_errors:
             return self.ratio
 
-        # 1. Tính tổng số lỗi mới
+        # Tính tổng số lỗi mới
         total_session_errors = sum(session.emotion_errors.values())
         if total_session_errors == 0:
             return self.ratio
 
-        # 2. Định nghĩa tốc độ học (Learning Rate)
+        # Định nghĩa tốc độ học (Learning Rate)
         LEARNING_RATE_TOTAL = 0.15 
         
-        # 3. Chuẩn hóa key và CHỈ LẤY NHỮNG CẢM XÚC CÓ LỖI (> 0)
-        # SỬA LỖI TẠI ĐÂY: Thêm điều kiện `if v > 0`
+        # Chuẩn hóa key và CHỈ LẤY NHỮNG CẢM XÚC CÓ LỖI (> 0)
         normalized_errors = {k.strip().lower(): v for k, v in session.emotion_errors.items() if v > 0}
         
-        # 4. Tính toán tỷ trọng (Weight) cần điều chỉnh
+        # Tính toán tỷ trọng (Weight) cần điều chỉnh
         adjustment_weights = {}
         for emotion, error_count in normalized_errors.items():
             if emotion in EMOTION_TO_INDEX:
                 adjustment_weights[emotion] = error_count / total_session_errors
         
-        # 5. Phân bổ lại Ratio
+        # Phân bổ lại Ratio
         new_ratio = list(self.ratio)
         total_non_error_ratio = 0.0
         emotions_with_errors = normalized_errors.keys()
 
-        # a) Tính tổng tỷ trọng của các cảm xúc KHÔNG bị lỗi
+        # Tính tổng tỷ trọng của các cảm xúc KHÔNG bị lỗi
         for emotion, idx in EMOTION_TO_INDEX.items():
             if emotion not in emotions_with_errors:
                 total_non_error_ratio += self.ratio[idx]
         
         # Giới hạn số lượng tỷ trọng có thể chuyển đi
         transfer_amount = min(LEARNING_RATE_TOTAL, total_non_error_ratio)
-        
-        print(f"[Debug] Transfer Amount: {transfer_amount:.4f} (Tổng Non-Error Ratio: {total_non_error_ratio:.4f})")
 
-        # b) GIẢM tỷ trọng của các cảm xúc KHÔNG bị lỗi
+        # GIẢM tỷ trọng của các cảm xúc KHÔNG bị lỗi
         for emotion, idx in EMOTION_TO_INDEX.items():
             if emotion not in emotions_with_errors:
                 # Giảm tỷ lệ dựa trên tỷ trọng cũ của nó
@@ -110,7 +107,7 @@ class ChildProgress:
                     reduction = 0
                 new_ratio[idx] -= reduction
 
-        # c) TĂNG tỷ trọng của các cảm xúc BỊ LỖI
+        # TĂNG tỷ trọng của các cảm xúc BỊ LỖI
         for emotion, idx in EMOTION_TO_INDEX.items():
             if emotion in emotions_with_errors:
                 # Tăng tỷ lệ dựa trên weight (tỷ lệ lỗi)
@@ -118,7 +115,7 @@ class ChildProgress:
                 new_ratio[idx] += increase
                 print(f"  → Tăng ratio của '{emotion}' (index {idx}): +{increase:.4f}")
 
-        # d) Đảm bảo tổng là 1.0 và làm tròn
+        # Đảm bảo tổng là 1.0 và làm tròn
         final_total = sum(new_ratio)
         if final_total > 0:
             self.ratio = [round(r / final_total, 4) for r in new_ratio]
@@ -134,10 +131,15 @@ class ChildProgress:
         """Tạo báo cáo tiến trình."""
         return {"type": report_type, "accuracy": self.accuracy}
 
-    def check_level_advance(self, progress, level_threshold: int):
+    def check_level_advance(self, progress, level_threshold: int, session: 'Session'):
         """Kiểm tra xem có đủ điểm để lên level không."""
-        if progress.score >= level_threshold:
+        if session.level == progress.level and progress.score >= level_threshold:
+            progress.accuracy = 0
+            progress.score = 0
             progress.level += 1
             progress.ratio = [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1665]
+            session.ratio = [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1665]
+            session.emotion_errors = {"sợ hãi": 0, "buồn bã": 0, "tức giận": 0, "ghê tởm": 0, "ngạc nhiên": 0, "vui vẻ": 0}
+            progress.review_emotions = []
             
         return progress

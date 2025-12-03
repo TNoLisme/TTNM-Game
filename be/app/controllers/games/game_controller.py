@@ -24,10 +24,12 @@ class AnswerResult(BaseModel):
     answer: str
     is_correct: bool
     response_time_ms: int
+    used_hint: bool = False
 
 class EndLevelRequest(BaseModel):
     session_id: UUID
     results: List[AnswerResult]
+    review_emotions: List[str] = []
 
 # 1. Lấy tất cả game
 @router.get("/")
@@ -98,10 +100,11 @@ async def end_level(body: EndLevelRequest, db: Session = Depends(get_db)):
     try:
         # Chuyển đổi Pydantic model sang List[Dict]
         results_list = [r.model_dump() for r in body.results]
-        
+        review_emotion_list = body.review_emotions 
         result = service.end_session_and_update_progress(
             session_id=body.session_id, 
-            results=results_list
+            results=results_list,
+            review_emotions=review_emotion_list
         )
         return result
     except ValueError as e:
