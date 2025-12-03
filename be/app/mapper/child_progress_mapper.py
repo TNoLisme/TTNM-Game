@@ -53,8 +53,8 @@ class ChildProgressMapper:
             avg_response_time=child_progress_domain.avg_response_time,
             score=child_progress_domain.score,
             last_played=child_progress_domain.last_played,
-            ratio=json.dumps(child_progress_domain.ratio), 
-            review_emotions=json.dumps([str(e) for e in child_progress_domain.review_emotions])
+            ratio=json.dumps(child_progress_domain.ratio, ensure_ascii=False),
+            review_emotions=json.dumps([str(e) for e in child_progress_domain.review_emotions], ensure_ascii=False)
         )
 
     @staticmethod

@@ -15,14 +15,22 @@ class SessionsMapper:
             return None
         ratio_list = []
         try:
-            ratio_list = json.loads(session_model.ratio)
-        except (json.JSONDecodeError, TypeError):
-            pass 
+            # Đảm bảo decode UTF-8 đúng
+            ratio_str = session_model.ratio
+            if isinstance(ratio_str, bytes):
+                ratio_str = ratio_str.decode('utf-8')
+            ratio_list = json.loads(ratio_str)
+        except (json.JSONDecodeError, TypeError, UnicodeDecodeError):
+            pass
 
         emotion_errors_dict = {}
         try:
-            emotion_errors_dict = json.loads(session_model.emotion_errors)
-        except (json.JSONDecodeError, TypeError):
+            # Đảm bảo decode UTF-8 đúng
+            emotion_str = session_model.emotion_errors
+            if isinstance(emotion_str, bytes):
+                emotion_str = emotion_str.decode('utf-8')
+            emotion_errors_dict = json.loads(emotion_str)
+        except (json.JSONDecodeError, TypeError, UnicodeDecodeError):
             pass 
         
         questions_domain = []
@@ -60,9 +68,9 @@ class SessionsMapper:
             end_time=session_domain.end_time,
             state=session_domain.state.value,
             score=session_domain.score,
-            emotion_errors=json.dumps(session_domain.emotion_errors),
+            emotion_errors=json.dumps(session_domain.emotion_errors, ensure_ascii=False),
             ratio=json.dumps(session_domain.ratio),
-            question_ids=json.dumps(question_ids_str_list),   
+            question_ids=json.dumps(question_ids_str_list),
             max_errors=session_domain.max_errors,
             level_threshold=session_domain.level_threshold,
             time_limit=session_domain.time_limit,

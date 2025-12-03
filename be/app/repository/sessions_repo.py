@@ -49,21 +49,18 @@ class SessionsRepository(BaseRepository[SessionModel, Session]):
 
             self.db_session.add(existing)
             self.db_session.commit()
-            self.db_session.refresh(existing)
-            return self.mapper_class.to_domain(existing)
+
+            return session
         except SQLAlchemyError as e:
             self.db_session.rollback()
             print(f"[SessionsRepository] Failed to update session: {e}")
             raise
 
-    def get_latest_session(self, user_id: UUID, game_id: UUID):
-        return (
-            self.db_session.query(self.model_class)
+    def get_latest_session(self, user_id: UUID, game_id: UUID) -> Session:
+        session_model = self.db_session.query(self.model_class) \
             .filter(
                 self.model_class.user_id == user_id,
                 self.model_class.game_id == game_id
-            )
-            .order_by(SessionModel.start_time.desc())
-            .first()
-        )
+            ).order_by(SessionModel.start_time.desc()).first()
+        return self.mapper_class.to_domain(session_model) if session_model else None
 

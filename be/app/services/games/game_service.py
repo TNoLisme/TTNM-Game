@@ -4,26 +4,27 @@ from app.domain.games.game import Game
 from app.repository.games_repo import GamesRepository
 from app.repository.game_contents_repo import GameContentsRepository
 from app.mapper.games_mapper import GamesMapper
+from app.domain.sessions.session import Session
 
 class GameService():
-    def __init__(self, game_repo: GamesRepository):
-        self.repo = game_repo
+    def __init__(self, db: Session):
+        self.repo = GamesRepository(db)
         self.mapper = GamesMapper
 
-    def get_by_id(self, game_id: str) -> dict:
+    def get_by_id(self, game_id: str):
         game = self.repo.get_game_by_id(game_id)
         if not game:
-            return {"status": "failed", "message": "Game not found"}
+            return None
 
         response = self.mapper.to_response(game)
-        return {"status": "success", "data": response}
+        return response
 
     def update(self, game_id: str, data: dict) -> dict:
         game = self.repo.get_game_by_id(UUID(game_id))
         if game:
             game.name = data.get("name", game.name)
             game.level = data.get("level", game.level)
-            self.repo.update_game(game)
+            self.repo.save(game)
             return {"status": "success", "message": f"Game {game.name} updated"}
         return {"status": "failed", "message": "Game not found"}
 
@@ -43,4 +44,4 @@ class GameService():
                 "level_threshold": game.level_threshold,
                 "time_limit": game.time_limit
             })
-        return {"status": "success", "games": games_list}
+        return games_list

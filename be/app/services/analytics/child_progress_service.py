@@ -8,8 +8,8 @@ from app.mapper.child_progress_mapper import ChildProgressMapper
 
 
 class ChildProgressService:
-    def __init__(self, progress_repo: ChildProgressRepository):
-        self.progress_repo = progress_repo
+    def __init__(self, db: Session):
+        self.progress_repo = ChildProgressRepository(db)
         self.mapper = ChildProgressMapper
 
     # Lấy tiến trình hiện tại hoặc tạo mới nếu chưa có.
@@ -32,7 +32,7 @@ class ChildProgressService:
             start_time=datetime.utcnow(),
             state=SessionStateEnum.playing,
             score=0,
-            emotion_errors={},
+            emotion_errors={"sợ hãi": 0, "buồn bã": 0, "tức giận": 0, "ghê tởm": 0, "ngạc nhiên": 0, "vui vẻ": 0},
             max_errors=3,
             level_threshold=100,
             ratio=[0.0]*6,
@@ -53,39 +53,45 @@ class ChildProgressService:
             return default_ratio
         return progress.ratio
     
-    # update và trả về progress đã cập nhật
-    def update_progress_after_session(self, child_id: UUID, game_id: UUID, session: Session) -> ChildProgress:
+    def update_progress_after_session(self, child_id: UUID, game_id: UUID, session: Session, old_emotion_error: dict, review_emotions: List[str] = None ) -> ChildProgress:
         """
         Cập nhật tiến trình sau khi chơi xong một session.
-        Tính lại accuracy, score, ratio, review_emotions, level...
+        Tính lại accuracy, score, ratio, review_emotions, level.
         """
-        print("a")
         progress = self.progress_repo.get_progress(child_id, game_id)
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score, ". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
-        print("aa ", progress.child_id)
-        progress.accuracy = progress.calculate_accuracy([session]) # mất acc
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
-        progress.score += sum(getattr(q, "score", 0) for q in getattr(session, "session_questions", []))
-        print("a1")
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
-        # Cập nhật phân bố cảm xúc và review_emotions
-        progress.update_emotion_distribution()
-        print("a2")
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
-        # Kiểm tra lên level nếu đạt threshold
-        level_threshold = getattr(session, "level_threshold", 70)
-        print(";level thread:", level_threshold)
-        if progress.check_level_advance(progress.score, level_threshold):
-            progress.level += 1
+        
+        # 1. TÍNH TOÁN ACCURACY MỚI
+        total_questions = len(session.questions)
+        if total_questions > 0:
+            total_score_possible = total_questions * 10 
+            accuracy = (session.score / total_score_possible) * 100 
+        else:
+            accuracy = 0.0
+            print("Không có câu hỏi nào được lưu trong session_questions để tính Accuracy.")
+
+        progress.accuracy = accuracy
+        progress.score += session.score # Cộng dồn điểm mới vào tổng điểm
+        
+        # 2. Cập nhật review_emotions
+        if review_emotions:
+            if progress.review_emotions is None:
+                progress.review_emotions = []
+            
+            # Sử dụng set để thêm các cảm xúc mới mà không trùng lặp
+            unique_review_emotions = list(set(progress.review_emotions) | set(review_emotions))
+            progress.review_emotions = unique_review_emotions
+
+        # 3. Cập nhật phân bố cảm xúc
+        # LƯU Ý: Hàm update_emotion_distribution_from_session trong ChildProgress domain phải được sửa
+        progress.update_emotion_distribution_from_session(session, old_emotion_error)
+        
+        # 4. Kiểm tra lên level
+        level_threshold = 30 # Test value
+        
+        # Giả định ChildProgress có hàm check_level_advance(self, score, threshold) trả về bool
+        progress = progress.check_level_advance(progress, level_threshold, session)
+
 
         # Lưu tiến trình vào DB
-        print("a4")
-        print("progress: ", progress.progress_id, ". ",progress.child_id, ". ",progress.game_id, ". ",progress.level, ". score: ",progress.score,". ",progress.ratio)
-        print("2 :", progress.accuracy, ". ",progress.review_emotions)
         self.progress_repo.update(progress)
-        print("a5")
         return progress
