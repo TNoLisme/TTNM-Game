@@ -32,20 +32,18 @@ class EndLevelRequest(BaseModel):
 # 1. Lấy tất cả game
 @router.get("/")
 async def get_all_games(db: Session = Depends(get_db)):
-    repo = GamesRepository(db)
-    service = GameService(repo)
+    service = GameService(db)
     result = service.get_all_games()
     return result
 
 # 2. Lấy thông tin game theo ID
 @router.get("/{game_id}")
 async def get_game_by_id(game_id: UUID, db: Session = Depends(get_db)):
-    game_repo = GamesRepository(db)
-    game_service = GameService(game_repo)
+    game_service = GameService(db)
     game = game_service.get_by_id(game_id)
-    if game["status"] != "success":
+    if not game:
         raise HTTPException(status_code=404, detail="Game not found")
-    return game["data"]
+    return game
 
 # 3. Lấy tiến trình hiện tại của user cho game
 @router.get("/progress/{game_id}")
@@ -55,13 +53,13 @@ async def get_game_progress(game_id: UUID, db: Session = Depends(get_db), user_i
     Bao gồm level hiện tại, score, và mảng ratio (tỷ lệ cảm xúc).
     """
     print(f"Fetching progress for user {user_id} and game {game_id}")
-    progress_repo = ChildProgressRepository(db)
-    progress_service = ChildProgressService(progress_repo)
+    progress_service = ChildProgressService(db)
     progress = progress_service.get_progress(user_id, game_id)
     if not progress:
         return None
     return progress
 
+# @claude: đây là api gọi khi bắt đầu chơi 1 level
 # 4. Bắt đầu game → tạo session
 @router.post("/start/{game_id}")
 async def start_game(
@@ -88,7 +86,7 @@ async def start_game(
         print(f"[ERROR] Start Game (Generic) {game_id}: {e}")
         raise HTTPException(status_code=500, detail="Lỗi máy chủ khi bắt đầu game")
 
-
+# @claude: api kết thúc sau khi chơi xong, dùng để cập nhật các phần có liên quan
 @router.post("/end-level") # <-- ENDPOINT MỚI
 async def end_level(body: EndLevelRequest, db: Session = Depends(get_db)):
     """

@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await res.json();
         console.log('Dữ liệu game từ API:', data); // DEBUG
 
-        if (data.status !== 'success') throw new Error(data.message || 'Lỗi dữ liệu');
+        if (!data) throw new Error(data.message || 'Lỗi dữ liệu');
 
-        games = data.games || [];
+        games = data || [];
     } catch (err) {
         console.error('Lỗi tải game:', err);
         alert('Không thể tải danh sách game. Vui lòng thử lại.');

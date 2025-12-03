@@ -4,22 +4,10 @@ from datetime import datetime
 
 if TYPE_CHECKING:
     from app.domain.sessions.session import Session
-    from app.domain.sessions.emotion_concept import EmotionConcept
 
 class ChildProgress:
-    def __init__(
-        self,
-        progress_id: UUID,
-        child_id: UUID,
-        game_id: UUID,
-        level: int,
-        accuracy: float,
-        avg_response_time: float,
-        score: int,
-        last_played: datetime,
-        ratio: List[float],
-        review_emotions: List[UUID]
-    ):
+    def __init__(self,progress_id: UUID,child_id: UUID,game_id: UUID,level: int,accuracy: float,avg_response_time: float,score: int,
+        last_played: datetime,ratio: List[float],review_emotions: List[UUID]):
         self.progress_id = progress_id
         self.child_id = child_id
         self.game_id = game_id
@@ -29,24 +17,7 @@ class ChildProgress:
         self.score = score
         self.last_played = last_played
         self.ratio = ratio
-        self.review_emotions = review_emotions
-
-    @classmethod
-    def load_progress(cls, child_id: UUID, game_id: UUID) -> 'ChildProgress':
-        """Tải tiến trình cho một trò chơi."""
-        # Placeholder: cần repository
-        return cls(
-            UUID("jkl01234-e89b-12d3-a456-426614174000"),
-            child_id,
-            game_id,
-            1,
-            0.0,
-            0.0,
-            0,
-            datetime.now(),
-            [],
-            []
-        )
+        self.review_emotions = review_emotions        
 
     def calculate_accuracy(self, sessions: List['Session']) -> float:
         """
@@ -69,20 +40,104 @@ class ChildProgress:
         print(f"Tổng câu hỏi: {total_questions}, Đúng: {total_correct}, Accuracy mới: {accuracy:.2f}%")
         return accuracy
 
+    def update_emotion_distribution_from_session(self, session: 'Session', old_emotion_error: dict) -> List[float]:
+        """
+        Cập nhật ratio dựa trên emotion_errors từ session vừa chơi.
+        Tăng tỷ trọng của các cảm xúc bị sai và giảm tỷ trọng của các cảm xúc khác.
+        """
+        print(f"[update_emotion_distribution_from_session] Lỗi trong Session: {session.emotion_errors}")
 
-    def update_emotion_distribution(self) -> None:
-        """Cập nhật phân bố cảm xúc."""
-        print(" run vào  update_emotion_distribution")
+        EMOTION_TO_INDEX = {
+            "vui vẻ": 0,
+            "buồn bã": 1,
+            "tức giận": 2,
+            "sợ hãi": 3,
+            "ngạc nhiên": 4,
+            "ghê tởm": 5
+        }
+        NUM_EMOTIONS = len(EMOTION_TO_INDEX)
+        
+        # Đảm bảo ratio tồn tại và có kích thước đúng
+        if not self.ratio or len(self.ratio) != NUM_EMOTIONS:
+            default_ratio = [1.0 / NUM_EMOTIONS] * NUM_EMOTIONS
+            # Làm tròn số cuối để tổng là 1.0
+            default_ratio[-1] = 1.0 - sum(default_ratio[:-1])
+            self.ratio = default_ratio
+
+        if not session.emotion_errors:
+            return self.ratio
+
+        # 1. Tính tổng số lỗi mới
+        total_session_errors = sum(session.emotion_errors.values())
+        if total_session_errors == 0:
+            return self.ratio
+
+        # 2. Định nghĩa tốc độ học (Learning Rate)
+        LEARNING_RATE_TOTAL = 0.15 
+        
+        # 3. Chuẩn hóa key và CHỈ LẤY NHỮNG CẢM XÚC CÓ LỖI (> 0)
+        # SỬA LỖI TẠI ĐÂY: Thêm điều kiện `if v > 0`
+        normalized_errors = {k.strip().lower(): v for k, v in session.emotion_errors.items() if v > 0}
+        
+        # 4. Tính toán tỷ trọng (Weight) cần điều chỉnh
+        adjustment_weights = {}
+        for emotion, error_count in normalized_errors.items():
+            if emotion in EMOTION_TO_INDEX:
+                adjustment_weights[emotion] = error_count / total_session_errors
+        
+        # 5. Phân bổ lại Ratio
+        new_ratio = list(self.ratio)
+        total_non_error_ratio = 0.0
+        emotions_with_errors = normalized_errors.keys()
+
+        # a) Tính tổng tỷ trọng của các cảm xúc KHÔNG bị lỗi
+        for emotion, idx in EMOTION_TO_INDEX.items():
+            if emotion not in emotions_with_errors:
+                total_non_error_ratio += self.ratio[idx]
+        
+        # Giới hạn số lượng tỷ trọng có thể chuyển đi
+        transfer_amount = min(LEARNING_RATE_TOTAL, total_non_error_ratio)
+        
+        print(f"[Debug] Transfer Amount: {transfer_amount:.4f} (Tổng Non-Error Ratio: {total_non_error_ratio:.4f})")
+
+        # b) GIẢM tỷ trọng của các cảm xúc KHÔNG bị lỗi
+        for emotion, idx in EMOTION_TO_INDEX.items():
+            if emotion not in emotions_with_errors:
+                # Giảm tỷ lệ dựa trên tỷ trọng cũ của nó
+                if total_non_error_ratio > 0:
+                    reduction = (self.ratio[idx] / total_non_error_ratio) * transfer_amount
+                else:
+                    reduction = 0
+                new_ratio[idx] -= reduction
+
+        # c) TĂNG tỷ trọng của các cảm xúc BỊ LỖI
+        for emotion, idx in EMOTION_TO_INDEX.items():
+            if emotion in emotions_with_errors:
+                # Tăng tỷ lệ dựa trên weight (tỷ lệ lỗi)
+                increase = adjustment_weights[emotion] * transfer_amount
+                new_ratio[idx] += increase
+                print(f"  → Tăng ratio của '{emotion}' (index {idx}): +{increase:.4f}")
+
+        # d) Đảm bảo tổng là 1.0 và làm tròn
+        final_total = sum(new_ratio)
+        if final_total > 0:
+            self.ratio = [round(r / final_total, 4) for r in new_ratio]
+        else:
+            self.ratio = new_ratio
+        
+        # Cập nhật lại vào session để trả về FE nếu cần
+        session.ratio = self.ratio
+        
+        return self.ratio
 
     def generate_report(self, report_type: str) -> dict:
         """Tạo báo cáo tiến trình."""
         return {"type": report_type, "accuracy": self.accuracy}
 
-    def check_level_advance(self, score: int, level_threshold: int) -> bool:
+    def check_level_advance(self, progress, level_threshold: int):
         """Kiểm tra xem có đủ điểm để lên level không."""
-        return score >= level_threshold
-
-    def get_review_emotions(self) -> List['EmotionConcept']:
-        """Lấy danh sách EmotionConcept cần ôn tập."""
-        from app.domain.sessions.emotion_concept import EmotionConcept  # import runtime
-        return [EmotionConcept.load_concept_by_emotion_and_level(e, 1) for e in self.review_emotions]
+        if progress.score >= level_threshold:
+            progress.level += 1
+            progress.ratio = [0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1665]
+            
+        return progress

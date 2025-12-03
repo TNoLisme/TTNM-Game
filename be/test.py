@@ -32,7 +32,7 @@ from datetime import datetime
 from typing import Generator
 
 TEST_USER_ID = UUID("7B732DC2-21F1-4369-AF77-098668261CBF")
-TEST_GAME_ID = UUID("51547AAF-A4E2-4EEE-9408-D9E73423103A")
+TEST_GAME_ID = UUID("6C2358B3-9720-446A-94A3-111EDF1CE9E1")
 def get_test_session() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
@@ -66,15 +66,6 @@ class Test:
         questions = session_start["questions"]
 
         print("🔹 Created session:", session_id)
-
-        # 2. Giả lập kết quả chơi
-        # Format yêu cầu:
-        #   {
-        #       "question_id": ...,
-        #       "answer": "something",
-        #       "is_correct": True/False,
-        #       "response_time_ms": 500
-        #   }
 
         mock_results = []
         for index, q in enumerate(questions):
@@ -114,22 +105,28 @@ class Test:
 
     def test_update_progress(self):
         x = self.progress_repo.get_progress(TEST_USER_ID, TEST_GAME_ID)
+        print("Pro cũ: ", x.ratio, " và ", x.review_emotions)
         if x: 
             progress = ChildProgress(
-                progress_id=UUID("6E371BF9-12BC-4C79-9E45-B261DDD2F56C"),
-                child_id=UUID("7B732DC2-21F1-4369-AF77-098668261CBF"),
-                game_id=UUID("51547AAF-A4E2-4EEE-9408-D9E73423103A"),
+                progress_id=UUID("1A635D64-5D47-4B19-AE12-BCEEBDB50269"),
+                child_id=TEST_USER_ID,
+                game_id=TEST_GAME_ID,
                 level=3,
                 accuracy=float(0.6),
                 avg_response_time=float(1),
                 score=60,
                 last_played=datetime.now(),
                 ratio=[0.1, 0.1667+0.1667, 0.1, 0.1667, 0.1667, 0.1665],
-                review_emotions=["hay"]
+                review_emotions=["hay, cảm xúc quá hả ạ"]
             )
             r = self.progress_repo.update(progress)
             if r:
                 print("alo", r.ratio)
+
+    def get_last_session(self):
+        session = self.session_repo.get_latest_session(TEST_USER_ID, TEST_GAME_ID)
+        print("review: ", session.emotion_errors)
+        session
 
 def run_all_tests():
     db_generator = get_test_session()
@@ -138,7 +135,8 @@ def run_all_tests():
     try:
         test_runner = Test(db)
         # test_runner.test_game_play_service()
-        test_runner.test_update_progress()
+        # test_runner.test_update_progress()
+        test_runner.get_last_session()
 
     except Exception as e:
         print(f"\n!!! LỖI QUAN TRỌNG TRONG QUÁ TRÌNH TEST: {e} !!!")
