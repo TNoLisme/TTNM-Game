@@ -7,36 +7,31 @@ from datetime import datetime
 from app.domain.sessions.session import Session, SessionStateEnum
 from app.domain.sessions.session_questions import SessionQuestions
 
-# Repositories
-from app.repository.games_repo import GamesRepository
-from app.repository.sessions_repo import SessionsRepository
-from app.repository.session_questions_repo import SessionQuestionsRepository
-from app.repository.child_progress_repo import ChildProgressRepository
-
-
 # Service
 from app.services.analytics.child_progress_service import ChildProgressService
 from app.services.games.question_service import QuestionService
 from app.services.sessions.emotion_concepts_service import EmotionConceptsService
 from app.services.analytics.child_progress_service import ChildProgressService
+from app.services.sessions.sessions_service import SessionsService
+from app.services.sessions.session_questions_service import SessionQuestionsService
+from app.services.games.game_service import GameService
 
 
 class GamePlayService:
     def __init__(self, db: Session):
         self.db = db
-        self.games_repo = GamesRepository(db)
-        self.session_repo = SessionsRepository(db)
-        self.session_questions_repo = SessionQuestionsRepository(db)
+        self.games_service = GameService(db)
+        self.session_service = SessionsService(db)
+        self.session_questions_service = SessionQuestionsService(db)
         self.question_service = QuestionService(db)
-        child_progress_repo = ChildProgressRepository(db)
-        self.child_progress_service = ChildProgressService(child_progress_repo)
+        self.child_progress_service = ChildProgressService(db)
         self.emotion_concepts_service = EmotionConceptsService(db)
 
     def start_session(self, game_id: str, level: int, user_id: str) -> Dict:
         user_uuid = UUID(user_id)
         game_uuid = UUID(game_id)
         # Lấy thông tin game
-        game = self.games_repo.get_game_by_id(game_uuid)
+        game = self.games_service.get_by_id(game_uuid)
         if not game:
             raise ValueError(f"Game not found with ID: {game_id}")
 
@@ -56,24 +51,20 @@ class GamePlayService:
             game_id=game_uuid,
             level=level
         )
-        print("A4")
         # Lấy session gần nhất
-        latest_session = self.session_repo.get_latest_session(user_uuid, game_uuid)
+        latest_session = self.session_service.get_latest_session(user_uuid, game_uuid)
         # Nếu có session cũ → dùng emotion_errors để FE hiển thị thẻ học
-        emotion_errors = latest_session.emotion_errors if latest_session else {}
+        old_emotion_errors = latest_session.emotion_errors if latest_session else {
+            "sợ hãi": 0,
+            "buồn bã": 0,
+            "tức giận": 0,
+            "ghê tởm": 0,
+            "ngạc nhiên": 0,
+            "vui vẻ": 0
+        }
 
         learning_cards = self.emotion_concepts_service.get_all_concepts()
-        
-        print("=== Emotion Errors ===")
-        print(emotion_errors)
 
-        print("=== Learning Cards ===")
-        for emotion, levels in learning_cards.items():
-            print(f"Emotion: {emotion}")
-            for level, cards in levels.items():
-                print(f"  Level {level}:")
-                for card in cards:
-                    print(f"    - {card['title']} ({card['concept_id']})")
         # Tạo Session domain
         session = Session(
             session_id=uuid4(),
@@ -82,7 +73,7 @@ class GamePlayService:
             start_time=datetime.now(),
             state=SessionStateEnum.playing,
             score=0,
-            emotion_errors={},  # khi kết thúc level sẽ update
+            emotion_errors=old_emotion_errors,
             max_errors=game.max_errors,
             level_threshold=game.level_threshold,
             ratio=ratio,
@@ -90,31 +81,32 @@ class GamePlayService:
             questions=questions,
             level=level
         )
-
-        saved_session = self.session_repo.create(session)
+        saved_session = self.session_service.create(session)
 
         return {
             "session_id": str(saved_session.session_id),
             "questions": formatted_questions,
             "max_errors": game.max_errors,
             "time_limit": game.time_limit,
-            "emotion_errors": emotion_errors, 
+            "emotion_errors": old_emotion_errors, 
             "learning_cards": learning_cards
         }
+    
+    def end_session_and_update_progress(self, session_id: UUID, results: List[Dict[str, Any]], review_emotions: List[str] = None ) -> Dict:
 
-    def end_session_and_update_progress(self, session_id: str, results: List[Dict[str, Any]]) -> Dict:
-        session = self.session_repo.get_by_id(session_id)
+        session = self.session_service.get_by_id(session_id)
         if not session:
             raise ValueError(f"Session {session_id} not found")
 
         final_score = 0
-        emotion_errors = {}
+        emotion_errors = session.emotion_errors
         total_response_time = 0
         total_correct = 0
 
         for res in results:
             question_uuid = res.get("question_id")
             is_correct = res.get("is_correct", False)
+            used_hint = res.get("used_hint", False)
 
             # Lấy câu hỏi bằng QuestionService
             question = self.question_service.get_question_by_id(question_uuid)
@@ -133,11 +125,11 @@ class GamePlayService:
                 correct_answer={"answer": correct_answer_str},
                 is_correct=is_correct,
                 response_time_ms=res.get("response_time_ms", 0),
-                check_hint=False,
+                check_hint=used_hint,
                 cv_confidence=None,
                 timestamp=datetime.now()
             )
-            self.session_questions_repo.create(sq)
+            self.session_questions_service.create(sq)
 
             total_response_time += res.get("response_time_ms", 0)
             if is_correct:
@@ -152,14 +144,23 @@ class GamePlayService:
         session.emotion_errors = emotion_errors
         session.state = SessionStateEnum.end
         session.end_time = datetime.now()
-        updated_session = self.session_repo.update(session)
 
-        # Update XP & Level
+        old_error = session.emotion_errors
+        # Lấy danh sách các câu hỏi mà user chơi cho tiến trình này
+        session_questions_list = self.session_questions_service.get_session_by_id(session.session_id)
+        session.questions = session_questions_list
+
+        updated_session = session
+
         progress = self.child_progress_service.update_progress_after_session(
             child_id=session.user_id,
             game_id=session.game_id,
-            session=updated_session
+            session=updated_session,
+            old_emotion_error=old_error,
+            review_emotions=review_emotions
         )
+
+        updated_session = self.session_service.update(session)
 
         return {
             "status": "success",

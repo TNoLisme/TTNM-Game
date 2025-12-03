@@ -11,9 +11,3 @@ class EmotionConcept:
         self.image_path = image_path
         self.audio_path = audio_path
         self.description = description
-
-    @classmethod
-    def load_concept_by_emotion_and_level(cls, emotion: str, level: int) -> 'EmotionConcept':
-        """Tải khái niệm cảm xúc theo emotion và level."""
-        # Placeholder: cần repository
-        return cls(uuid4(), emotion, level, "Learn Emotion", "path/to/video", "path/to/image", "path/to/audio", "Description")

@@ -45,6 +45,8 @@ class QuestionService:
     # Format question cho FE
     def format_questions_for_frontend(self, questions: List[Question], game_id: UUID, level: int) -> List[Dict]:
         formatted_questions = []
+        
+        # Lấy pool tất cả các đáp án tiềm năng trong level này
         options_pool = self.contents_repo.get_game_content_by_level(game_id, level)
 
         for q in questions:
@@ -55,11 +57,34 @@ class QuestionService:
             main_content = q.content
             correct_answer = q.correct_answer
 
-            distractors = [
-                opt for opt in options_pool
-                if opt.correct_answer != correct_answer and opt.content_id != main_content.content_id
-            ]
-            selected_distractors = random.sample(distractors, min(len(distractors), 3))
+            # Tạo Map để nhóm các content theo text đáp án
+            # Ví dụ: {'Buồn bã': [content1, content2], 'Sợ hãi': [content3]}
+            distractors_map = {}
+            
+            for opt in options_pool:
+                # Bỏ qua nếu text trùng với đáp án đúng (để không bị trùng đáp án chính)
+                if opt.correct_answer == correct_answer:
+                    continue
+                
+                if opt.correct_answer not in distractors_map:
+                    distractors_map[opt.correct_answer] = []
+                distractors_map[opt.correct_answer].append(opt)
+
+            # Lấy danh sách các loại đáp án khác nhau (các Key)
+            available_distractor_answers = list(distractors_map.keys())
+            
+            # Chọn ngẫu nhiên 3 loại đáp án KHÁC NHAU từ danh sách trên
+            # Dùng min để tránh lỗi nếu database chưa đủ 3 loại cảm xúc khác
+            num_to_select = min(len(available_distractor_answers), 3)
+            selected_answers = random.sample(available_distractor_answers, num_to_select)
+            
+            # Với mỗi loại đáp án đã chọn, lấy ngẫu nhiên 1 content đại diện
+            selected_distractors = []
+            for ans in selected_answers:
+                # Lấy ngẫu nhiên 1 content trong nhóm 'ans'
+                content = random.choice(distractors_map[ans])
+                selected_distractors.append(content)
+                
             options_domain = [main_content] + selected_distractors
             random.shuffle(options_domain)
 

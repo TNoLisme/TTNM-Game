@@ -521,7 +521,7 @@ class CVService:
                 start_time=start_time,
                 state=ModelSessionStateEnum.playing,
                 score=0,
-                emotion_errors=json.dumps({}),
+                emotion_errors=json.dumps({"sợ hãi": 0, "buồn bã": 0, "tức giận": 0, "ghê tởm": 0, "ngạc nhiên": 0, "vui vẻ": 0}),
                 max_errors=3,
                 level_threshold=100,
                 ratio=json.dumps([]),
