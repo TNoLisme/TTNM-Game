@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thám tử cảm xúc</title>
+    <link rel="stylesheet" href="../styles/game_click_4.css" />
+</head>
+<body>
+    <div class="page">
+        <header class="header">
+            <div class="header-main">
+                <h1 class="title">Thám tử cảm xúc</h1>
+                <p class="subtitle">Đọc tình huống và chọn cảm xúc phù hợp nhất</p>
+            </div>
+            <div class="stats">
+                <div class="stat-pill">
+                    <span id="progress-label">Câu 1/1</span>
+                </div>
+                <div class="stat-pill">
+                    <span id="score-label">Điểm: 0</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <section class="card question-card">
+                <div id="question-media" class="question-media"></div>
+                <p id="question-text" class="question-text">Đang tải câu hỏi...</p>
+                <div class="hint-row">
+                    <button id="hint-btn" class="btn btn-secondary">💡 Gợi ý</button>
+                    <p id="hint-text" class="hint-text"></p>
+                </div>
+            </section>
+
+            <section class="card answers-card">
+                <h2 class="answers-title">Chọn cảm xúc đúng</h2>
+                <div class="answers-grid">
+                    <button class="answer-option" data-index="0"></button>
+                    <button class="answer-option" data-index="1"></button>
+                    <button class="answer-option" data-index="2"></button>
+                    <button class="answer-option" data-index="3"></button>
+                    <button class="answer-option" data-index="4"></button>
+                    <button class="answer-option" data-index="5"></button>
+                </div>
+                <div class="controls-row">
+                    <button id="sound-btn" class="btn btn-ghost">🔊 Nghe lại câu hỏi</button>
+                    <button id="exit-btn" class="btn btn-outline">⬅ Thoát</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <div id="modal-icon" class="modal-icon"></div>
+            <h2 id="modal-title" class="modal-title"></h2>
+            <p id="modal-message" class="modal-message"></p>
+            <button id="next-question-btn" class="btn btn-primary modal-btn">Tiếp tục</button>
+        </div>
+    </div>
+
+    <div id="system-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="system-modal-title" class="modal-title"></h2>
+            <p id="system-modal-message" class="modal-message"></p>
+            <button id="system-modal-btn" class="btn btn-primary modal-btn">OK</button>
+        </div>
+    </div>
+
+    <script src="../components/game_click_4.js"></script>
+</body>
+</html>
