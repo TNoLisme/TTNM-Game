@@ -25,12 +25,14 @@ body {
   --border: #e5e7eb;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   --radius: 16px;
+  --nav-height: 70px;
 }
 
 /* ========== Layout tổng ========== */
 body {
   display: block;
   background: var(--bg);
+  padding-top: var(--nav-height); /* added top padding */
 }
 
 /* ========== Main Learn ========== */
