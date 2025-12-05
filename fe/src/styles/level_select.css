@@ -8,8 +8,8 @@ body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(135deg, #e9d5ff 0%, #fce7f3 50%, #bfdbfe 100%);
     min-height: 100vh;
-    padding: 1rem;
-    padding-top: 6rem;
+    padding: 0.75rem;
+    padding-top: 4.5rem;
 }
 
 .container {
@@ -22,20 +22,20 @@ body {
     background: white;
     border-radius: 1.5rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
     text-align: center;
     border: 3px solid #d8b4fe;
 }
 
 .header h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: #9333ea;
     margin-bottom: 0.5rem;
 }
 
 .subtitle {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #6b7280;
     margin-bottom: 0.75rem;
 }
@@ -64,26 +64,32 @@ body {
     background: white;
     border-radius: 1.5rem;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-    padding: 2.5rem;
+    padding: 2rem;
     border: 4px solid #d8b4fe;
 }
 
 .level-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
     text-align: center;
     color: #4b5563;
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
 }
 
 /* Level Grid */
 .level-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (max-width: 1023px) {
+    .level-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
     .level-grid {
         grid-template-columns: repeat(4, 1fr);
     }
@@ -93,8 +99,8 @@ body {
 .level-button {
     position: relative;
     border-radius: 1.5rem;
-    padding: 2rem;
-    min-height: 150px;
+    padding: 1.6rem;
+    min-height: 135px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -136,6 +142,10 @@ body {
     transition: height 1s ease-out;
     z-index: 0;
     pointer-events: none;
+}
+
+.water-fill.full {
+    background: linear-gradient(180deg, rgba(251, 191, 36, 0.7) 0%, rgba(245, 158, 11, 0.9) 40%, rgba(239, 68, 68, 0.95) 100%);
 }
 
 .water-fill::before {
@@ -255,15 +265,15 @@ body {
 /* Start Button */
 .button-container {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .start-button {
     background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: bold;
-    padding: 1.5rem 4rem;
+    padding: 1.1rem 3rem;
     border: none;
     border-radius: 9999px;
     cursor: pointer;
@@ -282,17 +292,15 @@ body {
 
 .start-button.disabled {
     background: #d1d5db;
-    cursor: not-allowed;
-    box-shadow: none;
 }
 
 /* Selected Message */
 .selected-message {
-    text-align: center;
-    font-size: 1rem;
-    color: #9333ea;
-    font-weight: 400;
-    animation: pulse 2s infinite;
+text-align: center;
+font-size: 1rem;
+color: #9333ea;
+font-weight: 400;
+animation: pulse 2s infinite;
 }
 
 .selected-message.hidden {
@@ -302,4 +310,104 @@ body {
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
+}
+
+/* Giảm chiều cao tổng thể trên màn hình thấp (ví dụ laptop 1366x768) */
+@media (max-height: 800px) {
+    body {
+        padding-top: 4rem;
+    }
+
+    .header {
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .header h1 {
+        font-size: 1.6rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .level-container {
+        padding: 1.6rem;
+    }
+
+    .level-title {
+        font-size: 1.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .level-grid {
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .level-button {
+        padding: 1.25rem;
+        min-height: 120px;
+    }
+
+    .level-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .level-number {
+        font-size: 1.6rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .level-name {
+        font-size: 1.1rem;
+    }
+
+    .start-button {
+        font-size: 1.25rem;
+        padding: 1rem 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 0.75rem;
+        padding-top: 5.5rem;
+    }
+
+    .level-container {
+        padding: 1.75rem;
+    }
+
+    .level-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .level-button {
+        padding: 1.5rem;
+        min-height: 130px;
+    }
+
+    .start-button {
+        width: 100%;
+        font-size: 1.25rem;
+        padding: 1.25rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.6rem;
+    }
+
+.subtitle {
+font-size: 0.95rem;
+}
+
+.level-title {
+font-size: 1.6rem;
+}
 }

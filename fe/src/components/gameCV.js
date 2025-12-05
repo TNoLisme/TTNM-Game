@@ -26,6 +26,10 @@ const CV_GAME_CONFIG = {
     },
 };
 
+// Map game_id từ database sang key nội bộ GV1/GV2
+const DB_GAME_CV_SCENARIO_ID = "e05909f3-3dee-42a6-9a75-fd985b1bdf47".toLowerCase(); // Câu chuyện trên khuôn mặt (GV1)
+const DB_GAME_CV_REQUEST_ID = "61f5e09e-eefa-44c1-86e1-87dfceac3b8e".toLowerCase(); // Thử thách cảm xúc (GV2)
+
 // Game state
 let gameState = {
     gameId: "GV1",
@@ -151,13 +155,28 @@ async function initGame() {
     
     console.log('✅ User found:', userId);
 
-    // Get level from query params
+    // Get level & game from query params
     const urlParams = new URLSearchParams(window.location.search);
-    const gameId = urlParams.get('gameId') || 'GV1';
-    gameState.gameId = gameId;
-    gameState.config = CV_GAME_CONFIG[gameId] || CV_GAME_CONFIG.GV1;
+    const rawGameId = urlParams.get('gameId');
+
+    // Mặc định: GV1 (biểu cảm theo tình huống)
+    let gameKey = "GV1";
+
+    if (rawGameId) {
+        const lowerId = rawGameId.toLowerCase();
+        if (lowerId === DB_GAME_CV_REQUEST_ID) {
+            // Thử thách cảm xúc (game_cv_2)
+            gameKey = "GV2";
+        } else if (lowerId === DB_GAME_CV_SCENARIO_ID) {
+            // Câu chuyện trên khuôn mặt / game CV tình huống
+            gameKey = "GV1";
+        }
+    }
+
+    gameState.gameId = gameKey;
+    gameState.config = CV_GAME_CONFIG[gameKey] || CV_GAME_CONFIG.GV1;
     applyGameConfig();
-    console.log('Selected game:', gameId);
+    console.log('Selected game:', gameKey, 'rawGameId:', rawGameId);
 
     const selectedLevel = parseInt(urlParams.get('level')) || 1;
     const selectedEmotion = urlParams.get('emotion');
