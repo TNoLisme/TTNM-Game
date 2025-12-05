@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 class EmotionConcept:
     def __init__(self, concept_id: UUID, emotion: str, level: int, title: str, video_path: str,
@@ -11,9 +11,3 @@ class EmotionConcept:
         self.image_path = image_path
         self.audio_path = audio_path
         self.description = description
-
-    @classmethod
-    def load_concept_by_emotion_and_level(cls, emotion: str, level: int) -> 'EmotionConcept':
-        """Tải khái niệm cảm xúc theo emotion và level."""
-        # Placeholder: cần repository
-        return cls(UUID("ghi78901-e89b-12d3-a456-426614174000"), emotion, level, "Learn Emotion", "path/to/video", "path/to/image", "path/to/audio", "Description")

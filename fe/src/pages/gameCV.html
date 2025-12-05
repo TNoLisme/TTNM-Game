@@ -4,24 +4,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTNM Game - Game CV</title>
-    <link rel="stylesheet" href="/src/styles/game.css">
+    <title>Game CV - Nhận diện cảm xúc</title>
+    <link rel="stylesheet" href="/src/styles/gameCV.css">
+    <!-- face-api.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@latest/dist/face-api.min.js"></script>
 </head>
 
 <body>
     <div class="navbar">
         <button id="back-button" class="back-btn">&#x2190; Quay lại</button>
-        <span>TTNM Game - Game CV</span>
-        <button id="logout-button" class="logout-btn">Đăng xuất</button>
+        <span>Game CV - Nhận diện cảm xúc</span>
+        <div class="navbar-right">
+            <span id="progress-indicator" class="progress-indicator">Màn 0/10</span>
+            <button id="logout-button" class="logout-btn">Đăng xuất</button>
+        </div>
     </div>
 
-    <div class="container">
-        <h1>GAME CV</h1>
-        <p>Đây là nội dung cơ bản của Game CV (Career Vision).</p>
-        <p>Logic chơi game sẽ được triển khai tại đây.</p>
+    <div id="error-message"></div>
+
+    <div class="game-container">
+        <!-- Left Panel: Preparation & Instructions -->
+        <div class="left-panel">
+            <h2 class="scenario-title" id="scenario-title">Đang tải...</h2>
+            <div class="scenario-image-container">
+                <img id="scenario-image" class="scenario-image" alt="Minh họa tình huống" style="display: none;" />
+            </div>
+            <p class="scenario-description" id="scenario-description"></p>
+            <div class="target-emotion" id="target-emotion"></div>
+            <div class="countdown" id="countdown"></div>
+            
+            <div class="button-group">
+                <button id="hint-btn" class="game-btn hint-btn">💡 Gợi ý</button>
+                <button id="start-btn" class="game-btn start-btn">▶️ Bắt đầu</button>
+            </div>
+            
+            <!-- Hint Space Container -->
+            <div class="hint-space-container">
+                <!-- Hint Animation -->
+                <div id="hint-animation"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Camera & Detection -->
+        <div class="right-panel">
+            <div class="camera-container">
+                <video id="camera-video" autoplay playsinline></video>
+            </div>
+            
+            <div class="detection-info">
+                <div class="detected-emotion-icon" id="detected-emotion-icon">👤</div>
+                <div class="detected-emotion-percent" id="detected-emotion-percent">0%</div>
+            </div>
+
+            <div class="traffic-light">
+                <div class="traffic-light-item traffic-red" id="traffic-red"></div>
+                <div class="traffic-light-item traffic-yellow" id="traffic-yellow"></div>
+                <div class="traffic-light-item traffic-green" id="traffic-green"></div>
+            </div>
+
+            <div class="feedback-text" id="feedback-text">Chờ bắt đầu...</div>
+            
+            <div class="privacy-notice">
+                Xử lý trên máy – không lưu hình ảnh
+            </div>
+        </div>
     </div>
 
-    <script src="/src/components/gameLogic.js"></script>
+    <!-- Success Animation -->
+    <div id="success-animation"></div>
+
+    <!-- Game Complete Modal -->
+    <div id="game-complete-modal" class="game-complete-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎉 Hoàn thành!</h2>
+            </div>
+            <div class="modal-body">
+                <p id="completion-message">Con đã hoàn thành màn chơi!</p>
+                <div class="score-display" id="score-display"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="play-again-btn" class="modal-btn play-again-btn">🔄 Chơi lại</button>
+                <button id="exit-btn" class="modal-btn exit-btn">🏠 Thoát</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/src/components/gameCV.js"></script>
 </body>
 
 </html>
+

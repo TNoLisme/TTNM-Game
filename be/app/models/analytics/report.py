@@ -1,4 +1,4 @@
-from sqlalchemy import Column, UUID, Enum, TIMESTAMP, Text, JSON, ForeignKey
+from sqlalchemy import Column, UUID, Enum, TIMESTAMP, Text, JSON, ForeignKey, UnicodeText
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 import enum
@@ -16,7 +16,7 @@ class Report(Base):
     child_id = Column(UUID(as_uuid=True), ForeignKey("children.user_id"))
     report_type = Column(Enum(ReportTypeEnum), nullable=False)
     generated_at = Column(TIMESTAMP, nullable=False)
-    summary = Column(Text, nullable=False)
+    summary = Column(UnicodeText, nullable=False)
     data = Column(JSON, nullable=False)
 
     # Relationships

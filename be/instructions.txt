@@ -1,0 +1,457 @@
+# 📚 Hướng Dẫn Chi Tiết - Hệ Thống Admin & CRUD
+
+## 🎯 TỔNG QUAN NHỮNG GÌ ĐÃ THÊM/SỬA
+
+### ✅ 1. Authentication & Authorization System
+**Files mới tạo:**
+- `be/app/middleware/auth_middleware.py` - JWT middleware với role-based access control
+
+**Chức năng:**
+- Tạo JWT token khi login
+- Verify token cho các protected routes
+- Check role (Admin/Child) cho từng endpoint
+- Decode token để lấy user_id, username, role
+
+**Cách hoạt động:**
+```python
+# Tạo token khi login
+access_token = create_access_token(
+    data={"user_id": "...", "username": "...", "role": "admin"}
+)
+
+# Protect endpoint chỉ cho admin
+@router.get("/users", dependencies=[Depends(verify_admin)])
+
+# Protect endpoint cho cả admin và child
+@router.get("/games", dependencies=[Depends(verify_token)])
+```
+
+---
+
+### ✅ 2. Admin Management System
+**Files mới tạo:**
+- `be/app/controllers/admin/admin_controller.py` - Admin endpoints
+- `be/app/services/admin/admin_service.py` - Admin business logic
+
+**Endpoints admin có:**
+
+#### **GET /api/admin/users** 🔒 (Admin only)
+Lấy danh sách tất cả users với pagination và filter
+```bash
+GET /api/admin/users?skip=0&limit=10&role=child
+Authorization: Bearer <admin_token>
+```
+Response:
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "user_id": "...",
+      "username": "user1",
+      "email": "user1@example.com",
+      "name": "User One",
+      "role": "child"
+    }
+  ],
+  "total": 50,
+  "skip": 0,
+  "limit": 10
+}
+```
+
+#### **GET /api/admin/users/{user_id}** 🔒 (Admin only)
+Lấy chi tiết user (kèm child info nếu là child)
+```bash
+GET /api/admin/users/123e4567-e89b-12d3-a456-426614174000
+Authorization: Bearer <admin_token>
+```
+
+#### **PUT /api/admin/users/{user_id}** 🔒 (Admin only)
+Cập nhật thông tin user
+```bash
+PUT /api/admin/users/123e4567-e89b-12d3-a456-426614174000
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "name": "New Name",
+  "email": "newemail@example.com",
+  "age": 10,
+  "gender": "male"
+}
+```
+
+#### **DELETE /api/admin/users/{user_id}** 🔒 (Admin only)
+Xóa user (cascade delete child record nếu có)
+
+#### **GET /api/admin/children** 🔒 (Admin only)
+Lấy danh sách tất cả children (join với user data)
+
+#### **GET /api/admin/statistics** 🔒 (Admin only)
+Lấy thống kê hệ thống
+```json
+{
+  "status": "success",
+  "data": {
+    "total_users": 100,
+    "total_children": 80,
+    "total_admins": 20,
+    "total_child_records": 80
+  }
+}
+```
+
+---
+
+### ✅ 3. Emotion Concepts System (Learn Section)
+**Files mới tạo:**
+- `be/app/controllers/sessions/emotion_concepts_controller.py`
+- `be/app/services/sessions/emotion_concepts_service.py` (updated)
+- `be/app/repository/emotion_concepts_repo.py` (updated)
+- `be/app/mapper/emotion_concepts_mapper.py`
+
+**Endpoints:**
+
+#### **GET /api/emotion-concepts** 🔓 (Authenticated users)
+Lấy danh sách emotion concepts với filter
+```bash
+GET /api/emotion-concepts?emotion=vui&level=1
+Authorization: Bearer <token>
+```
+
+#### **GET /api/emotion-concepts/{emotion}/{level}** 🔓
+Lấy concept theo emotion và level cụ thể
+```bash
+GET /api/emotion-concepts/vui/1
+Authorization: Bearer <token>
+```
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "concept_id": "...",
+    "emotion": "vui",
+    "level": 1,
+    "title": "Khái niệm cảm xúc vui",
+    "video_path": "/videos/vui_level1.mp4",
+    "image_path": "/images/vui_level1.png",
+    "audio_path": "/audio/vui_level1.mp3",
+    "description": "Mô tả về cảm xúc vui..."
+  }
+}
+```
+
+#### **POST /api/emotion-concepts** 🔒 (Admin only)
+Tạo emotion concept mới
+```bash
+POST /api/emotion-concepts
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "emotion": "vui",
+  "level": 1,
+  "title": "Khái niệm vui",
+  "video_path": "/videos/vui.mp4",
+  "image_path": "/images/vui.png",
+  "audio_path": "/audio/vui.mp3",
+  "description": "Mô tả..."
+}
+```
+
+#### **PUT /api/emotion-concepts/{concept_id}** 🔒 (Admin only)
+Cập nhật emotion concept
+
+#### **DELETE /api/emotion-concepts/{concept_id}** 🔒 (Admin only)
+Xóa emotion concept
+
+---
+
+### ✅ 4. Questions Management System
+**Files mới tạo:**
+- `be/app/controllers/games/questions_controller.py`
+- `be/app/services/games/question_service.py` (updated)
+
+**Endpoints:**
+
+#### **GET /api/games/{game_id}/questions** 🔓
+Lấy danh sách questions theo game
+```bash
+GET /api/games/abc123.../questions?level=1
+Authorization: Bearer <token>
+```
+
+#### **GET /api/questions/{question_id}** 🔓
+Lấy chi tiết question
+
+#### **POST /api/questions** 🔒 (Admin only)
+Tạo question mới
+```bash
+POST /api/questions
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "game_id": "abc123...",
+  "level": 1,
+  "content": {
+    "game_id": "abc123...",
+    "level": 1,
+    "content_type": "image",
+    "media_path": "/images/q1.png",
+    "question_text": "Cảm xúc này là gì?",
+    "correct_answer": "vui",
+    "emotion": "vui",
+    "explanation": "..."
+  },
+  "answer_options": [
+    { "...": "4 options tương tự content" }
+  ],
+  "correct_answer": "vui"
+}
+```
+
+#### **PUT /api/questions/{question_id}** 🔒 (Admin only)
+Cập nhật question
+
+#### **DELETE /api/questions/{question_id}** 🔒 (Admin only)
+Xóa question
+
+#### **GET /api/games/{game_id}/questions/random** 🔓
+Lấy random questions cho game session
+```bash
+GET /api/games/abc123.../questions/random?level=1&count=10
+Authorization: Bearer <token>
+```
+
+---
+
+### ✅ 5. Game Contents Management System
+**Files mới tạo:**
+- `be/app/controllers/games/game_contents_controller.py`
+- `be/app/services/games/game_contents_service.py`
+
+**Endpoints:**
+
+#### **GET /api/games/{game_id}/contents** 🔓
+Lấy danh sách contents theo game
+```bash
+GET /api/games/abc123.../contents?level=1&emotion=vui
+Authorization: Bearer <token>
+```
+
+#### **GET /api/contents/{content_id}** 🔓
+Lấy chi tiết content
+
+#### **POST /api/contents** 🔒 (Admin only)
+Tạo content mới
+```bash
+POST /api/contents
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "game_id": "abc123...",
+  "level": 1,
+  "content_type": "image",
+  "media_path": "/images/content1.png",
+  "question_text": "Đây là cảm xúc gì?",
+  "correct_answer": "vui",
+  "emotion": "vui",
+  "explanation": "Giải thích..."
+}
+```
+
+#### **PUT /api/contents/{content_id}** 🔒 (Admin only)
+Cập nhật content
+
+#### **DELETE /api/contents/{content_id}** 🔒 (Admin only)
+Xóa content
+
+#### **GET /api/contents/emotion/{emotion}** 🔓
+Lấy contents theo emotion
+
+---
+
+### ✅ 6. Users Controller Updates
+**File đã sửa:**
+- `be/app/controllers/users/users_controller.py`
+- `be/app/services/users/users_service.py`
+
+**Cập nhật:**
+- Login endpoint giờ trả về JWT token
+- Response thêm `access_token` và `token_type`
+- Service login method thêm `user_id` vào response
+
+**Login endpoint mới:**
+```bash
+POST /api/users/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "password123"
+}
+```
+Response:
+```json
+{
+  "success": true,
+  "message": "Đăng nhập thành công",
+  "user": {
+    "user_id": "123e4567...",
+    "username": "user1",
+    "fullName": "User One",
+    "accountType": "child"
+  },
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+---
+
+### ✅ 7. Repository & Mapper Updates
+**Files mới tạo/sửa:**
+- `be/app/repository/child_repo.py` - Thêm methods: `save`, `update`, `get_by_user_id`, `delete`, `get_all`
+- `be/app/mapper/child_mapper.py` - Mapper cho Child entity
+- `be/app/mapper/emotion_concepts_mapper.py` - Mapper cho EmotionConcept
+- `be/app/repository/emotion_concepts_repo.py` - Thêm methods: `get_by_emotion_and_level`, `get_all`
+
+---
+
+## 🔧 CÁCH SỬ DỤNG
+
+### 1. Cài đặt dependencies
+```bash
+cd be
+pip install -r requirements.txt
+```
+
+### 2. Cấu hình .env
+```bash
+cp .env.example .env
+# Sửa các giá trị trong .env
+```
+
+### 3. Chạy server
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 4. Test endpoints
+
+#### **Step 1: Login để lấy token**
+```bash
+curl -X POST http://localhost:8000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+```
+Copy `access_token` từ response
+
+#### **Step 2: Gọi protected endpoints**
+```bash
+# Lấy danh sách users (admin only)
+curl -X GET http://localhost:8000/api/admin/users \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# Lấy emotion concepts
+curl -X GET http://localhost:8000/api/emotion-concepts \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# Tạo question mới (admin only)
+curl -X POST http://localhost:8000/api/questions \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"game_id":"...","level":1,...}'
+```
+
+---
+
+## 🔐 PHÂN QUYỀN
+
+### Admin có thể:
+- ✅ Quản lý users (CRUD)
+- ✅ Quản lý emotion concepts (CRUD)
+- ✅ Quản lý questions (CRUD)
+- ✅ Quản lý game contents (CRUD)
+- ✅ Xem thống kê hệ thống
+- ✅ Truy cập tất cả endpoints
+
+### Child có thể:
+- ✅ Xem emotion concepts (Read only)
+- ✅ Xem questions (Read only)
+- ✅ Xem game contents (Read only)
+- ✅ Chơi games
+- ❌ KHÔNG thể CRUD dữ liệu
+
+---
+
+## 📊 DATABASE CHANGES NEEDED
+
+Đảm bảo các bảng sau tồn tại:
+- `users` (có sẵn)
+- `children` (có sẵn)
+- `emotion_concepts` (có sẵn)
+- `game_content` (có sẵn)
+- `questions` (có sẵn)
+- `question_answer_options` (có sẵn)
+
+Không cần migration mới vì tất cả tables đã có trong code hiện tại.
+
+---
+
+## 🐛 TROUBLESHOOTING
+
+### Lỗi: "Invalid authentication credentials"
+- Check token có đúng không
+- Check token chưa hết hạn (24 giờ)
+- Check header: `Authorization: Bearer <token>`
+
+### Lỗi: "Admin access required"
+- Check role trong token phải là "admin"
+- Re-login với admin account
+
+### Lỗi: "User not found"
+- Check user_id có tồn tại trong database
+- Check UUID format đúng
+
+### Lỗi khi import
+```bash
+# Thêm PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:/path/to/be"
+```
+
+---
+
+## 📝 NOTES
+
+1. **JWT Secret Key**: Đổi `JWT_SECRET_KEY` trong production (min 32 chars)
+2. **Token Expiry**: Mặc định 24 giờ, có thể config trong `auth_middleware.py`
+3. **Email OTP**: Cần Gmail App Password để gửi email OTP
+4. **Password**: Hiện tại lưu plain text, nên hash bằng bcrypt trong production
+5. **Pagination**: Default `limit=100`, có thể tăng nếu cần
+
+---
+
+## 🎉 HOÀN THÀNH
+
+Hệ thống giờ có đầy đủ:
+- ✅ JWT Authentication
+- ✅ Role-based Authorization
+- ✅ Admin Management
+- ✅ Emotion Concepts CRUD
+- ✅ Questions CRUD
+- ✅ Game Contents CRUD
+- ✅ Proper error handling
+- ✅ Pagination & Filtering
+
+**Next steps:**
+1. Test tất cả endpoints
+2. Thêm unit tests
+3. Hash passwords (bcrypt)
+4. Add rate limiting
+5. Add logging
+6. Deploy to production

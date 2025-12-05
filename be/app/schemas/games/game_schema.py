@@ -28,3 +28,15 @@ class GameSchema(BaseModel):
         max_errors: int
         level_threshold: int
         time_limit: int
+
+
+
+    class StartGameRequest(BaseModel):
+
+        level: int
+        user_id: str
+
+    class AnswerRequest(BaseModel):
+        session_id: str
+        question_id: str
+        answer: str

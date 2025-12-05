@@ -1,6 +1,6 @@
 from uuid import UUID
 from datetime import datetime
-from app.models.games.game import Game as GameModel
+from app.models.games.game import Game as GameModel, GameTypeEnum
 from app.domain.games.game import Game, GameClick, GameCV, GameRecognizeEmotion, GameSituationEmotion, GameFaceBuilder, GameWhoIsWho, GameExpressEmotion, GameSituationExpress
 from app.schemas.games.game_schema import GameSchema  # Giả định schema
 from typing import Optional
@@ -9,9 +9,12 @@ class GamesMapper:
     @staticmethod
     def to_domain(game_model: GameModel) -> Game:
         """Chuyển đổi từ model sang domain entity."""
+        game_type_value = getattr(game_model.game_type, "value", None)
         if not game_model:
             return None
-        if game_model.game_type == "GameClick":
+        
+
+        if game_type_value == "GameClick":
             return GameClick(
                 game_id=game_model.game_id,
                 game_type=game_model.game_type,
@@ -22,9 +25,9 @@ class GamesMapper:
                 level_threshold=game_model.level_threshold,
                 time_limit=game_model.time_limit,
                 type_question="multiple_choice",  # Giả định
-                options=[]  # Cần lấy từ question_answer_options
+                options=[]
             )
-        elif game_model.game_type == "GameCV":
+        elif game_type_value == "GameCV":
             return GameCV(
                 game_id=game_model.game_id,
                 game_type=game_model.game_type,

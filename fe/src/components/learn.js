@@ -174,34 +174,34 @@ function renderDots() {
 }
 
 function renderSituationPanel() {
-  if (!situationPanel || !situationText) return;
+    if (!situationPanel || !situationText) return;
 
-  //  Chưa chọn cảm xúc → ẩn panel, không text, không loa
-  if (!currentEmotion) {
-    situationPanel.style.display = "none";
-    situationText.textContent =
-      "Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.";
-    return;
-  }
+    //  Chưa chọn cảm xúc → ẩn panel, không text, không loa
+    if (!currentEmotion) {
+        situationPanel.style.display = "none";
+        situationText.textContent =
+            "Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.";
+        return;
+    }
 
-  const key = currentEmotion.toLowerCase();
-  const info = SITUATIONS[key];
+    const key = currentEmotion.toLowerCase();
+    const info = SITUATIONS[key];
 
-  if (!info) {
-    situationPanel.style.display = "none";
-    situationText.textContent = "";
-    return;
-  }
+    if (!info) {
+        situationPanel.style.display = "none";
+        situationText.textContent = "";
+        return;
+    }
 
-  if (current === 0) {
-    // 👉 Trang 1: VIDEO → chỉ có video, ẩn panel (không text, không loa)
-    situationPanel.style.display = "none";
-    situationText.textContent = "";
-  } else {
-    // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text + loa
-    situationPanel.style.display = "flex"; // hoặc "" nếu CSS set sẵn display:flex
-    situationText.textContent = info.text; // An đánh rơi kem rồi, nên An buồn và khóc.
-  }
+    if (current === 0) {
+        // 👉 Trang 1: VIDEO → chỉ có video, ẩn panel (không text, không loa)
+        situationPanel.style.display = "none";
+        situationText.textContent = "";
+    } else {
+        // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text + loa
+        situationPanel.style.display = "flex"; // hoặc "" nếu CSS set sẵn display:flex
+        situationText.textContent = info.text; // An đánh rơi kem rồi, nên An buồn và khóc.
+    }
 }
 
 function updateCarousel() {

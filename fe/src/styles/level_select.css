@@ -1,0 +1,305 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #e9d5ff 0%, #fce7f3 50%, #bfdbfe 100%);
+    min-height: 100vh;
+    padding: 1rem;
+    padding-top: 6rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    border: 3px solid #d8b4fe;
+}
+
+.header h1 {
+    font-size: 2rem;
+    color: #9333ea;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+}
+
+.progress-badge {
+    display: inline-block;
+    background: #f3e8ff;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.trophy-icon {
+    font-size: 1.25rem;
+    margin-right: 0.25rem;
+}
+
+.progress-text {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #7c3aed;
+}
+
+/* Level Container */
+.level-container {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    padding: 2.5rem;
+    border: 4px solid #d8b4fe;
+}
+
+.level-title {
+    font-size: 2rem;
+    text-align: center;
+    color: #4b5563;
+    margin-bottom: 2rem;
+}
+
+/* Level Grid */
+.level-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+    .level-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Level Button */
+.level-button {
+    position: relative;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #d1d5db;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.level-button:hover:not(.locked) {
+    transform: scale(1.1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.level-button:active:not(.locked) {
+    transform: scale(0.95);
+}
+
+.level-button.selected {
+    border: 8px solid #9333ea;
+    transform: scale(1.05);
+}
+
+.level-button.locked {
+    background: #d1d5db;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Water Fill Effect */
+.water-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.4) 0%, rgba(37, 99, 235, 0.6) 100%);
+    transition: height 1s ease-out;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.water-fill::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -50%;
+    width: 200%;
+    height: 20px;
+    background: rgba(96, 165, 250, 0.5);
+    border-radius: 50%;
+    animation: wave 3s infinite linear;
+}
+
+@keyframes wave {
+    0% { transform: translateX(0) translateY(0); }
+    50% { transform: translateX(-25%) translateY(-5px); }
+    100% { transform: translateX(-50%) translateY(0); }
+}
+
+/* Level Colors */
+.level-button.level-1 { background: #fbbf24; }
+.level-button.level-2 { background: #f472b6; }
+.level-button.level-3 { background: #60a5fa; }
+.level-button.level-4 { background: #a78bfa; }
+.level-button.level-5 { background: #fb923c; }
+.level-button.level-6 { background: #4ade80; }
+.level-button.level-7 { background: #f87171; }
+.level-button.level-8 { background: #818cf8; }
+
+.level-button.level-1:hover:not(.locked) { background: #f59e0b; }
+.level-button.level-2:hover:not(.locked) { background: #ec4899; }
+.level-button.level-3:hover:not(.locked) { background: #3b82f6; }
+.level-button.level-4:hover:not(.locked) { background: #8b5cf6; }
+.level-button.level-5:hover:not(.locked) { background: #f97316; }
+.level-button.level-6:hover:not(.locked) { background: #22c55e; }
+.level-button.level-7:hover:not(.locked) { background: #ef4444; }
+.level-button.level-8:hover:not(.locked) { background: #6366f1; }
+
+/* Score Display */
+.score-display {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.4rem 0.8rem;
+    border-radius: 1rem;
+    font-weight: bold;
+    color: #1f2937;
+    font-size: 0.9rem;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Completed Badge */
+.completed-badge {
+    position: absolute;
+    top: -12px;
+    left: -12px;
+    background: #22c55e;
+    border-radius: 50%;
+    padding: 0.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+
+/* Level Content */
+.level-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Level Icon */
+.level-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.level-button.selected .level-icon {
+    animation: bounce 0.6s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Level Number */
+.level-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.level-button.locked .level-number {
+    color: #6b7280;
+}
+
+/* Level Name */
+.level-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.level-button.locked .level-name {
+    color: #6b7280;
+}
+
+/* Start Button */
+.button-container {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.start-button {
+    background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 1.5rem 4rem;
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.start-button:hover:not(.disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.start-button:active:not(.disabled) {
+    transform: scale(0.95);
+}
+
+.start-button.disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Selected Message */
+.selected-message {
+    text-align: center;
+    font-size: 1rem;
+    color: #9333ea;
+    font-weight: 400;
+    animation: pulse 2s infinite;
+}
+
+.selected-message.hidden {
+    display: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}

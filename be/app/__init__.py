@@ -4,7 +4,7 @@ from .mapper import ChildMapper, ChildProgressMapper, EmotionConceptsMapper, Gam
 from .models import User, Session, GameHistory, Game, Base
 from .repository import BaseRepository, ChildProgressRepository, ChildRepository, GameContentsRepository, GamesRepository, GameContentsRepository, GameDataRepository, GameHistoryRepository, QuestionsRepository, ReportRepository, SessionsRepository, SessionHistoryRepository, SessionQuestionsRepository, UsersRepository
 from .schemas import ChildProgressSchema, GameHistorySchema, ReportSchema, SessionHistorySchema, GameContentsSchema, GameDataSchema, GameSchema, QuestionSchema, EmotionConceptSchema, SessionQuestionsSchema, SessionSchema, UserSchema
-from .services import ChildProgressService, GameHistoryService, ReportService, SessionHistoryService, BaseGameService, GameDataService, GameService, QuestionService, EmotionConceptsService, SessionsService, SessionQuestionsService, UsersService
+from .services import ChildProgressService, GameHistoryService, ReportService, SessionHistoryService, GameService, QuestionService, EmotionConceptsService, SessionsService, SessionQuestionsService, UsersService
 
 __all__ = [
            'ChildProgress', 'GameHistory', 'Report', 'SessionHistory', 'GameCompleted', 'LevelAdvanced', 'ProgressUpdated', 'SessionEnded', 'SessionStarted',
@@ -13,4 +13,4 @@ __all__ = [
            'User', 'Session', 'GameHistory', 'Game', 'Base',
            'AdminRepository', 'BaseRepository', 'ChildProgressRepository', 'ChildRepository', 'EmotionConceptsRepository', 'GamesRepository', 'GameContentsRepository', 'GameDataRepository', 'GameHistoryRepository', 'QuestionsRepository', 'ReportRepository', 'SessionsRepository', 'SessionHistoryRepository', 'SessionQuestionsRepository', 'UsersRepository',
            'ChildProgressSchema', 'GameHistorySchema', 'ReportSchema', 'SessionHistorySchema', 'GameContentsSchema', 'GameDataSchema', 'GameSchema', 'QuestionSchema', 'EmotionConceptSchema', 'SessionQuestionsSchema', 'SessionSchema', 'UserSchema',
-           'ChildProgressService', 'GameHistoryService', 'ReportService', 'SessionHistoryService', 'BaseGameService', 'GameDataService', 'GameService', 'QuestionService', 'EmotionConceptsService', 'SessionsService', 'SessionQuestionsService', 'UsersService']
+           'ChildProgressService', 'GameHistoryService', 'ReportService', 'SessionHistoryService', 'BaseGameService', 'GameService', 'QuestionService', 'EmotionConceptsService', 'SessionsService', 'SessionQuestionsService', 'UsersService']

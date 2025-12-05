@@ -11,13 +11,12 @@ class QuestionsMapper:
         if not question_model:
             return None
         content = GameContentsMapper.to_domain(question_model.content)
-        answer_options = [GameContentsMapper.to_domain(content) for content in question_model.answer_options]
+        
         return Question(
             question_id=question_model.question_id,
             game_id=question_model.game_id,
             level=question_model.level,
             content=content,
-            answer_options=answer_options,
             correct_answer=question_model.correct_answer
         )
 
@@ -44,6 +43,5 @@ class QuestionsMapper:
             game_id=question_model.game_id,
             level=question_model.level,
             content=GameContentsMapper.to_response(question_model.content),
-            answer_options=[GameContentsMapper.to_response(c) for c in question_model.answer_options],
             correct_answer=question_model.correct_answer
         )
