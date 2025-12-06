@@ -37,12 +37,10 @@ class AdminService:
             users = self.admin_repo.get_all_users(skip, limit)
             total = self.admin_repo.count_users()
             
-            # Kết hợp thông tin user + child
             result_users = []
             for user in users:
                 user_dict = self._user_to_dict(user)
                 
-                # Lấy thông tin child nếu có
                 child = self.child_repo.get_by_user_id(user.user_id)
                 if child:
                     user_dict['age'] = child.age
@@ -77,7 +75,6 @@ class AdminService:
             
             user_dict = self._user_to_dict(user)
             
-            # Lấy thông tin child nếu có
             child = self.child_repo.get_by_user_id(user_id)
             if child:
                 user_dict['age'] = child.age
@@ -96,7 +93,6 @@ class AdminService:
     def create_user(self, data: dict) -> dict:
         """Tạo user mới (bởi admin)"""
         try:
-            # Validate required fields
             required_fields = ["username", "email", "password"]
             for field in required_fields:
                 if field not in data or not data[field]:
@@ -105,25 +101,21 @@ class AdminService:
                         "message": f"Missing required field: {field}"
                     }
             
-            # Kiểm tra username đã tồn tại
             existing_user_by_username = self.users_repo.get_by_username(data.get("username"))
             if existing_user_by_username:
                 return {"status": "failed", "message": "Username already exists"}
 
-            # Kiểm tra email đã tồn tại
             existing_user_by_email = self.users_repo.get_by_email(data.get("email"))
             if existing_user_by_email:
                 return {"status": "failed", "message": "Email already exists"}
 
-            # Xác định role
-            role = RoleEnum.admin  # default role
+            role = RoleEnum.admin
             if "role" in data and data["role"]:
                 try:
                     role = RoleEnum[data["role"].upper()]
                 except KeyError:
                     return {"status": "failed", "message": f"Invalid role: {data['role']}"}
 
-            # Tạo user
             user_id = uuid4()
             user = User(
                 user_id=user_id,
@@ -136,18 +128,15 @@ class AdminService:
 
             self.users_repo.save(user)
             
-            # Nếu role là child, tạo thêm child record
             if role == RoleEnum.child:
                 from app.domain.enum import GenderEnum
                 from datetime import datetime
                 
-                # Parse gender nếu có
                 gender = None
                 if "gender" in data and data["gender"]:
                     try:
                         gender = GenderEnum[data["gender"].upper()]
                     except KeyError:
-                        # Nếu gender không hợp lệ, bỏ qua hoặc trả về lỗi
                         pass
                 
                 child = Child(
@@ -195,19 +184,16 @@ class AdminService:
             if not user:
                 return {"status": "failed", "message": "User not found"}
             
-            # Kiểm tra username đã tồn tại (nếu đang update username)
             if "username" in data and data["username"] and data["username"] != user.username:
                 existing_user = self.users_repo.get_by_username(data["username"])
                 if existing_user:
                     return {"status": "failed", "message": "Username already exists"}
             
-            # Kiểm tra email đã tồn tại (nếu đang update email)
             if "email" in data and data["email"] and data["email"] != user.email:
                 existing_user = self.users_repo.get_by_email(data["email"])
                 if existing_user:
                     return {"status": "failed", "message": "Email already exists"}
             
-            # Update user fields
             if "name" in data and data["name"]:
                 user.name = data["name"]
             if "username" in data and data["username"]:
@@ -217,16 +203,13 @@ class AdminService:
             if "password" in data and data["password"]:
                 user.password = data["password"]
             if "role" in data and data["role"]:
-                # Convert string role to RoleEnum
                 try:
                     user.role = RoleEnum[data["role"].upper()]
                 except KeyError:
                     return {"status": "failed", "message": f"Invalid role: {data['role']}"}
             
-            # Lưu user
             updated_user = self.users_repo.save_user(user)
             
-            # Update child info nếu là child và có data liên quan
             if updated_user.role == RoleEnum.child:
                 child = self.child_repo.get_by_user_id(user_id)
                 if child:
@@ -303,120 +286,6 @@ class AdminService:
             print(f"❌ Error in search_users: {e}")
             return {"status": "failed", "message": str(e)}
 
-    # ==================== Emotion Concepts Management ====================
-    def get_all_emotions(self, game_id: UUID, level: int) -> dict:
-        """Lấy danh sách emotion concepts"""
-        try:
-            emotions = self.emotion_repo.get_by_game_and_level(game_id, level)
-            return {
-                "status": "success",
-                "data": [self._emotion_to_dict(e) for e in emotions]
-            }
-        except Exception as e:
-            return {"status": "failed", "message": str(e)}
-
-    def create_emotion_concept(self, data: dict) -> dict:
-        """Tạo emotion concept mới"""
-        try:
-            emotion = EmotionConcept(
-                concept_id=data.get("concept_id") or uuid4(),
-                emotion=data.get("emotion"),
-                level=data.get("level"),
-                title=data.get("title"),
-                video_path=data.get("video_path"),
-                image_path=data.get("image_path"),
-                audio_path=data.get("audio_path"),
-                description=data.get("description")
-            )
-            saved_emotion = self.emotion_repo.create(emotion)
-            
-            return {
-                "status": "success",
-                "message": "Emotion concept created successfully",
-                "data": self._emotion_to_dict(saved_emotion)
-            }
-        except Exception as e:
-            print(f"❌ Error in create_emotion_concept: {e}")
-            return {"status": "failed", "message": str(e)}
-
-    # ==================== Questions Management ====================
-    def get_all_questions(self, game_id: UUID, level: int, count: int = 10) -> dict:
-        """Lấy danh sách câu hỏi"""
-        try:
-            questions = self.question_repo.get_random_contents(game_id, level, count)
-            return {
-                "status": "success",
-                "data": [self._question_to_dict(q) for q in questions]
-            }
-        except Exception as e:
-            return {"status": "failed", "message": str(e)}
-
-    def create_question(self, data: dict) -> dict:
-        """Tạo câu hỏi mới"""
-        try:
-            question = Question(
-                question_id=data.get("question_id") or uuid4(),
-                game_id=data["game_id"],
-                level=data["level"],
-                content_id=data["content_id"],
-                correct_answer=data.get("correct_answer")
-            )
-            saved_question = self.question_repo.create(question)
-            
-            return {
-                "status": "success",
-                "message": "Question created successfully",
-                "data": self._question_to_dict(saved_question)
-            }
-        except Exception as e:
-            print(f"❌ Error in create_question: {e}")
-            return {"status": "failed", "message": str(e)}
-
-    def update_question(self, question_id: UUID, data: dict) -> dict:
-        """Cập nhật câu hỏi"""
-        try:
-            question = self.question_repo.get_by_id(question_id)
-            if not question:
-                return {"status": "failed", "message": "Question not found"}
-            
-            # Update fields
-            if "level" in data:
-                question.level = data["level"]
-            if "content_id" in data:
-                question.content_id = data["content_id"]
-            if "correct_answer" in data:
-                question.correct_answer = data["correct_answer"]
-            
-            updated_question = self.question_repo.save(question)
-            
-            return {
-                "status": "success",
-                "message": "Question updated successfully",
-                "data": self._question_to_dict(updated_question)
-            }
-        except Exception as e:
-            print(f"❌ Error in update_question: {e}")
-            return {"status": "failed", "message": str(e)}
-
-    def delete_question(self, question_id: UUID) -> dict:
-        """Xóa câu hỏi"""
-        try:
-            question = self.question_repo.get_by_id(question_id)
-            if not question:
-                return {"status": "failed", "message": "Question not found"}
-            
-            success = self.question_repo.delete(question_id)
-            
-            if success:
-                return {
-                    "status": "success",
-                    "message": "Question deleted successfully"
-                }
-            return {"status": "failed", "message": "Failed to delete question"}
-        except Exception as e:
-            print(f"❌ Error in delete_question: {e}")
-            return {"status": "failed", "message": str(e)}
-
     # ==================== Game Content Management ====================
     def get_game_contents(
         self, 
@@ -428,43 +297,56 @@ class AdminService:
     ) -> dict:
         """Lấy danh sách game contents với filter"""
         try:
-            # Case 1: Filter đầy đủ theo game_id, level và emotion
+            contents = []
+            total = 0
+            
             if game_id and level and emotion:
-                contents = self.game_content_repo.get_game_content_by_emotion_and_level(
+                all_contents = self.game_content_repo.get_game_content_by_emotion_and_level(
                     game_id, level, emotion
                 )
-                total = len(contents)
-                contents = contents[skip:skip + limit]
-            
-            # Case 2: Filter theo game_id và level
+                total = len(all_contents)
+                contents = all_contents[skip:skip + limit]
+                
             elif game_id and level:
-                contents = self.game_content_repo.get_game_content_by_level(game_id, level)
+                all_contents = self.game_content_repo.get_game_content_by_level(game_id, level)
                 
-                # Filter thêm theo emotion nếu có
                 if emotion:
-                    contents = [c for c in contents if c.emotion == emotion]
+                    all_contents = [c for c in all_contents if c.emotion == emotion]
                 
-                total = len(contents)
-                contents = contents[skip:skip + limit]
-            
-            # Case 3: Lấy tất cả với pagination
+                total = len(all_contents)
+                contents = all_contents[skip:skip + limit]
+                
             else:
                 contents = self.game_content_repo.get_all(skip, limit)
                 
-                # Apply filters nếu có
-                if game_id:
-                    contents = [c for c in contents if c.game_id == game_id]
-                if level is not None:
-                    contents = [c for c in contents if c.level == level]
-                if emotion:
-                    contents = [c for c in contents if c.emotion == emotion]
+                filtered_contents = contents
                 
-                total = len(contents)
+                if game_id:
+                    filtered_contents = [c for c in filtered_contents if c.game_id == game_id]
+                if level is not None:
+                    filtered_contents = [c for c in filtered_contents if c.level == level]
+                if emotion:
+                    filtered_contents = [c for c in filtered_contents if c.emotion == emotion]
+                
+                if game_id or level is not None or emotion:
+                    all_for_count = self.game_content_repo.get_all(0, 10000)
+                    
+                    if game_id:
+                        all_for_count = [c for c in all_for_count if c.game_id == game_id]
+                    if level is not None:
+                        all_for_count = [c for c in all_for_count if c.level == level]
+                    if emotion:
+                        all_for_count = [c for c in all_for_count if c.emotion == emotion]
+                    
+                    total = len(all_for_count)
+                    contents = filtered_contents
+                else:
+                    total = self.game_content_repo.count_all()
             
             return {
                 "status": "success",
                 "data": {
-                    "contents": [self._content_to_dict(c) for c in contents],
+                    "game_contents": [self._content_to_dict(c) for c in contents],
                     "total": total,
                     "skip": skip,
                     "limit": limit
@@ -472,10 +354,12 @@ class AdminService:
             }
         except Exception as e:
             print(f"❌ Error in get_game_contents: {e}")
+            import traceback
+            traceback.print_exc()
             return {"status": "failed", "message": str(e)}
 
     def get_game_content_by_id(self, content_id: UUID) -> dict:
-        """Lấy chi tiết một game content"""
+        """✅ Lấy chi tiết một game content theo content_id"""
         try:
             content = self.game_content_repo.get_by_id(content_id)
             if not content:
@@ -490,9 +374,8 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def create_game_content(self, data: dict) -> dict:
-        """Tạo game content mới"""
+        """✅ Tạo game content mới với content_id + game_id"""
         try:
-            # Validate required fields
             required_fields = ["game_id", "level", "content_type", "question_text"]
             for field in required_fields:
                 if field not in data:
@@ -501,10 +384,10 @@ class AdminService:
                         "message": f"Missing required field: {field}"
                     }
             
-            # Tạo GameContent domain entity
+            # ✅ Tạo content_id mới, game_id từ request
             content = GameContent(
-                content_id=uuid4(),
-                game_id=data["game_id"],
+                content_id=uuid4(),  # ✅ Primary key
+                game_id=data["game_id"],  # ✅ Foreign key
                 level=data["level"],
                 content_type=data["content_type"],
                 media_path=data.get("media_path"),
@@ -514,7 +397,6 @@ class AdminService:
                 explanation=data.get("explanation")
             )
             
-            # Lưu vào database
             saved_content = self.game_content_repo.create(content)
             
             return {
@@ -527,14 +409,12 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def update_game_content(self, content_id: UUID, data: dict) -> dict:
-        """Cập nhật game content"""
+        """✅ Cập nhật game content theo content_id"""
         try:
-            # Lấy content hiện tại
             content = self.game_content_repo.get_by_id(content_id)
             if not content:
                 return {"status": "failed", "message": "Game content not found"}
             
-            # Cập nhật các field nếu có trong data
             if "level" in data and data["level"] is not None:
                 content.level = data["level"]
             if "content_type" in data and data["content_type"]:
@@ -550,7 +430,6 @@ class AdminService:
             if "explanation" in data:
                 content.explanation = data["explanation"]
             
-            # Lưu cập nhật
             updated_content = self.game_content_repo.save(content)
             
             return {
@@ -563,14 +442,12 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def delete_game_content(self, content_id: UUID) -> dict:
-        """Xóa game content"""
+        """✅ Xóa game content theo content_id"""
         try:
-            # Kiểm tra content có tồn tại không
             content = self.game_content_repo.get_by_id(content_id)
             if not content:
                 return {"status": "failed", "message": "Game content not found"}
             
-            # Xóa content
             success = self.game_content_repo.delete(content_id)
             
             if success:
@@ -584,7 +461,7 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def bulk_delete_game_contents(self, content_ids: List[UUID]) -> dict:
-        """Xóa nhiều game contents cùng lúc"""
+        """✅ Xóa nhiều game contents theo content_ids"""
         try:
             if not content_ids:
                 return {
@@ -648,34 +525,11 @@ class AdminService:
             "created_at": child.created_at.isoformat() if child.created_at else None
         }
 
-    def _emotion_to_dict(self, emotion: EmotionConcept) -> dict:
-        """Convert EmotionConcept to dict"""
-        return {
-            "concept_id": str(emotion.concept_id),
-            "emotion": emotion.emotion,
-            "level": emotion.level,
-            "title": emotion.title,
-            "video_path": emotion.video_path,
-            "image_path": emotion.image_path,
-            "audio_path": emotion.audio_path,
-            "description": emotion.description
-        }
-
-    def _question_to_dict(self, question: Question) -> dict:
-        """Convert Question to dict"""
-        return {
-            "question_id": str(question.question_id),
-            "game_id": str(question.game_id),
-            "level": question.level,
-            "content_id": str(question.content_id),
-            "correct_answer": question.correct_answer
-        }
-
     def _content_to_dict(self, content: GameContent) -> dict:
-        """Convert GameContent to dict"""
+        """✅ Convert GameContent to dict với CẢ content_id VÀ game_id"""
         return {
-            "content_id": str(content.content_id),
-            "game_id": str(content.game_id),
+            "content_id": str(content.content_id),  # ✅ Primary key
+            "game_id": str(content.game_id),        # ✅ Foreign key
             "level": content.level,
             "content_type": content.content_type,
             "media_path": content.media_path,

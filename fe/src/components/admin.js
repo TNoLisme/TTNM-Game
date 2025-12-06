@@ -5,24 +5,9 @@ function $(id) {
     return document.getElementById(id);
 }
 
-function getAuthToken() {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        console.error('❌ No access token found!');
-        alert('⛔ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
-        window.location.href = '../pages/login.html';
-        return null;
-    }
-    return token;
-}
-
-async function fetchWithAuth(url, options = {}) {
-    const token = getAuthToken();
-    if (!token) throw new Error('No authentication token');
-
+async function fetchAPI(url, options = {}) {
     const headers = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // ⭐ GỬI TOKEN
         ...options.headers
     };
 
@@ -36,14 +21,9 @@ async function fetchWithAuth(url, options = {}) {
 // AUTHENTICATION & ROLE CHECK
 // ==========================================
 function checkAdminRole() {
-    const currentUserStr = localStorage.getItem('currentUser');
-    const accessToken = localStorage.getItem('access_token');
+    const currentUserStr = sessionStorage.getItem('currentUser') || localStorage.getItem('currentUser');
 
-    console.log('%c🔍 CHECKING ADMIN ROLE:', 'color: blue; font-weight: bold;');
-    console.log('currentUser:', currentUserStr);
-    console.log('access_token:', accessToken ? 'EXISTS ✅' : 'MISSING ❌');
-
-    if (!currentUserStr || !accessToken) {
+    if (!currentUserStr) {
         alert('⛔ Bạn chưa đăng nhập!');
         window.location.href = '../pages/login.html';
         return false;
@@ -62,7 +42,6 @@ function checkAdminRole() {
     const adminNameEl = $('admin-name');
     if (adminNameEl) adminNameEl.textContent = adminName;
 
-    console.log('%c✅ ADMIN VERIFIED', 'color: green; font-weight: bold;');
     return true;
 }
 
@@ -90,11 +69,12 @@ navItems.forEach(item => {
 // ==========================================
 // USERS MANAGEMENT
 // ==========================================
+let currentUsers = [];
+let editingUserId = null;
+
 async function loadUsers() {
     try {
-        console.log('📡 Loading users with token...');
-        
-        const res = await fetchWithAuth(`${API_URL}/users`);
+        const res = await fetchAPI(`${API_URL}/users?skip=0&limit=100`);
 
         if (!res.ok) {
             const errData = await res.json();
@@ -102,27 +82,22 @@ async function loadUsers() {
         }
 
         const data = await res.json();
-        console.log('✅ Users loaded:', data);
-        
         currentUsers = data.data.users || [];
         renderUsersTable(currentUsers);
+        
+        // Update dashboard stats
+        if ($('total-users')) {
+            $('total-users').textContent = currentUsers.length;
+        }
         
     } catch (err) {
         console.error("❌ Load users error:", err);
         showNotification(`Lỗi tải users: ${err.message}`, 'error');
-        
-        // Nếu lỗi 401/403, redirect về login
-        if (err.message.includes('401') || err.message.includes('403')) {
-            setTimeout(() => {
-                localStorage.clear();
-                window.location.href = '../pages/login.html';
-            }, 2000);
-        }
     }
 }
 
 function renderUsersTable(users) {
-    const tbody = document.getElementById('users-tbody'); // FIXED
+    const tbody = $('users-tbody');
 
     if (!tbody) {
         console.error("Không tìm thấy #users-tbody trong DOM!");
@@ -139,16 +114,14 @@ function renderUsersTable(users) {
 
     tbody.innerHTML = users.map(user => `
         <tr>
-            <td>${user.user_id}</td>
+            <td>${user.user_id.substring(0, 8)}...</td>
             <td><strong>${user.username}</strong></td>
             <td>${user.email}</td>
             <td><span class="badge badge-${user.role}">${user.role.toUpperCase()}</span></td>
             <td>${user.age || 'N/A'}</td>
-            <td>${new Date(user.created_at).toLocaleDateString('vi-VN')}</td>
+            <td>${user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A'}</td>
             <td>
-                <span class="badge badge-${user.status}">
-                    ${user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
-                </span>
+                <span class="badge badge-active">Hoạt động</span>
             </td>
             <td class="actions">
                 <button class="btn btn-warning" onclick="editUser('${user.user_id}')">✏️</button>
@@ -157,6 +130,15 @@ function renderUsersTable(users) {
         </tr>
     `).join('');
 }
+
+$('add-user-btn')?.addEventListener('click', () => {
+    editingUserId = null;
+    $('user-modal-title').textContent = '➕ Thêm User Mới';
+    $('user-form').reset();
+    $('user-password').required = true;
+    $('user-password').placeholder = 'Nhập mật khẩu';
+    openModal('user-modal');
+});
 
 window.editUser = (id) => {
     editingUserId = id;
@@ -171,7 +153,6 @@ window.editUser = (id) => {
     $('user-role').value = user.role;
     $('user-age').value = user.age ?? '';
     $('user-gender').value = user.gender ?? 'male';
-    $('user-status').value = user.status;
 
     $('user-password').required = false;
     $('user-password').placeholder = 'Để trống nếu không đổi';
@@ -183,8 +164,7 @@ window.deleteUser = async (id) => {
     if (!confirm("⚠️ Bạn có chắc chắn muốn xóa user này?")) return;
 
     try {
-        
-        const res = await fetchWithAuth(`${API_URL}/users/${id}`, {
+        const res = await fetchAPI(`${API_URL}/users/${id}`, {
             method: "DELETE"
         });
 
@@ -202,18 +182,16 @@ window.deleteUser = async (id) => {
     }
 };
 
-// SUBMIT USER FORM
 $('user-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const data = {
         username: $('user-username').value,
-        email: $('user-email').value,
         name: $('user-name').value,
+        email: $('user-email').value,
         role: $('user-role').value,
         age: $('user-age').value ? parseInt($('user-age').value) : null,
-        gender: $('user-gender').value,
-        status: $('user-status').value,
+        gender: $('user-gender').value || null
     };
 
     const passwordValue = $('user-password').value;
@@ -222,16 +200,22 @@ $('user-form')?.addEventListener('submit', async (e) => {
     try {
         let res;
 
+        const options = {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        };
+
         if (editingUserId) {
-            
-            res = await fetchWithAuth(`${API_URL}/users/${editingUserId}`, {
+            res = await fetchAPI(`${API_URL}/users/${editingUserId}`, {
                 method: "PUT",
-                body: JSON.stringify(data),
+                ...options
             });
         } else {
-            res = await fetchWithAuth(`${API_URL}/users`, {
+            res = await fetchAPI(`${API_URL}/users`, {
                 method: "POST",
-                body: JSON.stringify(data),
+                ...options
             });
         }
 
@@ -250,355 +234,489 @@ $('user-form')?.addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// EMOTIONS / QUESTIONS
-// (KHÔNG ĐỤNG TỚI – GIỮ NGUYÊN CODE CŨ CỦA ANH)
+// ⭐ EMOTION VIDEOS MANAGEMENT
 // ==========================================
+const EMOTION_VIDEOS = [
+    { id: 'vui', name: 'Vui vẻ', emoji: '😊', path: '../../assets/videos/happy.mp4' },
+    { id: 'buon', name: 'Buồn bã', emoji: '😢', path: '../../assets/videos/sad.mp4' },
+    { id: 'tuc', name: 'Tức giận', emoji: '😠', path: '../../assets/videos/angry.mp4' },
+    { id: 'so', name: 'Sợ hãi', emoji: '😨', path: '../../assets/videos/fear.mp4' },
+    { id: 'ngac', name: 'Ngạc nhiên', emoji: '😲', path: '../../assets/videos/surprise.mp4' },
+    { id: 'ghe', name: 'Ghê tởm', emoji: '🤢', path: '../../assets/videos/disgust.mp4' }
+];
 
-let currentEmotions = [];
-let editingEmotionId = null;
+let currentVideoFile = null;
+let editingVideoId = null;
 
-function loadEmotions() {
-    currentEmotions = getEmotions();
-    renderEmotionsGrid(currentEmotions);
+function loadEmotionVideos() {
+    renderVideoGrid();
 }
 
-function getEmotions() {
-    const stored = localStorage.getItem('adminEmotions');
-    if (stored) return JSON.parse(stored);
+function renderVideoGrid() {
+    const grid = $('emotions-grid');
     
-    // Default demo data
-    return [
-        { id: 1, name: 'Vui vẻ', nameEn: 'Happy', icon: '😊', color: '#ffd700', category: 'happy', description: 'Cảm giác hạnh phúc và vui vẻ' },
-        { id: 2, name: 'Buồn', nameEn: 'Sad', icon: '😢', color: '#4a90e2', category: 'sad', description: 'Cảm giác buồn bã' },
-        { id: 3, name: 'Giận dữ', nameEn: 'Angry', icon: '😠', color: '#e74c3c', category: 'angry', description: 'Cảm giác tức giận' },
-        { id: 4, name: 'Sợ hãi', nameEn: 'Scared', icon: '😨', color: '#9b59b6', category: 'scared', description: 'Cảm giác sợ sệt' },
-        { id: 5, name: 'Ngạc nhiên', nameEn: 'Surprised', icon: '😲', color: '#f39c12', category: 'surprised', description: 'Cảm giác bất ngờ' }
-    ];
-}
-
-function saveEmotions(emotions) {
-    localStorage.setItem('adminEmotions', JSON.stringify(emotions));
-}
-
-function renderEmotionsGrid(emotions) {
-    const grid = document.getElementById('emotions-grid');
-    
-    if (emotions.length === 0) {
-        grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; padding: 30px;">Không có dữ liệu</p>';
-        return;
-    }
-    
-    grid.innerHTML = emotions.map(emotion => `
-        <div class="emotion-card" style="border-top: 4px solid ${emotion.color}">
-            <div class="emotion-icon-large">${emotion.icon}</div>
-            <h3>${emotion.name}</h3>
-            <p style="color: #7f8c8d; font-size: 12px; margin-bottom: 5px;">${emotion.nameEn}</p>
-            <p>${emotion.description || ''}</p>
-            <div class="actions">
-                <button class="btn btn-warning" onclick="editEmotion(${emotion.id})">✏️ Sửa</button>
-                <button class="btn btn-danger" onclick="deleteEmotion(${emotion.id})">🗑️ Xóa</button>
+    grid.innerHTML = EMOTION_VIDEOS.map(video => `
+        <div class="video-card" data-video-id="${video.id}">
+            <div class="video-preview">
+                <video src="${video.path}" controls style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
+                    Video không tải được
+                </video>
+            </div>
+            <div class="video-info">
+                <h3>${video.emoji} ${video.name}</h3>
+                <p style="font-size: 12px; color: #7f8c8d; margin: 5px 0;">
+                    📹 ${video.path}
+                </p>
+            </div>
+            <div class="actions" style="margin-top: 10px;">
+                <button class="btn btn-warning" onclick="replaceVideo('${video.id}')">
+                    🔄 Thay thế video
+                </button>
+                <button class="btn btn-danger" onclick="deleteVideo('${video.id}')">
+                    🗑️ Xóa video
+                </button>
             </div>
         </div>
     `).join('');
 }
 
-// Search Emotions
-document.getElementById('search-emotions')?.addEventListener('input', filterEmotions);
-document.getElementById('filter-category')?.addEventListener('change', filterEmotions);
-
-function filterEmotions() {
-    const search = document.getElementById('search-emotions').value.toLowerCase();
-    const category = document.getElementById('filter-category').value;
+window.replaceVideo = function(videoId) {
+    editingVideoId = videoId;
+    const video = EMOTION_VIDEOS.find(v => v.id === videoId);
     
-    let filtered = currentEmotions.filter(emotion => {
-        const matchSearch = emotion.name.toLowerCase().includes(search) || 
-                          emotion.nameEn.toLowerCase().includes(search);
-        const matchCategory = !category || emotion.category === category;
+    if (video) {
+        $('video-modal-title').textContent = `🔄 Thay thế Video: ${video.emoji} ${video.name}`;
+        $('video-emotion-name').textContent = video.name;
+        $('video-current-path').textContent = video.path;
+        $('video-file-input').value = '';
+        currentVideoFile = null;
         
-        return matchSearch && matchCategory;
-    });
-    
-    renderEmotionsGrid(filtered);
-}
-
-// Add Emotion
-document.getElementById('add-emotion-btn')?.addEventListener('click', () => {
-    editingEmotionId = null;
-    document.getElementById('emotion-modal-title').textContent = '➕ Thêm Cảm xúc Mới';
-    document.getElementById('emotion-form').reset();
-    openModal('emotion-modal');
-});
-
-// Edit Emotion
-window.editEmotion = function(id) {
-    editingEmotionId = id;
-    const emotion = currentEmotions.find(e => e.id === id);
-    
-    if (emotion) {
-        document.getElementById('emotion-modal-title').textContent = '✏️ Chỉnh sửa Cảm xúc';
-        document.getElementById('emotion-name').value = emotion.name;
-        document.getElementById('emotion-name-en').value = emotion.nameEn;
-        document.getElementById('emotion-icon').value = emotion.icon;
-        document.getElementById('emotion-color').value = emotion.color;
-        document.getElementById('emotion-category').value = emotion.category;
-        document.getElementById('emotion-description').value = emotion.description || '';
-        
-        openModal('emotion-modal');
+        openModal('video-modal');
     }
 };
 
-// Delete Emotion
-window.deleteEmotion = function(id) {
-    if (confirm('⚠️ Bạn có chắc chắn muốn xóa cảm xúc này?')) {
-        currentEmotions = currentEmotions.filter(e => e.id !== id);
-        saveEmotions(currentEmotions);
-        renderEmotionsGrid(currentEmotions);
-        showNotification('✅ Đã xóa cảm xúc thành công!', 'success');
-    }
-};
-
-// Save Emotion Form
-document.getElementById('emotion-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
+window.deleteVideo = function(videoId) {
+    const video = EMOTION_VIDEOS.find(v => v.id === videoId);
     
-    const emotionData = {
-        name: document.getElementById('emotion-name').value,
-        nameEn: document.getElementById('emotion-name-en').value,
-        icon: document.getElementById('emotion-icon').value,
-        color: document.getElementById('emotion-color').value,
-        category: document.getElementById('emotion-category').value,
-        description: document.getElementById('emotion-description').value
-    };
+    if (!video) return;
     
-    if (editingEmotionId) {
-        const index = currentEmotions.findIndex(e => e.id === editingEmotionId);
-        currentEmotions[index] = { ...currentEmotions[index], ...emotionData };
-        showNotification('✅ Đã cập nhật cảm xúc thành công!', 'success');
-    } else {
-        const newEmotion = { id: Date.now(), ...emotionData };
-        currentEmotions.push(newEmotion);
-        showNotification('✅ Đã thêm cảm xúc mới thành công!', 'success');
-    }
+    if (!confirm(`⚠️ Bạn có chắc chắn muốn xóa video "${video.name}"?\n\nLưu ý: Video sẽ bị xóa khỏi thư mục assets!`)) return;
     
-    saveEmotions(currentEmotions);
-    renderEmotionsGrid(currentEmotions);
-    closeModal('emotion-modal');
-});
-
-let currentQuestions = [];
-let editingQuestionId = null;
-
-function loadQuestions() {
-    currentQuestions = getQuestions();
-    renderQuestionsTable(currentQuestions);
-}
-
-function getQuestions() {
-    const stored = localStorage.getItem('adminQuestions');
-    if (stored) return JSON.parse(stored);
-    
-    // Default demo data
-    return [
-        {
-            id: 1,
-            text: 'Khi bạn cảm thấy vui, bạn thường làm gì?',
-            emotion: 'happy',
-            difficulty: 'easy',
-            answers: ['Cười', 'Khóc', 'La hét', 'Ngủ'],
-            correctAnswer: 1,
-            explanation: 'Khi vui, người ta thường cười',
-            playCount: 150
-        },
-        {
-            id: 2,
-            text: 'Biểu hiện nào cho thấy bạn đang buồn?',
-            emotion: 'sad',
-            difficulty: 'medium',
-            answers: ['Nhảy múa', 'Khóc', 'Hát hò', 'Chạy'],
-            correctAnswer: 2,
-            explanation: 'Khóc là biểu hiện phổ biến khi buồn',
-            playCount: 120
+    fetch(`${API_URL}/emotions/delete-video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ video_path: video.path })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification(`✅ Đã xóa video "${video.name}"!`, 'success');
+            loadEmotionVideos();
+        } else {
+            throw new Error(data.message || 'Lỗi xóa video');
         }
-    ];
-}
+    })
+    .catch(err => {
+        showNotification(`❌ ${err.message}`, 'error');
+    });
+};
 
-function saveQuestions(questions) {
-    localStorage.setItem('adminQuestions', JSON.stringify(questions));
-}
-
-function renderQuestionsTable(questions) {
-    const tbody = document.getElementById('questions-tbody');
+$('video-file-input')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
     
-    if (questions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Không có dữ liệu</td></tr>';
+    if (!file) {
+        currentVideoFile = null;
+        $('video-preview-container').style.display = 'none';
+        return;
+    }
+
+    if (!file.type.startsWith('video/')) {
+        alert('❌ Vui lòng chọn file video!');
+        e.target.value = '';
+        return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+        alert('❌ Video quá lớn! Tối đa 50MB.');
+        e.target.value = '';
         return;
     }
     
-    const emotionEmojis = {
-        happy: '😊',
-        sad: '😢',
-        angry: '😠',
-        scared: '😨',
-        surprised: '😲'
+    currentVideoFile = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        $('video-preview-player').src = e.target.result;
+        $('video-preview-container').style.display = 'block';
+        $('video-file-name').textContent = file.name;
+        $('video-file-size').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
     };
+    reader.readAsDataURL(file);
+});
+
+$('video-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
     
-    tbody.innerHTML = questions.map(q => `
+    if (!currentVideoFile) {
+        alert('❌ Vui lòng chọn video!');
+        return;
+    }
+    
+    const video = EMOTION_VIDEOS.find(v => v.id === editingVideoId);
+    if (!video) return;
+    
+    const formData = new FormData();
+    formData.append('video_file', currentVideoFile);
+    formData.append('emotion_id', video.id);
+    formData.append('emotion_name', video.name);
+    formData.append('old_path', video.path);
+    
+    const uploadBtn = e.target.querySelector('button[type="submit"]');
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = '⏳ Đang tải lên...';
+    
+    try {
+        const res = await fetch(`${API_URL}/emotions/upload-video`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok || data.status !== 'success') {
+            throw new Error(data.message || 'Lỗi upload video');
+        }
+        
+        showNotification(`✅ Đã thay thế video "${video.name}"!`, 'success');
+        closeModal('video-modal');
+        loadEmotionVideos();
+        
+    } catch (err) {
+        showNotification(`❌ ${err.message}`, 'error');
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '💾 Lưu video';
+    }
+});
+
+// ==========================================
+// ⭐ GAME CONTENTS MANAGEMENT
+// ==========================================
+// ==========================================
+// ⭐ GAME CONTENTS MANAGEMENT (FIXED)
+// ==========================================
+let currentGameContents = [];
+let editingGameContentId = null;  // ✅ Đây là content_id (primary key)
+let currentMediaFile = null;
+
+async function loadGameContents(filters = {}) {
+    try {
+        let url = `${API_URL}/game-contents?skip=0&limit=100`;
+        
+        if (filters.game_id) url += `&game_id=${filters.game_id}`;
+        if (filters.level) url += `&level=${filters.level}`;
+        if (filters.emotion) url += `&emotion=${filters.emotion}`;
+        
+        console.log('📡 Loading game contents from:', url);
+        
+        const res = await fetchAPI(url);
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log('📦 Received data:', data);
+        
+        currentGameContents = data.data?.game_contents || [];
+        
+        console.log(`✅ Loaded ${currentGameContents.length} game contents`);
+        
+        renderGameContentsTable(currentGameContents);
+        
+        // Update dashboard stats
+        if ($('total-game-contents')) {
+            $('total-game-contents').textContent = data.data?.total || currentGameContents.length;
+        }
+        
+    } catch (err) {
+        console.error("❌ Load game contents error:", err);
+        showNotification(`Lỗi tải nội dung game: ${err.message}`, 'error');
+    }
+}
+
+function renderGameContentsTable(contents) {
+    const tbody = $('game-contents-tbody');
+
+    if (!tbody) {
+        console.error("Không tìm thấy #game-contents-tbody trong DOM!");
+        return;
+    }
+
+    if (!contents || contents.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center; padding: 30px;">
+                    <div style="color: #999;">
+                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
+                        <p>Chưa có nội dung game nào</p>
+                    </div>
+                </td>
+            </tr>`;
+        return;
+    }
+
+    tbody.innerHTML = contents.map(content => `
         <tr>
-            <td>${q.id}</td>
-            <td style="max-width: 300px;">${q.text}</td>
-            <td>${emotionEmojis[q.emotion] || ''} ${q.emotion}</td>
-            <td><span class="badge badge-${q.difficulty}">${q.difficulty}</span></td>
-            <td>${q.answers[q.correctAnswer - 1]}</td>
-            <td>${q.playCount || 0}</td>
+            <td title="${content.content_id}">${content.content_id.substring(0, 8)}...</td>
+            <td title="${content.game_id}">${content.game_id.substring(0, 8)}...</td>
+            <td><span class="badge badge-info">Level ${content.level}</span></td>
+            <td><span class="badge badge-secondary">${content.content_type}</span></td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${content.question_text}">
+                ${content.question_text.substring(0, 50)}${content.question_text.length > 50 ? '...' : ''}
+            </td>
+            <td>${content.emotion ? getEmotionEmoji(content.emotion) + ' ' + content.emotion : '<span style="color:#999">N/A</span>'}</td>
+            <td>${content.media_path ? '✅' : '❌'}</td>
             <td class="actions">
-                <button class="btn btn-warning" onclick="editQuestion(${q.id})">✏️</button>
-                <button class="btn btn-danger" onclick="deleteQuestion(${q.id})">🗑️</button>
+                <button class="btn btn-warning" onclick="editGameContent('${content.content_id}')" title="Chỉnh sửa">✏️</button>
+                <button class="btn btn-danger" onclick="deleteGameContent('${content.content_id}')" title="Xóa">🗑️</button>
             </td>
         </tr>
     `).join('');
 }
 
-// Search & Filter Questions
-document.getElementById('search-questions')?.addEventListener('input', filterQuestions);
-document.getElementById('filter-difficulty')?.addEventListener('change', filterQuestions);
-document.getElementById('filter-emotion-type')?.addEventListener('change', filterQuestions);
-
-function filterQuestions() {
-    const search = document.getElementById('search-questions').value.toLowerCase();
-    const difficulty = document.getElementById('filter-difficulty').value;
-    const emotion = document.getElementById('filter-emotion-type').value;
-    
-    let filtered = currentQuestions.filter(q => {
-        const matchSearch = q.text.toLowerCase().includes(search);
-        const matchDifficulty = !difficulty || q.difficulty === difficulty;
-        const matchEmotion = !emotion || q.emotion === emotion;
-        
-        return matchSearch && matchDifficulty && matchEmotion;
-    });
-    
-    renderQuestionsTable(filtered);
+function getEmotionEmoji(emotion) {
+    const emojis = {
+        'vui': '😊',
+        'vui vẻ': '😊',
+        'happy': '😊',
+        'buồn': '😢',
+        'buồn bã': '😢',
+        'sad': '😢',
+        'tức giận': '😠',
+        'angry': '😠',
+        'sợ hãi': '😨',
+        'fear': '😨',
+        'ngạc nhiên': '😲',
+        'surprise': '😲',
+        'ghê tởm': '🤢',
+        'disgust': '🤢'
+    };
+    return emojis[emotion?.toLowerCase()] || '❓';
 }
 
-// Add Question
-document.getElementById('add-question-btn')?.addEventListener('click', () => {
-    editingQuestionId = null;
-    document.getElementById('question-modal-title').textContent = '➕ Thêm Câu hỏi Mới';
-    document.getElementById('question-form').reset();
-    openModal('question-modal');
+$('add-game-content-btn')?.addEventListener('click', () => {
+    editingGameContentId = null;
+    $('game-content-modal-title').textContent = '➕ Thêm Nội dung Game';
+    $('game-content-form').reset();
+    currentMediaFile = null;
+    $('gc-media-preview').style.display = 'none';
+    
+    // ✅ Khi tạo mới, game_id field phải enabled và rỗng
+    $('gc-game-id').disabled = false;
+    $('gc-game-id').value = '';
+    
+    openModal('game-content-modal');
 });
 
-// Edit Question
-window.editQuestion = function(id) {
-    editingQuestionId = id;
-    const question = currentQuestions.find(q => q.id === id);
-    
-    if (question) {
-        document.getElementById('question-modal-title').textContent = '✏️ Chỉnh sửa Câu hỏi';
-        document.getElementById('question-text').value = question.text;
-        document.getElementById('question-emotion').value = question.emotion;
-        document.getElementById('question-difficulty').value = question.difficulty;
-        
-        question.answers.forEach((answer, i) => {
-            document.getElementById(`answer-${i + 1}`).value = answer;
-        });
-        
-        document.querySelector(`input[name="correct-answer"][value="${question.correctAnswer}"]`).checked = true;
-        document.getElementById('question-explanation').value = question.explanation || '';
-        
-        openModal('question-modal');
-    }
-};
-
-// Delete Question
-window.deleteQuestion = function(id) {
-    if (confirm('⚠️ Bạn có chắc chắn muốn xóa câu hỏi này?')) {
-        currentQuestions = currentQuestions.filter(q => q.id !== id);
-        saveQuestions(currentQuestions);
-        renderQuestionsTable(currentQuestions);
-        showNotification('✅ Đã xóa câu hỏi thành công!', 'success');
-    }
-};
-
-// Save Question Form
-document.getElementById('question-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const questionData = {
-        text: document.getElementById('question-text').value,
-        emotion: document.getElementById('question-emotion').value,
-        difficulty: document.getElementById('question-difficulty').value,
-        answers: [
-            document.getElementById('answer-1').value,
-            document.getElementById('answer-2').value,
-            document.getElementById('answer-3').value,
-            document.getElementById('answer-4').value
-        ],
-        correctAnswer: parseInt(document.querySelector('input[name="correct-answer"]:checked').value),
-        explanation: document.getElementById('question-explanation').value,
-        playCount: 0
+$('apply-filters-btn')?.addEventListener('click', () => {
+    const filters = {
+        game_id: $('filter-game-id').value,
+        level: $('filter-level').value,
+        emotion: $('filter-emotion').value
     };
     
-    if (editingQuestionId) {
-        const index = currentQuestions.findIndex(q => q.id === editingQuestionId);
-        currentQuestions[index] = { ...currentQuestions[index], ...questionData };
-        showNotification('✅ Đã cập nhật câu hỏi thành công!', 'success');
-    } else {
-        const newQuestion = { id: Date.now(), ...questionData };
-        currentQuestions.push(newQuestion);
-        showNotification('✅ Đã thêm câu hỏi mới thành công!', 'success');
+    console.log('🔍 Applying filters:', filters);
+    loadGameContents(filters);
+});
+
+window.editGameContent = async (content_id) => {
+    // ✅ Lưu content_id (primary key) để update
+    editingGameContentId = content_id;
+    
+    try {
+        const res = await fetchAPI(`${API_URL}/game-contents/${content_id}`);
+        
+        if (!res.ok) {
+            throw new Error('Không tìm thấy nội dung');
+        }
+        
+        const data = await res.json();
+        const content = data.data;
+        
+        console.log('📝 Editing content:', content);
+        
+        $('game-content-modal-title').textContent = '✏️ Chỉnh sửa Nội dung Game';
+        
+        // ✅ Hiển thị CẢ content_id VÀ game_id
+        $('gc-game-id').value = content.game_id;
+        $('gc-game-id').disabled = false;  // Cho phép sửa game_id
+        
+        $('gc-level').value = content.level;
+        $('gc-content-type').value = content.content_type;
+        $('gc-emotion').value = content.emotion || '';
+        $('gc-question-text').value = content.question_text;
+        $('gc-correct-answer').value = content.correct_answer || '';
+        $('gc-explanation').value = content.explanation || '';
+        
+        openModal('game-content-modal');
+        
+    } catch (err) {
+        console.error('❌ Edit error:', err);
+        showNotification(`❌ ${err.message}`, 'error');
+    }
+};
+
+window.deleteGameContent = async (content_id) => {
+    if (!confirm("⚠️ Bạn có chắc chắn muốn xóa nội dung này?")) return;
+
+    try {
+        // ✅ Xóa theo content_id
+        const res = await fetchAPI(`${API_URL}/game-contents/${content_id}`, {
+            method: "DELETE"
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Lỗi xóa nội dung");
+        }
+
+        showNotification("✅ Đã xóa nội dung!", "success");
+        loadGameContents();
+
+    } catch (err) {
+        console.error('❌ Delete error:', err);
+        showNotification(`❌ ${err.message}`, 'error');
+    }
+};
+
+$('gc-media-file')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    
+    if (!file) {
+        currentMediaFile = null;
+        $('gc-media-preview').style.display = 'none';
+        return;
     }
     
-    saveQuestions(currentQuestions);
-    renderQuestionsTable(currentQuestions);
-    closeModal('question-modal');
-});
-
-function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-    document.body.style.overflow = 'auto';
-}
-
-// Close buttons
-document.querySelectorAll('.close').forEach(btn => {
-    btn.addEventListener('click', () => {
-        closeModal(btn.closest('.modal').id);
-    });
-});
-
-// Cancel buttons
-document.getElementById('cancel-user-btn')?.addEventListener('click', () => closeModal('user-modal'));
-document.getElementById('cancel-emotion-btn')?.addEventListener('click', () => closeModal('emotion-modal'));
-document.getElementById('cancel-question-btn')?.addEventListener('click', () => closeModal('question-modal'));
-
-// Close on outside click
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal(modal.id);
-    });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (checkAdminRole()) {
-        loadDashboard();
+    currentMediaFile = file;
+    const previewContent = $('gc-media-preview-content');
+    
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewContent.innerHTML = `<img src="${e.target.result}" style="max-width: 300px; border-radius: 8px;">`;
+            $('gc-media-preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else if (file.type.startsWith('video/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewContent.innerHTML = `<video src="${e.target.result}" controls style="max-width: 300px; border-radius: 8px;"></video>`;
+            $('gc-media-preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else if (file.type.startsWith('audio/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewContent.innerHTML = `<audio src="${e.target.result}" controls style="width: 100%;"></audio>`;
+            $('gc-media-preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
     }
 });
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(400px); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+
+$('game-content-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Đang xử lý...';
+    
+    try {
+        let mediaPath = null;
+        
+        // Upload media file first if exists
+        if (currentMediaFile) {
+            const formData = new FormData();
+            formData.append('file', currentMediaFile);
+            formData.append('content_type', $('gc-content-type').value);
+            formData.append('game_name', 'emotion_game');
+            formData.append('emotion', $('gc-emotion').value || '');
+            
+            console.log('📤 Uploading media...');
+            
+            const uploadRes = await fetch(`${API_URL}/game-contents/upload-media`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const uploadData = await uploadRes.json();
+            
+            if (!uploadRes.ok || uploadData.status !== 'success') {
+                throw new Error(uploadData.message || 'Lỗi upload media');
+            }
+            
+            mediaPath = uploadData.data.media_path;
+            console.log('✅ Media uploaded:', mediaPath);
+        }
+        
+        // ✅ Prepare data với game_id
+        const data = {
+            game_id: $('gc-game-id').value.trim(),  // ✅ Đọc game_id từ form
+            level: parseInt($('gc-level').value),
+            content_type: $('gc-content-type').value,
+            question_text: $('gc-question-text').value,
+            correct_answer: $('gc-correct-answer').value || null,
+            emotion: $('gc-emotion').value || null,
+            explanation: $('gc-explanation').value || null,
+            media_path: mediaPath
+        };
+        
+        // ✅ Validate game_id format (UUID)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(data.game_id)) {
+            throw new Error('Game ID phải là UUID hợp lệ (VD: 550e8400-e29b-41d4-a716-446655440000)');
+        }
+        
+        console.log('💾 Saving game content:', data);
+        
+        let res;
+        
+        if (editingGameContentId) {
+            // ✅ UPDATE: Dùng content_id trong URL
+            res = await fetchAPI(`${API_URL}/game-contents/${editingGameContentId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+        } else {
+            // ✅ CREATE: Backend sẽ tự tạo content_id mới
+            res = await fetchAPI(`${API_URL}/game-contents`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+        }
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Lỗi API");
+        }
+
+        showNotification("✔ Thành công!", "success");
+        closeModal("game-content-modal");
+        loadGameContents();
+
+    } catch (err) {
+        console.error('❌ Save error:', err);
+        showNotification("❌ " + err.message, "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '💾 Lưu';
     }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(400px); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
+});
 
 // ==========================================
 // MODAL + NOTIFICATION
@@ -625,6 +743,7 @@ function showNotification(message, type = 'success') {
         border-radius: 10px;
         z-index: 10000;
         animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     `;
     noti.textContent = message;
     document.body.appendChild(noti);
@@ -635,13 +754,29 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
+document.querySelectorAll('.close').forEach(btn => {
+    btn.addEventListener('click', () => {
+        closeModal(btn.closest('.modal').id);
+    });
+});
+
+$('cancel-user-btn')?.addEventListener('click', () => closeModal('user-modal'));
+$('cancel-video-btn')?.addEventListener('click', () => closeModal('video-modal'));
+$('cancel-game-content-btn')?.addEventListener('click', () => closeModal('game-content-modal'));
+
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal.id);
+    });
+});
+
 // ==========================================
 // LOGOUT
 // ==========================================
 $('logout-btn')?.addEventListener('click', () => {
     if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+        sessionStorage.removeItem("currentUser");
         localStorage.removeItem("currentUser");
-        localStorage.removeItem("access_token");
         window.location.href = "../pages/login.html";
     }
 });
@@ -651,8 +786,8 @@ $('logout-btn')?.addEventListener('click', () => {
 // ==========================================
 function loadDashboard() {
     loadUsers();
-    loadEmotions();
-    loadQuestions();
+    loadEmotionVideos();
+    loadGameContents();
 }
 
 function loadSectionData(section) {
@@ -661,16 +796,55 @@ function loadSectionData(section) {
             loadUsers();
             break;
         case 'emotions':
-            loadEmotions();
+            loadEmotionVideos();
             break;
-        case 'questions':
-            loadQuestions();
+        case 'game-contents':
+            loadGameContents();
+            break;
+        case 'dashboard':
+            loadDashboard();
             break;
     }
 }
 
+// ==========================================
+// INITIALIZE
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     if (checkAdminRole()) {
         loadDashboard();
     }
 });
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+    
+    .video-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .video-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .video-preview-container {
+        margin: 15px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+`;
+document.head.appendChild(style);
