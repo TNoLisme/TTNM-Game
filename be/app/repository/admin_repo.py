@@ -52,8 +52,7 @@ class AdminRepository(BaseRepository[UserModel, UserDomain]):
 
     def update_user_role(self, user_id: UUID, new_role: str) -> Optional[UserDomain]:
         """Cập nhật role của user (với validation cơ bản)."""
-        # TODO: thay bằng danh sách role thực tế của ứng dụng
-        ALLOWED_ROLES = {"user", "admin", "moderator"}
+        ALLOWED_ROLES = {"child", "admin"}
 
         if new_role not in ALLOWED_ROLES:
             raise ValueError("Invalid role")
