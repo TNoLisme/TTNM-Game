@@ -180,6 +180,33 @@ body {
     margin: 0;
 }
 
+.info-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* ==========================================
+   VIDEO INFO BANNER
+   ========================================== */
+.video-info-banner {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border-left: 4px solid #f39c12;
+}
+
+.video-info-banner p {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
 /* ==========================================
    BUTTONS
    ========================================== */
@@ -386,7 +413,7 @@ body {
     color: white;
 }
 
-.badge-user {
+.badge-child {
     background: #3498db;
     color: white;
 }
@@ -401,65 +428,107 @@ body {
     color: white;
 }
 
-.badge-easy {
-    background: #2ecc71;
-    color: white;
-}
-
-.badge-medium {
-    background: #f39c12;
-    color: white;
-}
-
-.badge-hard {
-    background: #e74c3c;
-    color: white;
-}
-
 /* ==========================================
-   CARDS GRID
+   VIDEO CARDS GRID
    ========================================== */
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
 }
 
-.emotion-card {
+.video-card {
     background: white;
-    padding: 25px;
     border-radius: 15px;
+    padding: 20px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    text-align: center;
     transition: all 0.3s ease;
     position: relative;
+    overflow: hidden;
 }
 
-.emotion-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+.video-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
-.emotion-icon-large {
-    font-size: 64px;
+.video-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.video-preview {
+    margin-bottom: 15px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.video-preview video {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #f8f9fa;
+}
+
+.video-skeleton {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 10px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.video-info {
     margin-bottom: 15px;
 }
 
-.emotion-card h3 {
+.video-info h3 {
     font-size: 20px;
-    margin-bottom: 10px;
     color: #2c3e50;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.emotion-card p {
+.video-info p {
+    font-size: 12px;
     color: #7f8c8d;
-    font-size: 14px;
-    margin-bottom: 15px;
+    word-break: break-all;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
 }
 
-.emotion-card .actions {
+.video-info code {
+    background: #ecf0f1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.video-card .actions {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+.video-card .actions .btn {
+    flex: 1;
+    min-width: 120px;
     justify-content: center;
 }
 
@@ -507,87 +576,6 @@ body {
 
 .activity-item:last-child {
     border-bottom: none;
-}
-
-/* ==========================================
-   SETTINGS
-   ========================================== */
-.settings-card {
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    margin-bottom: 20px;
-}
-
-.settings-card h3 {
-    margin-bottom: 20px;
-    color: #2c3e50;
-}
-
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid #ecf0f1;
-}
-
-.setting-item:last-child {
-    border-bottom: none;
-}
-
-.setting-input {
-    padding: 8px 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    width: 100px;
-}
-
-/* Toggle Switch */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 34px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 34px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: #2ecc71;
-}
-
-input:checked + .slider:before {
-    transform: translateX(26px);
 }
 
 /* ==========================================
@@ -670,6 +658,51 @@ input:checked + .slider:before {
 }
 
 /* ==========================================
+   VIDEO MODAL SPECIFIC
+   ========================================== */
+.video-current-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border-left: 4px solid #667eea;
+}
+
+.video-current-info h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 18px;
+}
+
+.video-current-info p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.video-current-info code {
+    background: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #667eea;
+}
+
+.video-preview-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.video-preview-container h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+/* ==========================================
    FORMS
    ========================================== */
 .form-group {
@@ -696,6 +729,18 @@ input:checked + .slider:before {
     transition: all 0.3s ease;
 }
 
+.form-group input[type="file"] {
+    padding: 10px;
+    border: 2px dashed #e0e0e0;
+    background: #f8f9fa;
+    cursor: pointer;
+}
+
+.form-group input[type="file"]:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -720,65 +765,6 @@ input:checked + .slider:before {
     flex: 1;
 }
 
-/* Answer Items */
-.answers-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.answer-item {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.answer-item input[type="text"] {
-    flex: 1;
-    padding: 10px 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-}
-
-.answer-item label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: normal;
-    white-space: nowrap;
-}
-
-/* ==========================================
-   PAGINATION
-   ========================================== */
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.pagination button {
-    padding: 8px 16px;
-    border: 2px solid #e0e0e0;
-    background: white;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.pagination button:hover {
-    border-color: #667eea;
-    color: #667eea;
-}
-
-.pagination button.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-color: transparent;
-}
-
 /* ==========================================
    RESPONSIVE
    ========================================== */
@@ -793,6 +779,10 @@ input:checked + .slider:before {
 
     .charts-container {
         grid-template-columns: 1fr;
+    }
+    
+    .cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
 }
 
@@ -862,6 +852,10 @@ input:checked + .slider:before {
     .data-table {
         min-width: 800px;
     }
+    
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 480px) {
@@ -874,7 +868,11 @@ input:checked + .slider:before {
         font-size: 24px;
     }
 
-    .cards-grid {
-        grid-template-columns: 1fr;
+    .video-card .actions {
+        flex-direction: column;
+    }
+    
+    .video-card .actions .btn {
+        min-width: auto;
     }
 }

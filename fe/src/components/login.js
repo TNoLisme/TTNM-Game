@@ -27,7 +27,7 @@ const showToast = (message, type = 'success') => {
     }, 3000);
 };
 
-const redirectBasedOnRole = (userFromAPI, accessToken) => {
+const redirectBasedOnRole = (userFromAPI) => {
     if (!userFromAPI || typeof userFromAPI !== 'object') {
         showError('Không thể đọc dữ liệu người dùng.');
         return;
@@ -43,14 +43,6 @@ const redirectBasedOnRole = (userFromAPI, accessToken) => {
     
     const saveUser = { ...userFromAPI, user_id, role };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
-    
-    // ⭐⭐⭐ LƯU ACCESS_TOKEN RIÊNG (QUAN TRỌNG!) ⭐⭐⭐
-    if (accessToken) {
-        localStorage.setItem('token', accessToken);
-        console.log('%c✅ ACCESS_TOKEN ĐÃ LƯU:', 'color: green; font-weight: bold; font-size: 14px;', accessToken);
-    } else {
-        console.warn('⚠️ WARNING: No access_token received!');
-    }
 
     console.log('%c🚀 LƯU USER:', 'color: blue; font-weight: bold;', saveUser);
     console.log('%c🔑 ROLE:', 'color: green; font-weight: bold;', role);
@@ -63,10 +55,9 @@ const redirectBasedOnRole = (userFromAPI, accessToken) => {
         welcomeMsg = '👋 Chào Admin ' + (saveUser.fullName || saveUser.username);
         console.log('%c🎯 REDIRECT TO ADMIN DASHBOARD', 'color: red; font-weight: bold;');
     } else if (role === 'child') {
-        redirectUrl = '/src/pages/home.html'; // Trang home cho child
+        redirectUrl = '/src/pages/home.html';
         console.log('%c🎯 REDIRECT TO HOME', 'color: blue; font-weight: bold;');
     } else {
-        // Unknown role - redirect to default
         console.warn('⚠️ Unknown role:', role, '- redirecting to home');
     }
 
@@ -77,7 +68,7 @@ const redirectBasedOnRole = (userFromAPI, accessToken) => {
     }, 1500);
 };
 
-// HANDLE LOGIN CHUẨN (FIXED)
+// HANDLE LOGIN (ĐÃ BỎ ACCESS_TOKEN)
 const handleLogin = async (e) => {
     e.preventDefault();
     showError('');
@@ -101,27 +92,22 @@ const handleLogin = async (e) => {
 
         const data = await res.json();
         console.log('%c📥 LOGIN RESPONSE:', 'color: purple; font-weight: bold;', data);
-        console.log('%c📥 FULL DATA STRUCTURE:', 'color: orange; font-weight: bold;', JSON.stringify(data, null, 2));
 
         if (res.ok && (data.success || data.user || data.data)) {
-            // ⭐ XỬ LÝ NHIỀU CẤU TRÚC RESPONSE KHÁC NHAU
+            // Xử lý nhiều cấu trúc response khác nhau
             let user = null;
-            let accessToken = null;
             
-            // Cấu trúc 1: {success: true, user: {...}, access_token: "..."}
+            // Cấu trúc 1: {success: true, user: {...}}
             if (data.user) {
                 user = data.user;
-                accessToken = data.access_token || data.token;
             }
-            // Cấu trúc 2: {data: {user: {...}, access_token: "..."}}
+            // Cấu trúc 2: {data: {user: {...}}}
             else if (data.data) {
                 user = data.data.user || data.data;
-                accessToken = data.data.access_token || data.data.token;
             }
-            // Cấu trúc 3: Flat object {user_id, username, ..., access_token}
+            // Cấu trúc 3: Flat object {user_id, username, ...}
             else {
                 user = data;
-                accessToken = data.access_token || data.token;
             }
             
             // Kiểm tra có đủ dữ liệu không
@@ -129,16 +115,10 @@ const handleLogin = async (e) => {
                 throw new Error('Response thiếu thông tin user');
             }
             
-            if (!accessToken) {
-                console.error('⚠️ CRITICAL: No access_token in response!');
-                throw new Error('Server không trả về access token');
-            }
-            
             console.log('%c✅ EXTRACTED USER:', 'color: blue; font-weight: bold;', user);
-            console.log('%c✅ EXTRACTED TOKEN:', 'color: green; font-weight: bold;', accessToken);
             
-            // Redirect dựa trên role (TRUYỀN TOKEN VÀO)
-            redirectBasedOnRole(user, accessToken);
+            // Redirect dựa trên role
+            redirectBasedOnRole(user);
             return;
         } else {
             throw new Error(data.message || data.detail || 'Sai tài khoản hoặc mật khẩu.');
@@ -152,7 +132,7 @@ const handleLogin = async (e) => {
     }
 };
 
-// === QUÊN MẬT KHẨU (GIỮ NGUYÊN) ===
+// === QUÊN MẬT KHẨU ===
 function openForgotModal(e) {
     e.preventDefault();
     const modal = document.getElementById('forgot-modal');
@@ -258,6 +238,5 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // DEBUG: Log current storage on page load
     console.log('%c🔍 DEBUG - Current Storage:', 'color: purple; font-weight: bold;');
-    console.log('access_token:', localStorage.getItem('access_token'));
     console.log('currentUser:', localStorage.getItem('currentUser'));
 });
