@@ -12,11 +12,10 @@
 
 <body>
     <div class="navbar">
-        <button id="back-button" class="back-btn">&#x2190; Quay lại</button>
+        <button id="back-button" class="back-btn global-back-btn">&#x2190; Quay lại</button>
         <span>Game CV - Biểu cảm theo yêu cầu</span>
         <div class="navbar-right">
             <span id="progress-indicator" class="progress-indicator">Màn 0/1</span>
-            <button id="logout-button" class="logout-btn">Đăng xuất</button>
         </div>
     </div>
 
@@ -86,6 +85,23 @@
             <div class="modal-actions">
                 <button id="play-again-btn" class="modal-btn play-again-btn">🔄 Chơi lại</button>
                 <button id="exit-btn" class="modal-btn exit-btn">🏠 Thoát</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Modal: hiện khi bé sai 1 cảm xúc quá nhiều lần -->
+    <div id="cv-learning-modal" class="game-complete-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📚 Góc học cảm xúc</h2>
+            </div>
+            <div class="modal-body">
+                <p id="cv-learning-emotion-title" class="cv-learning-title"></p>
+                <p id="cv-learning-description" class="cv-learning-description"></p>
+            </div>
+            <div class="modal-actions">
+                <button id="cv-learning-open-learn" class="modal-btn play-again-btn">🔍 Xem video học chi tiết</button>
+                <button id="cv-learning-close-btn" class="modal-btn exit-btn">✅ Đã hiểu, tiếp tục chơi</button>
             </div>
         </div>
     </div>
