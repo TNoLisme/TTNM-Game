@@ -5,22 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAME CLICK - Level 1</title>
-    <link rel="stylesheet" href="../styles/home.css">
     <link rel="stylesheet" href="../styles/recognize_emotion.css">
-    <link rel="stylesheet" href="../styles/navigation.css">
 </head>
 
 <body>
     <main class="game-main-content">
         <header class="game-header">
-            <h1 id="game-name">GAME CLICK (Level 1)</h1>
+            <div class="header-main">
+                <button id="back-button" class="back-btn global-back-btn" type="button" onclick="window.history.back()">&#x2190; Quay lại</button>
+                <h1 id="game-name">Chiếc hộp cảm xúc</h1>
+                <p class="subtitle">Nhìn hình và chọn cảm xúc phù hợp nhất</p>
+            </div>
             <div class="header-actions">
-                <span id="score-display" class="score-box">Câu 1/10 | ĐIỂM: 0</span>
-                <button id="hint-btn" class="action-btn" title="Gợi ý">Hint</button>
-                <button id="sound-btn" class="action-btn" title="Đọc câu hỏi">Sound</button>
-                <button id="exit-btn" class="action-btn exit-btn" title="Thoát game">
-                    <img src="../../assets/icons/exit.svg" alt="Exit" class="exit-icon">
-                </button>
+                <span id="score-display" class="score-box">Câu 1/10 | Điểm: 0</span>
+                <button id="hint-btn" class="action-btn" title="Gợi ý">💡 Gợi ý</button>
+                <button id="sound-btn" class="action-btn" title="Nghe lại câu hỏi">🔊 Nghe lại câu hỏi</button>
             </div>
         </header>
 
@@ -33,6 +32,8 @@
                 <button class="answer-option" data-answer-id="B"></button>
                 <button class="answer-option" data-answer-id="C"></button>
                 <button class="answer-option" data-answer-id="D"></button>
+                <button class="answer-option" data-answer-id="E"></button>
+                <button class="answer-option" data-answer-id="F"></button>
             </div>
         </section>
 

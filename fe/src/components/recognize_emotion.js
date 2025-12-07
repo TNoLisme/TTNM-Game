@@ -19,6 +19,32 @@ let learnedEmotions = [];
 
 let learningCards = {};
 
+function normalizeEmotion(text) {
+    return (text || '').trim().toLowerCase();
+}
+
+// Icon cho các cảm xúc, dùng label đã chuẩn hóa (chữ thường, có dấu)
+const EMOTION_ICONS = {
+    'vui vẻ': '😊',
+    'vui': '😊',
+    'buồn bã': '😢',
+    'buồn': '😢',
+    'ngạc nhiên': '😲',
+    'tức giận': '😠',
+    'sợ hãi': '😨',
+    'ghê tởm': '🤢'
+};
+
+// 6 lựa chọn cảm xúc cố định (giống detective game)
+const EMOTION_CHOICES = [
+    'Vui vẻ',
+    'Buồn bã',
+    'Ngạc nhiên',
+    'Tức giận',
+    'Sợ hãi',
+    'Ghê tởm'
+];
+
 // --- SỬA LỖI QUAN TRỌNG: DÙNG WINDOW ĐỂ CHẶN GỌI KÉP ---
 // Nếu file JS này bị load 2 lần, biến cục bộ sẽ bị tạo lại. 
 // Dùng window.isGameSessionStarted để đảm bảo cờ này là duy nhất trên toàn trang.
@@ -61,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         hintText: document.getElementById('hint-content'),
         hintBtn: document.getElementById('hint-btn'),
         soundBtn: document.getElementById('sound-btn'),
-        exitBtn: document.getElementById('exit-btn'),
+
         answers: document.querySelectorAll('.answer-option'),
         nextHintBtn: document.getElementById('next-question-btn'),
 
@@ -170,16 +196,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         text.textContent = q.question_text;
         elements.questionArea.appendChild(text);
 
+        // Hiển thị 6 lựa chọn cảm xúc cố định với icon
         elements.answers.forEach((btn, idx) => {
-            if (q.options[idx]) {
-                btn.textContent = q.options[idx].answer_text;
-                btn.dataset.answer = q.options[idx].answer_text;
-                btn.style.display = 'block';
+            const emo = EMOTION_CHOICES[idx];
+
+            if (emo) {
+                const key = normalizeEmotion(emo);
+                const icon = EMOTION_ICONS[key];
+                const label = icon ? `${icon} ${emo}` : emo;
+
+                btn.textContent = label;
+                btn.dataset.answer = emo;
+                btn.style.display = 'inline-flex';
+                btn.disabled = false;
             } else {
                 btn.style.display = 'none';
+                btn.dataset.answer = '';
+                btn.disabled = true;
             }
+
             btn.className = 'answer-option';
-            btn.disabled = false;
         });
 
         elements.hintText.textContent = 'Hãy chọn đáp án của bạn.';
@@ -266,12 +302,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         speechSynthesis.speak(msg);
     };
 
-    elements.exitBtn.onclick = () => {
-        if (confirm('Thoát game không lưu tiến trình?')) {
-            window.location.href = './select_game.html';
-        }
-    };
-
     elements.answers.forEach(btn => {
         btn.onclick = () => {
             if (answered) return;
@@ -279,9 +309,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const q = questions[currentIndex];
             const chosen = btn.dataset.answer;
-            const correct = (chosen === q.correct_answer);
+            const correct = normalizeEmotion(chosen) === normalizeEmotion(q.correct_answer);
             const emotion = q.correct_answer;
-            const emotionKey = emotion.trim().toLowerCase();
+            const emotionKey = normalizeEmotion(emotion);
 
             if (correct) score += 10;
 

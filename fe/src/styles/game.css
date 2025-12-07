@@ -1,7 +1,7 @@
 /* Toàn trang */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -42,20 +42,31 @@ body {
 
 /* Nút Quay lại */
 .back-btn {
-    background-color: #00bcd4;
-    /* Màu xanh ngọc */
+    padding: 10px 20px;
+    border-radius: 999px;
     border: none;
-    padding: 8px 12px;
-    color: white;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: #ffffff;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 5px;
-    font-weight: bold;
-    /* Đặt ở góc trái */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 15px;
+    box-shadow: 0 6px 16px rgba(148, 163, 184, 0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     order: -1;
 }
 
 .back-btn:hover {
-    background-color: #0097a7;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(79, 172, 254, 0.6);
+}
+
+.back-btn:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 3px 10px rgba(148, 163, 184, 0.5);
 }
 
 /* Container chính */

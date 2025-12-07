@@ -80,6 +80,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (subtitle) {
                 subtitle.textContent = 'Chọn một cảm xúc để luyện tập. Mức nước thể hiện điểm cao nhất con đạt được cho cảm xúc đó.';
             }
+
+            // Game CV không dùng level, ẩn badge "Level đã mở"
+            const progressBadge = document.querySelector('.progress-badge');
+            if (progressBadge) {
+                progressBadge.style.display = 'none';
+            }
         } else {
             // Các game còn lại: dùng tiến trình level như cũ
             const progressRes = await fetch(`/games/progress/${gameId}?user_id=${user.user_id}`);
@@ -136,8 +142,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Icon
             const icon = document.createElement('div');
             icon.className = 'level-icon';
-            icon.textContent = isUnlocked ? level.icon : '🔒';
+            icon.textContent = level.icon;
             button.appendChild(icon);
+
+            // Nếu đang khóa: icon vẫn là emoji nhưng mờ đi, thêm badge khóa nhỏ ở góc
+            if (!isUnlocked) {
+                const lockBadge = document.createElement('div');
+                lockBadge.className = 'lock-badge';
+                lockBadge.textContent = '🔒';
+                button.appendChild(lockBadge);
+            }
 
             // Số level
             const number = document.createElement('div');
@@ -167,7 +181,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         EMOTION_OPTIONS.forEach((emotion) => {
             const button = document.createElement('div');
-            button.className = 'level-button';
+            // Dùng thêm class emotion-tile để style riêng cho game Thử thách cảm xúc
+            button.className = 'level-button emotion-tile';
             button.dataset.emotion = emotion.key;
 
             const rawScore = typeof emotionScores[emotion.key] === 'number' ? emotionScores[emotion.key] : 0;
@@ -303,7 +318,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isCvRequestGame) {
         const levelTitle = document.querySelector('.level-title');
         if (levelTitle) levelTitle.textContent = 'Chọn cảm xúc';
+
         if (startButton) startButton.textContent = '👆 Chọn cảm xúc để chơi';
+
+        // Đổi nội dung thông báo đã chọn cho đúng ngữ cảnh cảm xúc
+        if (selectedMessage) {
+            selectedMessage.innerHTML = '✨ Bạn đã chọn cảm xúc <span id="selectedLevelNum"></span>! ✨';
+        }
+
         renderEmotionTiles();
     } else {
         renderLevels();
