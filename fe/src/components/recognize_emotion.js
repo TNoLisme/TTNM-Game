@@ -23,45 +23,29 @@ function normalizeEmotion(text) {
     return (text || '').trim().toLowerCase();
 }
 
-// Icon cho các cảm xúc, dùng label đã chuẩn hóa (chữ thường, có dấu)
 const EMOTION_ICONS = {
-    'vui vẻ': '😊',
-    'vui': '😊',
-    'buồn bã': '😢',
-    'buồn': '😢',
+    'vui vẻ': '😊', 'vui': '😊',
+    'buồn bã': '😢', 'buồn': '😢',
     'ngạc nhiên': '😲',
     'tức giận': '😠',
     'sợ hãi': '😨',
     'ghê tởm': '🤢'
 };
 
-// 6 lựa chọn cảm xúc cố định (giống detective game)
 const EMOTION_CHOICES = [
-    'Vui vẻ',
-    'Buồn bã',
-    'Ngạc nhiên',
-    'Tức giận',
-    'Sợ hãi',
-    'Ghê tởm'
+    'Vui vẻ', 'Buồn bã', 'Ngạc nhiên', 'Tức giận', 'Sợ hãi', 'Ghê tởm'
 ];
 
-// --- SỬA LỖI QUAN TRỌNG: DÙNG WINDOW ĐỂ CHẶN GỌI KÉP ---
-// Nếu file JS này bị load 2 lần, biến cục bộ sẽ bị tạo lại. 
-// Dùng window.isGameSessionStarted để đảm bảo cờ này là duy nhất trên toàn trang.
 if (window.isGameSessionStarted === undefined) {
     window.isGameSessionStarted = false;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Kiểm tra biến Global thay vì biến cục bộ
     if (window.isGameSessionStarted) {
-        console.warn("⛔ Session init skipped: Already started in another instance.");
+        console.warn("⛔ Session init skipped.");
         return;
     }
-    // Đánh dấu là đã bắt đầu ngay lập tức
     window.isGameSessionStarted = true;
-
-    console.log("🚀 Initializing Game Session...");
 
     user = JSON.parse(localStorage.getItem('currentUser'));
     if (!user) {
@@ -81,35 +65,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     elements = {
-        // Game elements
         score: document.getElementById('score-display'),
         questionArea: document.getElementById('question-area'),
         hintText: document.getElementById('hint-content'),
         hintBtn: document.getElementById('hint-btn'),
         soundBtn: document.getElementById('sound-btn'),
-
+        exitBtn: document.getElementById('exit-btn'),
         answers: document.querySelectorAll('.answer-option'),
         nextHintBtn: document.getElementById('next-question-btn'),
-
-        // Modals
         feedbackModal: document.getElementById('feedback-modal'),
         warningModal: document.getElementById('warning-modal'),
         learningModal: document.getElementById('learning-modal'),
-
-        // Modal Contents
         modalTitle: document.getElementById('modal-title'),
         modalMsg: document.getElementById('modal-message'),
         modalActionsContainer: document.getElementById('feedback-modal-actions'),
-
         learningTitle: document.getElementById('learning-emotion-title'),
         learningBody: document.getElementById('learning-card-body'),
         learningCloseBtn: document.getElementById('learning-close-btn'),
         closeWarn: document.getElementById('close-warning'),
     };
 
-    // START SESSION API
     try {
-        console.log("📡 Calling Start Session API...");
         const res = await fetch(`/games/start/${gameId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -119,15 +95,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!res.ok) throw new Error("Lỗi khởi động game");
 
         const data = await res.json();
-        console.log("✅ Session Started Successfully:", data.session_id);
-
         sessionId = data.session_id;
         questions = data.questions;
         // maxErrors = data.max_errors || 1;
-        maxErrors = 1; // Test
-        learningCards = data.learning_cards || {};
+        maxErrors = 1; // Test config
 
-        // Chuẩn hóa key cảm xúc về chữ thường
+        learningCards = data.learning_cards || {};
         const normalizedLearningCards = {};
         for (const key in learningCards) {
             if (learningCards.hasOwnProperty(key)) {
@@ -135,13 +108,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         learningCards = normalizedLearningCards;
+
         emotionErrors = data.emotion_errors || {
-            "sợ hãi": 0,
-            "buồn bã": 0,
-            "tức giận": 0,
-            "ghê tởm": 0,
-            "ngạc nhiên": 0,
-            "vui vẻ": 0
+            "sợ hãi": 0, "buồn bã": 0, "tức giận": 0, "ghê tởm": 0, "ngạc nhiên": 0, "vui vẻ": 0
         };
 
         loadQuestion(0);
@@ -149,8 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.error(err);
         alert("Lỗi khởi động game: " + err.message);
-        // Reset flag nếu lỗi để user có thể reload thử lại (tùy chọn)
-        // window.isGameSessionStarted = false; 
         return;
     }
 
@@ -196,15 +163,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         text.textContent = q.question_text;
         elements.questionArea.appendChild(text);
 
-        // Hiển thị 6 lựa chọn cảm xúc cố định với icon
         elements.answers.forEach((btn, idx) => {
             const emo = EMOTION_CHOICES[idx];
-
             if (emo) {
                 const key = normalizeEmotion(emo);
                 const icon = EMOTION_ICONS[key];
                 const label = icon ? `${icon} ${emo}` : emo;
-
                 btn.textContent = label;
                 btn.dataset.answer = emo;
                 btn.style.display = 'inline-flex';
@@ -214,7 +178,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.dataset.answer = '';
                 btn.disabled = true;
             }
-
             btn.className = 'answer-option';
         });
 
@@ -226,20 +189,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.learningModal.classList.add('hidden');
     }
 
-    function showFeedback(correct, correctAns, emotionKey) {
+    // Popup Sai/Đúng (Đã sửa logic hiển thị nút)
+    function showFeedback(correct, correctAns, emotion) {
+        const emotionKey = normalizeEmotion(emotion);
+
         elements.modalTitle.textContent = correct ? 'CHÍNH XÁC!' : 'SAI RỒI!';
         elements.modalTitle.style.color = correct ? '#10b981' : '#ef4444';
         elements.modalMsg.textContent = correct ? 'Giỏi lắm!' : `Đáp án đúng: ${correctAns}`;
 
         elements.modalActionsContainer.innerHTML = '';
 
-        if (!correct && emotionErrors[emotionKey.trim().toLowerCase()] >= maxErrors) {
+        // Kiểm tra xem lỗi này có vừa đạt ngưỡng học lại bắt buộc không
+        const isForcedLearning = !correct &&
+            emotionErrors[emotionKey] >= maxErrors &&
+            learnedEmotions.includes(emotionKey);
+
+        if (isForcedLearning) {
+            // --- UI BẮT BUỘC HỌC LẠI (Chỉ có 1 nút) ---
+            elements.modalTitle.textContent = 'CẦN HỌC LẠI CẢM XÚC NÀY!';
+            elements.modalTitle.style.color = '#f65c80ff';
+            elements.modalMsg.textContent = `Sai nhiều lần ở cảm xúc "${emotion}". Hãy học lại để ôn tập kiến thức trước khi tiếp tục.`;
+
             const learnBtn = document.createElement('button');
-            learnBtn.textContent = "Học lại cảm xúc";
+            learnBtn.textContent = "HỌC LẠI CẢM XÚC NÀY";
             learnBtn.className = "modal-btn learn-btn";
-            learnBtn.onclick = () => showLearningCard(emotionKey);
+
+            // Gán sự kiện gọi hàm showLearningCard để hiện popup thẻ học
+            learnBtn.onclick = () => showLearningCard(emotion);
+
             elements.modalActionsContainer.appendChild(learnBtn);
         } else {
+            // --- UI BÌNH THƯỜNG (Có Xem lại và Câu tiếp theo) ---
             const reviewBtn = document.createElement('button');
             reviewBtn.textContent = "Xem lại";
             reviewBtn.className = "modal-btn review-btn";
@@ -253,6 +233,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.modalActionsContainer.appendChild(reviewBtn);
             elements.modalActionsContainer.appendChild(nextBtn);
         }
+
         elements.feedbackModal.classList.remove('hidden');
     }
 
@@ -266,16 +247,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.feedbackModal.classList.add('hidden');
         const emotionKey = normalizeEmotion(emotion);
 
-        // 1. Lấy dữ liệu thẻ học (Bỏ qua Level)
-        // Nếu learningCards[key] là object theo level { "1": [...], "2": [...] } -> Gộp tất cả lại
-        // Nếu là mảng phẳng [...] -> Dùng luôn
         let cards = [];
         const rawData = learningCards[emotionKey];
 
         if (Array.isArray(rawData)) {
             cards = rawData;
         } else if (rawData && typeof rawData === 'object') {
-            // Gộp tất cả các level lại thành 1 mảng
             cards = Object.values(rawData).flat();
         }
 
@@ -286,25 +263,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.learningBody.innerHTML = `<p>Hiện không có video/thẻ học cho cảm xúc <strong>${emotion}</strong>. Vui lòng tiếp tục.</p>`;
         } else {
             cards.forEach(card => {
-                // 2. Xử lý hiển thị Video hoặc Ảnh
                 let mediaHtml = '';
-                if (card.image_path) {
-                    // Chuyển đường dẫn tương đối
-                    const relativeImgPath = card.image_path.replace('/fe/', '../../');
-                    const relativeVideoPath = card.video_path ? card.video_path.replace('/fe/', '../../') : null;
-                    console.log("rel: ", relativeVideoPath);
-                    // Kiểm tra đuôi file để xác định là video hay ảnh
-                    const isVideo = relativeVideoPath.match(/\.(mp4|webm|ogg|mov)$/i);
 
-                    if (isVideo) {
+                if (card.video_path) {
+                    const relativeVideoPath = card.video_path.replace('/fe/', '../../');
+                    mediaHtml = `
+                        <video controls autoplay class="learn-media" style="width:100%; max-height:300px; border-radius:12px;">
+                            <source src="${relativeVideoPath}" type="video/mp4">
+                            Trình duyệt không hỗ trợ video.
+                        </video>
+                    `;
+                }
+                else if (card.image_path) {
+                    const relativeImgPath = card.image_path.replace('/fe/', '../../');
+                    if (relativeImgPath.match(/\.(mp4|webm|ogg|mov)$/i)) {
                         mediaHtml = `
-                            <video controls autoplay class="learn-media" style="max-width: 100%; border-radius: 8px; margin-top: 10px;">
-                                <source src="${relativeVideoPath}" type="video/mp4">
-                                Trình duyệt của bạn không hỗ trợ video.
+                            <video controls autoplay class="learn-media" style="width:100%; max-height:300px; border-radius:12px;">
+                                <source src="${relativeImgPath}" type="video/mp4">
                             </video>
                         `;
                     } else {
-                        mediaHtml = `<img src="${relativeImgPath}" class="learn-img" alt="${card.title}">`;
+                        mediaHtml = `<img src="${relativeImgPath}" class="learn-img" alt="${card.title}" style="max-width:100%; max-height:300px;">`;
                     }
                 }
 
@@ -320,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         elements.learningCloseBtn.onclick = () => {
-            // Dừng video khi đóng modal (nếu có)
             const videos = elements.learningBody.querySelectorAll('video');
             videos.forEach(v => v.pause());
 
@@ -329,6 +307,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadQuestion(currentIndex);
         };
         elements.learningModal.classList.remove('hidden');
+    }
+
+    if (elements.exitBtn) {
+        elements.exitBtn.onclick = () => {
+            if (confirm('Thoát game không lưu tiến trình?')) {
+                window.location.href = './select_game.html';
+            }
+        };
     }
 
     elements.hintBtn.onclick = () => {
@@ -343,6 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     elements.answers.forEach(btn => {
+        if (!btn) return;
         btn.onclick = () => {
             if (answered) return;
             answered = true;
@@ -365,19 +352,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!correct) {
                 emotionErrors[emotionKey] = (emotionErrors[emotionKey] || 0) + 1;
+
+                // --- LOGIC POPUP TỰ ĐỘNG KHI SAI NHIỀU ---
                 if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
                     learnedEmotions.push(emotionKey);
-                    showFeedback(false, q.correct_answer, emotion);
-                    return;
+
+                    // KHÔNG RETURN: Sau khi push learnedEmotions, nó phải chạy xuống showFeedback
+                    // showFeedback sẽ kiểm tra và hiển thị nút "Học Lại" duy nhất.
                 }
             }
 
+            // Disable nút sau khi chọn
             elements.answers.forEach(b => {
                 if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
                 else if (b === btn && !correct) b.classList.add('incorrect');
                 b.disabled = true;
             });
 
+            // Gọi showFeedback. Hàm này sẽ tự động kiểm tra isForcedLearning
             showFeedback(correct, q.correct_answer, emotion);
         };
     });
