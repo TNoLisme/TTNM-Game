@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sessionId = data.session_id;
         questions = data.questions;
         // maxErrors = data.max_errors || 1;
-        maxErrors = 3; // Test
+        maxErrors = 1; // Test
         learningCards = data.learning_cards || {};
 
         // Chuẩn hóa key cảm xúc về chữ thường
@@ -264,26 +264,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function showLearningCard(emotion) {
         elements.feedbackModal.classList.add('hidden');
-        const emotionKey = emotion.trim().toLowerCase();
-        const cards = learningCards[emotionKey]?.[level];
+        const emotionKey = normalizeEmotion(emotion);
+
+        // 1. Lấy dữ liệu thẻ học (Bỏ qua Level)
+        // Nếu learningCards[key] là object theo level { "1": [...], "2": [...] } -> Gộp tất cả lại
+        // Nếu là mảng phẳng [...] -> Dùng luôn
+        let cards = [];
+        const rawData = learningCards[emotionKey];
+
+        if (Array.isArray(rawData)) {
+            cards = rawData;
+        } else if (rawData && typeof rawData === 'object') {
+            // Gộp tất cả các level lại thành 1 mảng
+            cards = Object.values(rawData).flat();
+        }
+
         elements.learningTitle.textContent = emotion;
         elements.learningBody.innerHTML = '';
 
         if (!cards || cards.length === 0) {
-            elements.learningBody.innerHTML = `<p>Hiện không có thẻ học cho cảm xúc <strong>${emotion}</strong> ở level ${level}. Vui lòng tiếp tục.</p>`;
+            elements.learningBody.innerHTML = `<p>Hiện không có video/thẻ học cho cảm xúc <strong>${emotion}</strong>. Vui lòng tiếp tục.</p>`;
         } else {
             cards.forEach(card => {
+                // 2. Xử lý hiển thị Video hoặc Ảnh
+                let mediaHtml = '';
+                if (card.image_path) {
+                    // Chuyển đường dẫn tương đối
+                    const relativeImgPath = card.image_path.replace('/fe/', '../../');
+                    const relativeVideoPath = card.video_path ? card.video_path.replace('/fe/', '../../') : null;
+                    console.log("rel: ", relativeVideoPath);
+                    // Kiểm tra đuôi file để xác định là video hay ảnh
+                    const isVideo = relativeVideoPath.match(/\.(mp4|webm|ogg|mov)$/i);
+
+                    if (isVideo) {
+                        mediaHtml = `
+                            <video controls autoplay class="learn-media" style="max-width: 100%; border-radius: 8px; margin-top: 10px;">
+                                <source src="${relativeVideoPath}" type="video/mp4">
+                                Trình duyệt của bạn không hỗ trợ video.
+                            </video>
+                        `;
+                    } else {
+                        mediaHtml = `<img src="${relativeImgPath}" class="learn-img" alt="${card.title}">`;
+                    }
+                }
+
                 const cardHtml = `
                     <div class="concept-card">
                         <h3>${card.title || emotion}</h3>
                         <p>${card.description || ""}</p>
-                        ${card.image_path ? `<img src="${card.image_path.replace('/fe/', '../../')}" class="learn-img">` : ''}
+                        ${mediaHtml}
                     </div>
                 `;
                 elements.learningBody.insertAdjacentHTML('beforeend', cardHtml);
             });
         }
+
         elements.learningCloseBtn.onclick = () => {
+            // Dừng video khi đóng modal (nếu có)
+            const videos = elements.learningBody.querySelectorAll('video');
+            videos.forEach(v => v.pause());
+
             elements.learningModal.classList.add('hidden');
             currentIndex++;
             loadQuestion(currentIndex);
