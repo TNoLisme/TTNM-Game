@@ -29,27 +29,27 @@ session history: lưu lại tổng kết của game đó sau mỗi level child c
 report	lưu nội dung báo cáo mỗi lần gửi phụ huynh (có thể thêm tính năng nhờ AI phân tích tiến độ học và đề xuất game nên chơi tiếp)
 
 */
-SELECT * FROM [TTNM].[dbo].[users]
-SELECT * FROM [TTNM].[dbo].[children]
-SELECT * FROM [TTNM].[dbo].[child_progress]
-SELECT * FROM [TTNM].[dbo].[games]
-SELECT * FROM [TTNM].[dbo].[game_data]
-SELECT * FROM [TTNM].[dbo].[game_content]
-SELECT * FROM [TTNM].[dbo].[game_history]
+SELECT * FROM [TTNMSQL].[dbo].[users]
+SELECT * FROM [TTNMSQL].[dbo].[children]
+SELECT * FROM [TTNMSQL].[dbo].[child_progress]
+SELECT * FROM [TTNMSQL].[dbo].[games]
+SELECT * FROM [TTNMSQL].[dbo].[game_data]
+SELECT * FROM [TTNMSQL].[dbo].[game_content]
+SELECT * FROM [TTNMSQL].[dbo].[game_history]
 
-SELECT * FROM [TTNM].[dbo].[game_data_contents]
-SELECT * FROM [TTNM].[dbo].[questions]
+SELECT * FROM [TTNMSQL].[dbo].[game_data_contents]
+SELECT * FROM [TTNMSQL].[dbo].[questions]
 
-SELECT * FROM [TTNM].[dbo].[session_questions]
-SELECT * FROM [TTNM].[dbo].[reports]
-SELECT * FROM [TTNM].[dbo].[emotion_concepts]
-SELECT * FROM [TTNM].[dbo].[session_history]	
-SELECT * FROM [TTNM].[dbo].[sessions]
+SELECT * FROM [TTNMSQL].[dbo].[session_questions]
+SELECT * FROM [TTNMSQL].[dbo].[reports]
+SELECT * FROM [TTNMSQL].[dbo].[emotion_concepts]
+SELECT * FROM [TTNMSQL].[dbo].[session_history]	
+SELECT * FROM [TTNMSQL].[dbo].[sessions]
 
 -- Tắt ràng buộc FK tạm thời
 EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
 
-USE TTNM;
+USE TTNMSQL;
 GO
 
 BEGIN TRY
@@ -180,9 +180,9 @@ INSERT INTO emotion_concepts (concept_id, emotion, level, title, video_path, ima
 (NEWID(), N'Ghê tởm', 1, N'Khi nào ghê?', NULL, '/fe/assets/images/concepts/ghe.jpg', NULL, N'Ghê khi ngửi mùi hôi...');
 
 -- 7. Sessions mẫu
-INSERT INTO sessions (session_id, user_id, game_id, start_time, end_time, state, score, emotion_errors, max_errors, level_threshold, ratio, time_limit, question_ids) VALUES
-(NEWID(), @child_user_id, @g1, DATEADD(minute, -30, GETDATE()), DATEADD(minute, -10, GETDATE()), 'end', 90, N'{}', 3, 70, '[]', 60, '[]'),
-(NEWID(), @child_user_id, @g6, DATEADD(hour, -1, GETDATE()), NULL, 'playing', 50, N'{"ghê tởm":1}', 3, 5, '[]', 300, '[]');
+INSERT INTO sessions (session_id, user_id, game_id, start_time, end_time, state, score, emotion_errors, max_errors, level_threshold, ratio, time_limit, question_ids, level) VALUES
+(NEWID(), @child_user_id, @g1, DATEADD(minute, -30, GETDATE()), DATEADD(minute, -10, GETDATE()), 'end', 90, N'{}', 3, 70, '[]', 60, '[]', 1),
+(NEWID(), @child_user_id, @g6, DATEADD(hour, -1, GETDATE()), NULL, 'playing', 50, N'{"ghê tởm":1}', 3, 5, '[]', 300, '[]', 2);
 
 -- 8. Child progress
 INSERT INTO child_progress (progress_id, child_id, game_id, level, accuracy, avg_response_time, score, last_played, ratio, review_emotions) VALUES

@@ -1,16 +1,20 @@
 from uuid import UUID, uuid4
 from typing import List, Dict, Optional
+from datetime import datetime, date, timedelta
+from app.domain.enum import GenderEnum
 from app.repository.admin_repo import AdminRepository
 from app.repository.users_repo import UsersRepository
 from app.repository.child_repo import ChildRepository
 from app.repository.emotion_concepts_repo import EmotionConceptRepository
 from app.repository.questions_repo import QuestionsRepository
 from app.repository.game_contents_repo import GameContentsRepository as GameContentRepo
+from app.repository.report_repo import ReportRepository  # ✅ ADDED
 from app.domain.users.user import User
 from app.domain.users.child import Child
 from app.domain.sessions.emotion_concept import EmotionConcept
 from app.domain.games.question import Question
 from app.domain.games.game_content import GameContent
+from app.domain.analytics.report import Report  # ✅ ADDED
 from app.domain.enum import RoleEnum
 
 class AdminService:
@@ -21,7 +25,8 @@ class AdminService:
         child_repo: ChildRepository,
         emotion_repo: EmotionConceptRepository,
         question_repo: QuestionsRepository,
-        game_content_repo: GameContentRepo
+        game_content_repo: GameContentRepo,
+        report_repo: ReportRepository  # ✅ ADDED
     ):
         self.admin_repo = admin_repo
         self.users_repo = users_repo
@@ -29,6 +34,7 @@ class AdminService:
         self.emotion_repo = emotion_repo
         self.question_repo = question_repo
         self.game_content_repo = game_content_repo
+        self.report_repo = report_repo  # ✅ ADDED
 
     # ==================== User Management ====================
     def get_all_users(self, skip: int = 0, limit: int = 100) -> dict:
@@ -92,91 +98,136 @@ class AdminService:
 
     def create_user(self, data: dict) -> dict:
         """Tạo user mới (bởi admin)"""
+        print("🔥 RAW DATA RECEIVED:", data)
+
         try:
-            required_fields = ["username", "email", "password"]
-            for field in required_fields:
-                if field not in data or not data[field]:
+            for field in ["username", "email", "password"]:
+                if not data.get(field):
                     return {
-                        "status": "failed", 
+                        "status": "failed",
                         "message": f"Missing required field: {field}"
                     }
-            
-            existing_user_by_username = self.users_repo.get_by_username(data.get("username"))
-            if existing_user_by_username:
+
+            if self.users_repo.get_by_username(data["username"]):
                 return {"status": "failed", "message": "Username already exists"}
 
-            existing_user_by_email = self.users_repo.get_by_email(data.get("email"))
-            if existing_user_by_email:
+            if self.users_repo.get_by_email(data["email"]):
                 return {"status": "failed", "message": "Email already exists"}
 
-            role = RoleEnum.admin
-            if "role" in data and data["role"]:
-                try:
-                    role = RoleEnum[data["role"].upper()]
-                except KeyError:
-                    return {"status": "failed", "message": f"Invalid role: {data['role']}"}
+            try:
+                role = RoleEnum[data.get("role", "admin").lower()]
+            except KeyError:
+                return {
+                    "status": "failed",
+                    "message": f"Invalid role: {data.get('role')}"
+                }
 
             user_id = uuid4()
             user = User(
                 user_id=user_id,
-                username=data.get("username"),
-                email=data.get("email"),
-                password=data.get("password"),
+                username=data["username"],
+                email=data["email"],
+                password=data["password"],
                 role=role,
                 name=data.get("name")
             )
+            self.users_repo.save_user(user)
 
-            self.users_repo.save(user)
-            
             if role == RoleEnum.child:
-                from app.domain.enum import GenderEnum
-                from datetime import datetime
+                required_child_fields = ["age", "gender", "date_of_birth", "phone_number"]
+                for field in required_child_fields:
+                    if data.get(field) is None:
+                        return {
+                            "status": "failed",
+                            "message": f"Missing required child field: {field}"
+                        }
+
+                try:
+                    gender = GenderEnum[data["gender"].lower()]
+                except KeyError:
+                    return {
+                        "status": "failed",
+                        "message": f"Invalid gender: {data['gender']}"
+                    }
+                try:
+                    date_of_birth_str = data["date_of_birth"]
+                    
+                    if isinstance(date_of_birth_str, str):
+                        date_of_birth = datetime.strptime(
+                            date_of_birth_str, "%Y-%m-%d"
+                        ).date()
+                    elif isinstance(date_of_birth_str, date):
+                        date_of_birth = date_of_birth_str
+                    else:
+                        raise ValueError("Invalid date format")
+                    
+                    if date_of_birth > date.today():
+                        return {
+                            "status": "failed",
+                            "message": "Date of birth cannot be in the future"
+                        }
+                        
+                except (ValueError, TypeError) as e:
+                    return {
+                        "status": "failed",
+                        "message": "Invalid date_of_birth format (must be YYYY-MM-DD)"
+                    }
                 
-                gender = None
-                if "gender" in data and data["gender"]:
-                    try:
-                        gender = GenderEnum[data["gender"].upper()]
-                    except KeyError:
-                        pass
+                phone_number = data["phone_number"]
+                if not isinstance(phone_number, str) or not phone_number.isdigit() or len(phone_number) != 10:
+                    return {
+                        "status": "failed",
+                        "message": "Phone number must be exactly 10 digits"
+                    }
+
+                age = data["age"]
+                if not isinstance(age, int) or age < 0 or age > 150:
+                    return {
+                        "status": "failed",
+                        "message": "Age must be between 0 and 150"
+                    }
                 
                 child = Child(
                     user_id=str(user_id),
-                    age=data.get("age"),
+                    age=age,
+                    gender=gender,
+                    date_of_birth=date_of_birth,
+                    phone_number=phone_number,
                     last_played=None,
                     report_preferences=data.get("report_preferences"),
                     created_at=datetime.utcnow(),
                     last_login=None,
-                    gender=gender,
-                    date_of_birth=data.get("date_of_birth"),
-                    phone_number=data.get("phone_number")
                 )
-                
+
                 saved_child = self.child_repo.save(child)
-                print("✅ Child created by admin:", saved_child.__dict__)
-                
+
                 return {
-                    "status": "success", 
+                    "status": "success",
                     "message": f"Child user {user.username} created",
                     "user_id": str(user.user_id),
                     "data": {
                         **self._user_to_dict(user),
                         "age": saved_child.age,
-                        "gender": saved_child.gender.value if saved_child.gender else None,
+                        "gender": saved_child.gender.value,
+                        "date_of_birth": saved_child.date_of_birth.isoformat(),
                         "phone_number": saved_child.phone_number
                     }
                 }
-            
+
             return {
-                "status": "success", 
+                "status": "success",
                 "message": f"User {user.username} created",
                 "user_id": str(user.user_id),
                 "data": self._user_to_dict(user)
             }
-            
+
         except Exception as e:
-            print(f"❌ Error in create_user: {e}")
+            print(f"❌ Error in create_user:", e)
+            import traceback
+            traceback.print_exc()
             return {"status": "failed", "message": str(e)}
-    
+
+        
     def update_user(self, user_id: UUID, data: dict) -> dict:
         """Cập nhật thông tin user"""
         try:
@@ -204,7 +255,7 @@ class AdminService:
                 user.password = data["password"]
             if "role" in data and data["role"]:
                 try:
-                    user.role = RoleEnum[data["role"].upper()]
+                    user.role = RoleEnum[data["role"].lower()]
                 except KeyError:
                     return {"status": "failed", "message": f"Invalid role: {data['role']}"}
             
@@ -212,31 +263,99 @@ class AdminService:
             
             if updated_user.role == RoleEnum.child:
                 child = self.child_repo.get_by_user_id(user_id)
+                
                 if child:
-                    child_fields = ["age", "gender", "phone_number", "report_preferences"]
-                    child_data = {k: v for k, v in data.items() if k in child_fields and v is not None}
+                    if "age" in data and data["age"] is not None:
+                        if not isinstance(data["age"], int) or data["age"] < 0 or data["age"] > 150:
+                            return {"status": "failed", "message": "Age must be between 0 and 150"}
+                        child.age = data["age"]
                     
-                    if child_data:
-                        for key, value in child_data.items():
-                            if key == "gender":
-                                from app.domain.enum import GenderEnum
-                                try:
-                                    setattr(child, key, GenderEnum[value.upper()])
-                                except KeyError:
-                                    return {"status": "failed", "message": f"Invalid gender: {value}"}
+                    if "gender" in data and data["gender"]:
+                        try:
+                            child.gender = GenderEnum[data["gender"].lower()]
+                        except KeyError:
+                            return {"status": "failed", "message": f"Invalid gender: {data['gender']}"}
+                    
+                    if "phone_number" in data and data["phone_number"]:
+                        phone = data["phone_number"]
+                        if not isinstance(phone, str) or not phone.isdigit() or len(phone) != 10:
+                            return {"status": "failed", "message": "Phone number must be exactly 10 digits"}
+                        child.phone_number = phone
+                    
+                    if "date_of_birth" in data and data["date_of_birth"]:
+                        try:
+                            date_str = data["date_of_birth"]
+                            if isinstance(date_str, str):
+                                dob = datetime.strptime(date_str, "%Y-%m-%d").date()
+                            elif isinstance(date_str, date):
+                                dob = date_str
                             else:
-                                setattr(child, key, value)
+                                raise ValueError("Invalid date format")
+                            
+                            if dob > date.today():
+                                return {"status": "failed", "message": "Date of birth cannot be in the future"}
+                            
+                            child.date_of_birth = dob
+                        except (ValueError, TypeError):
+                            return {"status": "failed", "message": "Invalid date_of_birth format (must be YYYY-MM-DD)"}
+                    
+                    if "report_preferences" in data:
+                        child.report_preferences = data["report_preferences"]
+                    
+                    self.child_repo.save(child)
+                    print("✅ Child info updated:", child.__dict__)
+                else:
+                    print("⚠️ User is marked as child but no child record found. Creating child record...")
+                    
+                    if not all(k in data for k in ["age", "gender", "date_of_birth", "phone_number"]):
+                        return {
+                            "status": "failed", 
+                            "message": "Missing required child fields (age, gender, date_of_birth, phone_number)"
+                        }
+                    
+                    try:
+                        gender = GenderEnum[data["gender"].lower()]
                         
-                        self.child_repo.save(child)
-                        print("✅ Child info updated:", child.__dict__)
+                        date_str = data["date_of_birth"]
+                        if isinstance(date_str, str):
+                            dob = datetime.strptime(date_str, "%Y-%m-%d").date()
+                        else:
+                            dob = date_str
+                        
+                        if dob > date.today():
+                            return {"status": "failed", "message": "Date of birth cannot be in the future"}
+                        
+                        phone = data["phone_number"]
+                        if not phone.isdigit() or len(phone) != 10:
+                            return {"status": "failed", "message": "Phone number must be exactly 10 digits"}
+                        
+                        new_child = Child(
+                            user_id=str(user_id),
+                            age=data["age"],
+                            gender=gender,
+                            date_of_birth=dob,
+                            phone_number=phone,
+                            last_played=None,
+                            report_preferences=data.get("report_preferences"),
+                            created_at=datetime.utcnow(),
+                            last_login=None,
+                        )
+                        self.child_repo.save(new_child)
+                        print("✅ Child record created for existing user")
+                        
+                    except (ValueError, KeyError) as e:
+                        return {"status": "failed", "message": f"Invalid child data: {str(e)}"}
             
             return {
                 "status": "success",
                 "message": "User updated successfully",
                 "data": self._user_to_dict(updated_user)
             }
+            
         except Exception as e:
             print(f"❌ Error in update_user: {e}")
+            import traceback
+            traceback.print_exc()
             return {"status": "failed", "message": str(e)}
 
     def delete_user(self, user_id: UUID) -> dict:
@@ -359,7 +478,7 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def get_game_content_by_id(self, content_id: UUID) -> dict:
-        """✅ Lấy chi tiết một game content theo content_id"""
+        """Lấy chi tiết một game content theo content_id"""
         try:
             content = self.game_content_repo.get_by_id(content_id)
             if not content:
@@ -374,7 +493,7 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def create_game_content(self, data: dict) -> dict:
-        """✅ Tạo game content mới với content_id + game_id"""
+        """Tạo game content mới với content_id + game_id"""
         try:
             required_fields = ["game_id", "level", "content_type", "question_text"]
             for field in required_fields:
@@ -384,10 +503,9 @@ class AdminService:
                         "message": f"Missing required field: {field}"
                     }
             
-            # ✅ Tạo content_id mới, game_id từ request
             content = GameContent(
-                content_id=uuid4(),  # ✅ Primary key
-                game_id=data["game_id"],  # ✅ Foreign key
+                content_id=uuid4(),
+                game_id=data["game_id"],
                 level=data["level"],
                 content_type=data["content_type"],
                 media_path=data.get("media_path"),
@@ -409,7 +527,7 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def update_game_content(self, content_id: UUID, data: dict) -> dict:
-        """✅ Cập nhật game content theo content_id"""
+        """Cập nhật game content theo content_id"""
         try:
             content = self.game_content_repo.get_by_id(content_id)
             if not content:
@@ -442,7 +560,7 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def delete_game_content(self, content_id: UUID) -> dict:
-        """✅ Xóa game content theo content_id"""
+        """Xóa game content theo content_id"""
         try:
             content = self.game_content_repo.get_by_id(content_id)
             if not content:
@@ -461,7 +579,7 @@ class AdminService:
             return {"status": "failed", "message": str(e)}
 
     def bulk_delete_game_contents(self, content_ids: List[UUID]) -> dict:
-        """✅ Xóa nhiều game contents theo content_ids"""
+        """Xóa nhiều game contents theo content_ids"""
         try:
             if not content_ids:
                 return {
@@ -503,6 +621,229 @@ class AdminService:
             print(f"❌ Error in bulk_delete_game_contents: {e}")
             return {"status": "failed", "message": str(e)}
 
+    # ==================== ✅ REPORTS MANAGEMENT ====================
+    def get_reports_statistics(self) -> Dict:
+        """
+        Lấy thống kê báo cáo tuần/tháng với trend
+        """
+        try:
+            all_reports = self.report_repo.get_all_ordered()
+            
+            now = datetime.now()
+            last_week = now - timedelta(days=7)
+            last_month = now - timedelta(days=30)
+            two_weeks_ago = now - timedelta(days=14)
+            two_months_ago = now - timedelta(days=60)
+            
+            weekly_reports = []
+            monthly_reports = []
+            
+            current_week_count = 0
+            last_week_count = 0
+            current_month_count = 0
+            last_month_count = 0
+            
+            for report in all_reports:
+                child_info = self._get_child_info(report.child_id)
+                
+                import json
+                parsed_data = {}
+                if report.data:
+                    try:
+                        parsed_data = json.loads(report.data) if isinstance(report.data, str) else report.data
+                    except:
+                        parsed_data = {}
+                
+                report_dict = {
+                    'report_id': str(report.report_id),
+                    'child_id': str(report.child_id) if report.child_id else None,
+                    'child_name': child_info['name'],
+                    'child_email': child_info['email'],
+                    'period': report.report_type,
+                    'sent_at': report.generated_at.isoformat() if report.generated_at else None,
+                    'status': 'sent',
+                    'stats': self._extract_stats(parsed_data),
+                    'summary': report.summary
+                }
+                
+                generated_at = report.generated_at
+                
+                if report.report_type == 'weekly':
+                    weekly_reports.append(report_dict)
+                    if generated_at and generated_at >= last_week:
+                        current_week_count += 1
+                    elif generated_at and two_weeks_ago <= generated_at < last_week:
+                        last_week_count += 1
+                
+                elif report.report_type == 'monthly':
+                    monthly_reports.append(report_dict)
+                    if generated_at and generated_at >= last_month:
+                        current_month_count += 1
+                    elif generated_at and two_months_ago <= generated_at < last_month:
+                        last_month_count += 1
+            
+            weekly_trend = self._calculate_trend(current_week_count, last_week_count)
+            monthly_trend = self._calculate_trend(current_month_count, last_month_count)
+            
+            return {
+                "status": "success",
+                "data": {
+                    "weekly_reports": weekly_reports,
+                    "monthly_reports": monthly_reports,
+                    "weekly_trend": weekly_trend,
+                    "monthly_trend": monthly_trend,
+                    "total_count": len(all_reports)
+                }
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in get_reports_statistics: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "status": "failed",
+                "message": str(e),
+                "data": {
+                    "weekly_reports": [],
+                    "monthly_reports": [],
+                    "weekly_trend": 0,
+                    "monthly_trend": 0,
+                    "total_count": 0
+                }
+            }
+    
+    def get_report_by_id(self, report_id: UUID) -> Dict:
+        """Lấy chi tiết một báo cáo"""
+        try:
+            report = self.report_repo.get_by_id(report_id)
+            
+            if not report:
+                return {
+                    "status": "failed",
+                    "message": "Không tìm thấy báo cáo"
+                }
+            
+            child_info = self._get_child_info(report.child_id)
+            
+            import json
+            parsed_data = {}
+            if report.data:
+                try:
+                    parsed_data = json.loads(report.data) if isinstance(report.data, str) else report.data
+                except:
+                    pass
+            
+            return {
+                "status": "success",
+                "data": {
+                    'report_id': str(report.report_id),
+                    'child_id': str(report.child_id) if report.child_id else None,
+                    'child_name': child_info['name'],
+                    'child_email': child_info['email'],
+                    'period': report.report_type,
+                    'sent_at': report.generated_at.isoformat() if report.generated_at else None,
+                    'status': 'sent',
+                    'summary': report.summary,
+                    'content': parsed_data or self._get_default_stats()
+                }
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in get_report_by_id: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "status": "failed",
+                "message": str(e)
+            }
+    
+    def resend_report(self, report_id: UUID) -> Dict:
+        """Gửi lại báo cáo qua email"""
+        try:
+            report = self.report_repo.get_by_id(report_id)
+            
+            if not report:
+                return {
+                    "status": "failed",
+                    "message": "Không tìm thấy báo cáo"
+                }
+            
+            # TODO: Tích hợp với email service
+            # from app.services.reports.report_service import ReportService
+            # email_result = report_service.send_report_email(...)
+            
+            print(f"✅ Đã gửi lại báo cáo {report_id}")
+            
+            return {
+                "status": "success",
+                "message": "Đã gửi lại báo cáo thành công",
+                "data": {
+                    "report_id": str(report_id)
+                }
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in resend_report: {e}")
+            return {
+                "status": "failed",
+                "message": str(e)
+            }
+    
+    def get_all_reports(
+        self, 
+        skip: int = 0, 
+        limit: int = 100,
+        report_type: Optional[str] = None
+    ) -> Dict:
+        """Lấy danh sách tất cả reports với pagination"""
+        try:
+            if report_type:
+                reports = self.report_repo.get_by_type(report_type, skip, limit)
+                total = self.report_repo.count_by_type(report_type)
+            else:
+                reports = self.report_repo.get_all(skip, limit)
+                total = self.report_repo.count_all()
+            
+            report_list = []
+            for report in reports:
+                child_info = self._get_child_info(report.child_id)
+                
+                import json
+                parsed_data = {}
+                if report.data:
+                    try:
+                        parsed_data = json.loads(report.data) if isinstance(report.data, str) else report.data
+                    except:
+                        pass
+                
+                report_list.append({
+                    'report_id': str(report.report_id),
+                    'child_id': str(report.child_id) if report.child_id else None,
+                    'child_name': child_info['name'],
+                    'child_email': child_info['email'],
+                    'report_type': report.report_type,
+                    'generated_at': report.generated_at.isoformat() if report.generated_at else None,
+                    'summary': report.summary,
+                    'stats': self._extract_stats(parsed_data)
+                })
+            
+            return {
+                "status": "success",
+                "data": {
+                    "reports": report_list,
+                    "total": total,
+                    "skip": skip,
+                    "limit": limit
+                }
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in get_all_reports: {e}")
+            return {
+                "status": "failed",
+                "message": str(e)
+            }
+
     # ==================== Helper Methods ====================
     def _user_to_dict(self, user: User) -> dict:
         """Convert User domain entity to dict"""
@@ -526,10 +867,10 @@ class AdminService:
         }
 
     def _content_to_dict(self, content: GameContent) -> dict:
-        """✅ Convert GameContent to dict với CẢ content_id VÀ game_id"""
+        """Convert GameContent to dict với CẢ content_id VÀ game_id"""
         return {
-            "content_id": str(content.content_id),  # ✅ Primary key
-            "game_id": str(content.game_id),        # ✅ Foreign key
+            "content_id": str(content.content_id),
+            "game_id": str(content.game_id),
             "level": content.level,
             "content_type": content.content_type,
             "media_path": content.media_path,
@@ -537,4 +878,51 @@ class AdminService:
             "correct_answer": content.correct_answer,
             "emotion": content.emotion,
             "explanation": content.explanation
+        }
+    
+    # ==================== ✅ REPORTS HELPER METHODS ====================
+    def _get_child_info(self, child_id: Optional[str]) -> Dict[str, str]:
+        """Lấy thông tin child từ child_id"""
+        if not child_id:
+            return {'name': 'N/A', 'email': ''}
+        
+        try:
+            child = self.child_repo.get_by_user_id(child_id)
+            if not child:
+                return {'name': 'N/A', 'email': ''}
+            
+            user = self.users_repo.get_by_id(UUID(child_id))
+            if not user:
+                return {'name': 'N/A', 'email': ''}
+            
+            return {
+                'name': user.name or 'N/A',
+                'email': user.email or ''
+            }
+        except Exception as e:
+            print(f"⚠️ Lỗi lấy child info: {e}")
+            return {'name': 'N/A', 'email': ''}
+    
+    def _calculate_trend(self, current: int, previous: int) -> float:
+        """Tính % thay đổi"""
+        if previous > 0:
+            return round(((current - previous) / previous) * 100, 1)
+        elif current > 0:
+            return 100.0
+        return 0.0
+    
+    def _extract_stats(self, data: Dict) -> Dict:
+        """Trích xuất stats từ data"""
+        return {
+            'total_sessions': data.get('total_sessions', 0),
+            'total_playtime': data.get('total_playtime', 0),
+            'avg_score': data.get('avg_score', 0)
+        }
+    
+    def _get_default_stats(self) -> Dict:
+        """Stats mặc định khi không có data"""
+        return {
+            'total_sessions': 0,
+            'total_playtime': 0,
+            'avg_score': 0
         }
