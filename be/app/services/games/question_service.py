@@ -103,6 +103,7 @@ class QuestionService:
                 "media_path": main_content.media_path,
                 "options": options_response,
                 "correct_answer": correct_answer,
+                "emotion": main_content.emotion,
                 "explanation": main_content.explanation
             })
 
