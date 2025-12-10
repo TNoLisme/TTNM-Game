@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +7,6 @@
     <link rel="stylesheet" href="../styles/admin.css" />
     <link rel="stylesheet" href="../styles/chatbot_widget.css" />
 </head>
-
 <body>
     <!-- Header -->
     <header class="admin-header">
@@ -43,6 +41,10 @@
                     <span class="icon">🎮</span>
                     <span class="text">Quản lý Game Contents</span>
                 </a>
+                <a href="#reports" class="nav-item" data-section="reports">
+                    <span class="icon">📋</span>
+                    <span class="text">Quản lý Reports</span>
+                </a>
             </nav>
         </aside>
 
@@ -72,6 +74,13 @@
                         <div class="stat-info">
                             <h3 id="total-game-contents">0</h3>
                             <p>Nội dung Game</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-info">
+                            <h3 id="total-reports">0</h3>
+                            <p>Báo cáo đã gửi</p>
                         </div>
                     </div>
                 </div>
@@ -204,10 +213,162 @@
                     </table>
                 </div>
             </section>
+
+            <!-- ✅ FIXED: Reports Management Section -->
+            <section id="reports-section" class="content-section">
+                <div class="section-header">
+                    <h1>📋 Quản lý Reports</h1>
+                    <button class="btn btn-secondary" id="refresh-reports-btn">
+                        <span>🔄</span> Làm mới
+                    </button>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <h3 id="weekly-reports-count">0</h3>
+                            <p>Báo cáo tuần</p>
+                            <small id="weekly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
+                                <span class="trend-icon">↗️</span> +0%
+                            </small>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📆</div>
+                        <div class="stat-info">
+                            <h3 id="monthly-reports-count">0</h3>
+                            <p>Báo cáo tháng</p>
+                            <small id="monthly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
+                                <span class="trend-icon">↗️</span> +0%
+                            </small>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3 id="total-reports-count">0</h3>
+                            <p>Tổng báo cáo</p>
+                            <small style="font-size: 12px; display: block; margin-top: 5px; color: #7f8c8d;">
+                                Tất cả thời gian
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters">
+                    <input type="text" id="search-reports" placeholder="🔍 Tìm kiếm theo tên trẻ..." class="search-input" />
+                    <select id="filter-report-period" class="filter-select">
+                        <option value="">Tất cả chu kỳ</option>
+                        <option value="weekly">📅 Tuần</option>
+                        <option value="monthly">📆 Tháng</option>
+                    </select>
+                </div>
+
+                <!-- ✅ FIXED: Reports Table - Đúng với schema database -->
+                <div class="table-container">
+                    <table class="data-table" id="reports-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 180px;">Report ID</th>
+                                <th style="width: 200px;">Trẻ</th>
+                                <th style="width: 100px;">Chu kỳ</th>
+                                <th style="width: 350px;">Tóm tắt</th>
+                                <th style="width: 200px;">Thống kê</th>
+                                <th style="width: 200px;">Ngày tạo</th>
+                                <th style="width: 150px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-tbody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 30px;">
+                                    <div class="loading-spinner">⏳ Đang tải dữ liệu...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="reports-pagination" style="display: none;">
+                    <button class="btn btn-secondary" id="reports-prev-page">← Trước</button>
+                    <span id="reports-page-info">Trang 1 / 1</span>
+                    <button class="btn btn-secondary" id="reports-next-page">Sau →</button>
+                </div>
+            </section>
         </main>
     </div>
 
-    <!-- Modal: Add/Edit User -->
+    <div id="report-modal" class="modal">
+        <div class="modal-content large">
+            <span class="close" id="close-report-modal">×</span>
+            <h2>📋 Chi tiết báo cáo</h2>
+            
+            <div class="report-details-container">
+                <!-- Header Info -->
+                <div class="report-header" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <strong>👶 Trẻ em:</strong>
+                            <p id="report-detail-child-name" style="margin: 5px 0;">-</p>
+                        </div>
+                        <div>
+                            <strong>📧 Email:</strong>
+                            <p id="report-detail-child-email" style="margin: 5px 0;">-</p>
+                        </div>
+                        <div>
+                            <strong>📅 Chu kỳ:</strong>
+                            <p id="report-detail-period" style="margin: 5px 0;">-</p>
+                        </div>
+                        <div>
+                            <strong>📆 Ngày gửi:</strong>
+                            <p id="report-detail-sent-at" style="margin: 5px 0;">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="report-summary" style="margin-bottom: 20px;">
+                    <h3>📝 Tóm tắt</h3>
+                    <p id="report-detail-summary" style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 1.6;">
+                        Đang tải...
+                    </p>
+                </div>
+
+                <!-- Statistics -->
+                <div class="report-stats">
+                    <h3>📊 Thống kê chi tiết</h3>
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div class="stat-item" style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #1976d2;" id="report-detail-sessions">0</div>
+                            <div style="color: #666; margin-top: 5px;">Phiên chơi</div>
+                        </div>
+                        <div class="stat-item" style="background: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #7b1fa2;" id="report-detail-playtime">0</div>
+                            <div style="color: #666; margin-top: 5px;">Phút chơi</div>
+                        </div>
+                        <div class="stat-item" style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #388e3c;" id="report-detail-score">0</div>
+                            <div style="color: #666; margin-top: 5px;">Điểm TB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="button" class="btn btn-primary" id="resend-report-btn">
+                    📧 Gửi lại báo cáo
+                </button>
+                <button type="button" class="btn btn-secondary" id="close-report-detail-btn">
+                    ❌ Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Modals (User, Video, Game Content) remain unchanged -->
     <div id="user-modal" class="modal">
         <div class="modal-content">
             <span class="close" id="close-user-modal">×</span>
@@ -232,8 +393,8 @@
                     <div class="form-group">
                         <label for="user-role">Vai trò *</label>
                         <select id="user-role" required>
-                            <option value="child">child</option>
-                            <option value="admin">admin</option>
+                            <option value="child">Child</option>
+                            <option value="admin">Admin</option>
                         </select>
                     </div>
                 </div>
@@ -243,20 +404,27 @@
                         <label for="user-name">Tên hiển thị *</label>
                         <input type="text" id="user-name" required>
                     </div>
-                    <div class="form-group">
-                        <label for="user-age">Tuổi</label>
-                        <input type="number" id="user-age" min="3" max="18">
-                    </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row child-fields">
                     <div class="form-group">
-                        <label for="user-gender">Giới tính</label>
+                        <label for="user-date-of-birth">Ngày sinh *</label>
+                        <input type="date" id="user-date-of-birth">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-gender">Giới tính *</label>
                         <select id="user-gender">
                             <option value="male">Nam</option>
                             <option value="female">Nữ</option>
                             <option value="other">Khác</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="form-row child-fields">
+                    <div class="form-group">
+                        <label for="user-phone">Số điện thoại *</label>
+                        <input type="tel" id="user-phone" placeholder="Nhập 10 chữ số" maxlength="10" pattern="[0-9]{10}">
                     </div>
                 </div>
 
@@ -268,7 +436,6 @@
         </div>
     </div>
 
-    <!-- Modal: Replace Video -->
     <div id="video-modal" class="modal">
         <div class="modal-content large">
             <span class="close" id="close-video-modal">×</span>
@@ -306,13 +473,11 @@
         </div>
     </div>
 
-    <!-- Modal: Add/Edit Game Content -->
     <div id="game-content-modal" class="modal">
         <div class="modal-content large">
             <span class="close" id="close-game-content-modal">×</span>
             <h2 id="game-content-modal-title">➕ Thêm Nội dung Game</h2>
             <form id="game-content-form">
-                <!-- ✅ THÊM FIELD GAME_ID -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="gc-game-id">Game ID *</label>
@@ -385,8 +550,7 @@
         </div>
     </div>
 
-    <script src="../components/admin.js" defer></script>
+    <script type="module" src="../components/admin.js"></script>
     <script src="../components/chatbot_widget.js"></script>
 </body>
-
 </html>

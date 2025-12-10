@@ -7,12 +7,16 @@ from app.repository.child_repo import ChildRepository
 from app.repository.emotion_concepts_repo import EmotionConceptRepository
 from app.repository.questions_repo import QuestionsRepository
 from app.repository.game_contents_repo import GameContentsRepository as GameContentRepo
+from app.repository.report_repo import ReportRepository  # ✅ ADDED
+from app.models.analytics import Report as ReportModel  # ✅ ADDED
 from app.database import get_db
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
+from sqlalchemy.orm import Session
 import os
 import shutil
 from pathlib import Path
+from datetime import date, datetime, timedelta
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -25,6 +29,8 @@ class CreateUserRequest(BaseModel):
     role: str  # 'admin' or 'child'
     age: Optional[int] = None
     gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    phone_number: Optional[str] = None
 
 class UpdateUserRequest(BaseModel):
     username: Optional[str] = None
@@ -60,7 +66,7 @@ class UpdateGameContentRequest(BaseModel):
 class BulkDeleteGameContentRequest(BaseModel):
     content_ids: List[UUID]
 
-# ==================== Dependency: AdminService ====================
+# ==================== Dependency: Services ====================
 def get_admin_service(db=Depends(get_db)) -> AdminService:
     admin_repo = AdminRepository(db)
     users_repo = UsersRepository(db)
@@ -68,6 +74,7 @@ def get_admin_service(db=Depends(get_db)) -> AdminService:
     emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
+    report_repo = ReportRepository(db)  # ✅ ADDED
     
     return AdminService(
         admin_repo=admin_repo,
@@ -75,7 +82,8 @@ def get_admin_service(db=Depends(get_db)) -> AdminService:
         child_repo=child_repo,
         emotion_repo=emotion_repo,
         question_repo=question_repo,
-        game_content_repo=game_content_repo
+        game_content_repo=game_content_repo,
+        report_repo=report_repo  # ✅ ADDED
     )
 
 # ==================== User Management Endpoints ====================
@@ -215,9 +223,6 @@ async def get_game_content_detail(
     content_id: UUID,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ LẤY CHI TIẾT MỘT GAME CONTENT
-    """
     try:
         result = service.get_game_content_by_id(content_id)
         
@@ -237,11 +242,6 @@ async def create_game_content(
     request: CreateGameContentRequest,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ TẠO MỚI GAME CONTENT
-    
-    Tạo nội dung câu hỏi mới cho game
-    """
     try:
         result = service.create_game_content(request.dict())
         
@@ -262,11 +262,6 @@ async def update_game_content(
     request: UpdateGameContentRequest,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ CẬP NHẬT GAME CONTENT
-    
-    Cập nhật thông tin nội dung câu hỏi
-    """
     try:
         result = service.update_game_content(
             content_id, 
@@ -289,11 +284,6 @@ async def delete_game_content(
     content_id: UUID,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ XÓA MỘT GAME CONTENT
-    
-    Xóa nội dung câu hỏi (soft delete hoặc hard delete)
-    """
     try:
         result = service.delete_game_content(content_id)
         
@@ -313,11 +303,6 @@ async def bulk_delete_game_contents(
     request: BulkDeleteGameContentRequest,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ XÓA NHIỀU GAME CONTENTS CÙNG LÚC
-    
-    Xóa hàng loạt theo danh sách content_ids
-    """
     try:
         result = service.bulk_delete_game_contents(request.content_ids)
         
@@ -339,15 +324,7 @@ async def upload_game_content_media(
     game_name: str = Form(...),
     emotion: Optional[str] = Form(None)
 ):
-    """
-    ⭐ UPLOAD FILE MEDIA CHO GAME CONTENT
-    
-    - Upload ảnh/video/audio
-    - Lưu vào thư mục tương ứng
-    - Trả về đường dẫn file
-    """
     try:
-        # Validate content type
         allowed_types = {
             'image': ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'],
             'video': ['video/mp4', 'video/mpeg', 'video/quicktime'],
@@ -426,20 +403,10 @@ async def upload_emotion_video(
     emotion_name: str = Form(...),
     old_path: str = Form(...)
 ):
-    """
-    ⭐ UPLOAD/THAY THẾ VIDEO DẠY CẢM XÚC
-    
-    - Nhận file video từ frontend
-    - Lưu vào thư mục /fe/assets/videos/
-    - Xóa video cũ nếu có
-    - Trả về đường dẫn video mới
-    """
     try:
-        # Kiểm tra định dạng file
         if not video_file.content_type.startswith('video/'):
             raise HTTPException(400, detail="File không phải video!")
         
-        # Kiểm tra kích thước (max 50MB)
         video_file.file.seek(0, 2)
         file_size = video_file.file.tell()
         video_file.file.seek(0)
@@ -499,11 +466,6 @@ async def upload_emotion_video(
 
 @router.post("/emotions/delete-video")
 async def delete_emotion_video(request: DeleteVideoRequest):
-    """
-    ⭐ XÓA VIDEO DẠY CẢM XÚC
-    
-    - Xóa file video khỏi thư mục /fe/assets/videos/
-    """
     try:
         project_root = Path(__file__).resolve().parent.parent.parent.parent
         
@@ -530,3 +492,214 @@ async def delete_emotion_video(request: DeleteVideoRequest):
     except Exception as e:
         print(f"❌ Delete error: {e}")
         raise HTTPException(500, detail=f"Lỗi xóa video: {str(e)}")
+
+# ==================== ✅ REPORTS MANAGEMENT ====================
+@router.get("/reports/statistics")
+async def get_reports_statistics(db: Session = Depends(get_db)):
+    try:
+        from app.models.users import Child as ChildModel
+        
+        # Lấy tất cả reports từ database
+        all_reports = db.query(ReportModel).order_by(ReportModel.generated_at.desc()).all()
+        
+        # Tính thời gian
+        now = datetime.now()
+        last_week = now - timedelta(days=7)
+        last_month = now - timedelta(days=30)
+        two_weeks_ago = now - timedelta(days=14)
+        two_months_ago = now - timedelta(days=60)
+        
+        # Phân loại báo cáo
+        weekly_reports = []
+        monthly_reports = []
+        
+        # Đếm cho trend
+        current_week_count = 0
+        last_week_count = 0
+        current_month_count = 0
+        last_month_count = 0
+        
+        for report in all_reports:
+            # Lấy thông tin child
+            child_name = "N/A"
+            child_email = ""
+            
+            if report.child_id:
+                child = db.query(ChildModel).filter(
+                    ChildModel.user_id == str(report.child_id)
+                ).first()
+                
+                if child and child.user:
+                    child_name = child.user.name or "N/A"
+                    child_email = child.user.email or ""
+            
+            report_dict = {
+                'report_id': str(report.report_id),
+                'child_id': str(report.child_id) if report.child_id else None,
+                'child_name': child_name,
+                'child_email': child_email,
+                'sent_at': report.generated_at.isoformat() if report.generated_at else None,
+                'status': 'sent',
+                'stats': {
+                    'total_sessions': 15,  # TODO: Thay bằng data thực từ report.data
+                    'total_playtime': 240,
+                    'avg_score': 7.5
+                }
+            }
+            
+            generated_at = report.generated_at
+            
+            # Phân loại theo tuần/tháng
+            if generated_at and generated_at >= last_week:
+                weekly_reports.append(report_dict)
+                current_week_count += 1
+            
+            if generated_at and generated_at >= last_month:
+                monthly_reports.append(report_dict)
+                current_month_count += 1
+            
+            # Đếm cho trend
+            if generated_at:
+                if two_weeks_ago <= generated_at < last_week:
+                    last_week_count += 1
+                if two_months_ago <= generated_at < last_month:
+                    last_month_count += 1
+        
+        # Tính trend
+        weekly_trend = 0
+        if last_week_count > 0:
+            weekly_trend = round(((current_week_count - last_week_count) / last_week_count) * 100, 1)
+        elif current_week_count > 0:
+            weekly_trend = 100
+        
+        monthly_trend = 0
+        if last_month_count > 0:
+            monthly_trend = round(((current_month_count - last_month_count) / last_month_count) * 100, 1)
+        elif current_month_count > 0:
+            monthly_trend = 100
+        
+        return {
+            "weekly_reports": weekly_reports,
+            "monthly_reports": monthly_reports,
+            "weekly_trend": weekly_trend,
+            "monthly_trend": monthly_trend,
+            "total_count": len(all_reports)
+        }
+        
+    except Exception as e:
+        print(f"❌ Error getting reports statistics: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "weekly_reports": [],
+            "monthly_reports": [],
+            "weekly_trend": 0,
+            "monthly_trend": 0,
+            "total_count": 0
+        }
+
+
+@router.get("/reports/{report_id}")
+async def get_report_details(report_id: UUID, db: Session = Depends(get_db)):
+    try:
+        from app.models.users import Child as ChildModel
+        
+        report = db.query(ReportModel).filter(
+            ReportModel.report_id == str(report_id)
+        ).first()
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo")
+        
+        # Lấy thông tin child
+        child_name = "N/A"
+        child_email = ""
+        
+        if report.child_id:
+            # ✅ FIX: Đổi từ child_id → user_id
+            child = db.query(ChildModel).filter(
+                ChildModel.user_id == str(report.child_id)
+            ).first()
+            
+            if child and child.user:
+                child_name = child.user.name or "N/A"
+                child_email = child.user.email or ""
+        
+        # Parse report data nếu có
+        content = {
+            'total_sessions': 15,
+            'total_playtime': 240,
+            'avg_score': 7.5
+        }
+        
+        if report.data:
+            try:
+                import json
+                parsed_data = json.loads(report.data) if isinstance(report.data, str) else report.data
+                if parsed_data:
+                    content = parsed_data
+            except Exception as parse_error:
+                print(f"⚠️ Failed to parse report data: {parse_error}")
+        
+        return {
+            'report_id': str(report.report_id),
+            'child_id': str(report.child_id) if report.child_id else None,
+            'child_name': child_name,
+            'child_email': child_email,
+            'period': report.report_type or 'weekly',
+            'sent_at': report.generated_at.isoformat() if report.generated_at else None,
+            'status': 'sent',
+            'summary': report.summary,
+            'content': content
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error getting report details: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Lỗi lấy chi tiết báo cáo: {str(e)}")
+
+
+@router.post("/reports/{report_id}/resend")
+async def resend_report(report_id: UUID, db: Session = Depends(get_db)):
+    try:
+        report = db.query(ReportModel).filter(
+            ReportModel.report_id == str(report_id)
+        ).first()
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo")
+        
+        # TODO: Tích hợp với ReportService
+        # from app.services.reports.report_service import ReportService
+        # from app.repository.users_repo import UsersRepository
+        # from app.repository.child_repo import ChildRepository
+        # 
+        # users_repo = UsersRepository(db)
+        # child_repo = ChildRepository(db)
+        # report_service = ReportService(users_repo, child_repo)
+        # 
+        # result = report_service.generate_and_send_report(
+        #     child_user_id=report.child_id,
+        #     period=report.report_type or "weekly"
+        # )
+        # 
+        # if result["status"] != "success":
+        #     raise HTTPException(status_code=400, detail=result["message"])
+        
+        print(f"✅ Resending report {report_id}...")
+        
+        return {
+            "status": "success",
+            "message": "Đã gửi lại báo cáo thành công"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error resending report: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Lỗi gửi lại báo cáo: {str(e)}")

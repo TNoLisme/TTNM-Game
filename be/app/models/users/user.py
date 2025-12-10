@@ -19,3 +19,4 @@ class User(Base):
     # Relationships
     sessions = relationship("Session", back_populates="user")
     game_history = relationship("GameHistory", back_populates="user")
+    child = relationship("Child", back_populates="user", uselist=False, foreign_keys="[Child.user_id]")
