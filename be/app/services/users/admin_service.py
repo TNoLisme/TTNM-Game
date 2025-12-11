@@ -926,3 +926,42 @@ class AdminService:
             'total_playtime': 0,
             'avg_score': 0
         }
+    def get_emotion_concepts(self):
+        try:
+            concepts = self.emotion_repo.get_all_emotion_concepts()
+
+            data = []
+            for c in concepts:
+                data.append({
+                    "concept_id": str(c.concept_id),
+                    "emotion": c.emotion,
+                    "level": c.level,
+                    "title": c.title,
+                    "video_path": c.video_path,
+                    "image_path": c.image_path,
+                    "audio_path": c.audio_path,
+                    "description": c.description,
+                })
+
+            return {"status": "success", "data": data}
+        except Exception as e:
+            print("❌ get_emotion_concepts error:", e)
+            return {"status": "error", "message": str(e)}
+
+    def update_emotion_concept_video(self, concept_id: UUID, video_path: str):
+        try:
+            updated = self.emotion_repo.update_video_path(concept_id, video_path)
+            if not updated:
+                return {"status": "error", "message": "Emotion concept không tồn tại"}
+
+            return {
+                "status": "success",
+                "data": {
+                    "concept_id": str(updated.concept_id),
+                    "emotion": updated.emotion,
+                    "video_path": updated.video_path,
+                },
+            }
+        except Exception as e:
+            print("❌ update_emotion_concept_video error:", e)
+            return {"status": "error", "message": str(e)}

@@ -18,6 +18,8 @@ import shutil
 from pathlib import Path
 from datetime import date, datetime, timedelta
 import time
+import unicodedata
+import re
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -86,6 +88,17 @@ def get_admin_service(db=Depends(get_db)) -> AdminService:
         game_content_repo=game_content_repo,
         report_repo=report_repo  # ✅ ADDED
     )
+def normalize_ascii(text: str):
+    # Loại bỏ dấu tiếng Việt
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")   # bỏ phần không ASCII
+    
+    # Chỉ giữ chữ cái, số, gạch ngang hoặc gạch dưới
+    text = re.sub(r"[^a-zA-Z0-9]+", "-", text)
+    
+    # Viết thường + bỏ dấu gạch thừa
+    text = text.strip("-").lower()
+    return text or "emotion"
 
 # ==================== User Management Endpoints ====================
 @router.get("/users")
@@ -350,6 +363,7 @@ async def upload_game_content_media(
             raise HTTPException(400, detail="File quá lớn! Tối đa 50MB.")
         
         # Determine save directory
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
         
         if content_type == 'image':
             media_dir = PROJECT_ROOT  / "fe" / "assets" / "images" / game_name.lower()
@@ -414,7 +428,11 @@ async def upload_emotion_video(
         if file_size > 50 * 1024 * 1024:
             raise HTTPException(400, detail="Video quá lớn! Tối đa 50MB.")
         
-        video_dir = PROJECT_ROOT / "fe" / "assets" / "videos"
+        # Đường dẫn thư mục lưu video
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+        video_dir = project_root / "fe" / "assets" / "videos"
+        
+        # Tạo thư mục nếu chưa tồn tại
         video_dir.mkdir(parents=True, exist_ok=True)
         
         emotion_dir = video_dir / emotion_id
@@ -437,8 +455,8 @@ async def upload_emotion_video(
             shutil.copyfileobj(video_file.file, buffer)
         
         # Đường dẫn tương đối (để frontend dùng)
-        relative_path = f"../../assets/videos/{original_name}"
-        version = int(new_file_path.stat().st_mtime * 1000)
+        relative_path = f"/assets/videos/{new_filename}"
+        
         print(f"✅ Đã lưu video: {new_file_path}")
         
         return {
@@ -461,19 +479,13 @@ async def upload_emotion_video(
 @router.post("/emotions/delete-video")
 async def delete_emotion_video(request: DeleteVideoRequest):
     try:
-
-        cleaned_path = Path(request.video_path)
-        relative_parts = []
-
-        try:
-            # Cố gắng cắt bỏ phần prefix '../../assets/videos/' nếu có
-            relative_str = str(cleaned_path).split("assets/videos/")[-1]
-            relative_parts = Path(relative_str).parts
-        except Exception:
-            relative_parts = cleaned_path.parts
-
-        safe_relative = Path(*relative_parts)
-        full_path = PROJECT_ROOT / "fe" / "assets" / "videos" / safe_relative
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+        
+        # Extract filename từ path
+        # VD: "../../assets/videos/happy.mp4" → "happy.mp4"
+        filename = Path(request.video_path).name
+        full_path = project_root / "fe" / "assets" / "videos" / filename
+        
         # Kiểm tra file có tồn tại không
         if not full_path.exists():
             raise HTTPException(404, detail="Video không tồn tại!")
@@ -735,3 +747,108 @@ async def resend_report(report_id: UUID, db: Session = Depends(get_db)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Lỗi gửi lại báo cáo: {str(e)}")
+    
+# ==================== EMOTION CONCEPT MANAGEMENT ====================
+
+@router.get("/emotion-concepts")
+async def list_emotion_concepts(db: Session = Depends(get_db)):
+    """
+    Lấy danh sách emotion_concepts cho màn Admin (quản lý video khái niệm cảm xúc).
+    """
+    repo = EmotionConceptRepository(db)
+    concepts = repo.get_all_emotion_concepts()
+
+    data = []
+    for c in concepts:
+        data.append({
+            "concept_id": str(c.concept_id),
+            "emotion": c.emotion,
+            "level": c.level,
+            "title": c.title,
+            "video_path": c.video_path,
+            "image_path": c.image_path,
+            "audio_path": c.audio_path,
+            "description": c.description
+        })
+
+    return {
+        "status": "success",
+        "data": data
+    }
+
+@router.post("/emotion-concepts/upload-video")
+async def upload_emotion_concept_video(
+    video_file: UploadFile = File(...),
+    concept_id: UUID = Form(...),
+    emotion: str = Form(...),
+    old_path: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload video mới cho một Emotion Concept:
+    - KHÔNG xoá video cũ
+    - Lưu file mới vào fe/assets/videos/
+    - Tạo tên file mới để không ghi đè
+    - Cập nhật video_path trong DB để FE render video mới
+    """
+    try:
+        # 1) Validate file type
+        if not video_file.content_type.startswith("video/"):
+            raise HTTPException(status_code=400, detail="File không phải video!")
+
+        # 2) Validate size
+        video_file.file.seek(0, 2)
+        size = video_file.file.tell()
+        video_file.file.seek(0)
+
+        if size > 50 * 1024 * 1024:
+            raise HTTPException(400, detail="Video quá lớn! Tối đa 50MB.")
+
+        # 3) Xác định thư mục lưu video
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+        video_dir = project_root / "fe" / "assets" / "videos"
+        video_dir.mkdir(parents=True, exist_ok=True)
+
+        # 4) Tạo tên file mới (không ghi đè file cũ)
+        original_ext = Path(video_file.filename).suffix or ".mp4"
+        safe_emotion = normalize_ascii(emotion)
+
+        timestamp = int(time.time() * 1000)
+        ext = Path(video_file.filename).suffix or ".mp4"
+
+        filename = f"{safe_emotion}-{timestamp}{ext}"
+        new_file_path = video_dir / filename
+
+        # 5) Lưu file MỚI, KHÔNG XOÁ file cũ
+        with open(new_file_path, "wb") as buffer:
+            shutil.copyfileobj(video_file.file, buffer)
+
+        print(f"✅ Đã lưu video mới: {new_file_path}")
+
+        # 6) Path lưu vào DB (khớp với format hệ thống của m)
+        # Nếu DB của m dùng "/fe/assets/videos/xxx.mp4" thì đổi theo:
+        relative_path = f"/assets/videos/{filename}"
+
+        # 7) Update DB
+        repo = EmotionConceptRepository(db)
+        updated = repo.update_video_path(concept_id, relative_path)
+
+        if not updated:
+            raise HTTPException(404, detail="Emotion concept không tồn tại!")
+
+        return {
+            "status": "success",
+            "message": f"Đã thay thế video cho '{emotion}' thành công!",
+            "data": {
+                "video_path": relative_path,
+                "file_size": size,
+                "filename": filename,
+            },
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(f"❌ Upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi upload video: {str(e)}")
