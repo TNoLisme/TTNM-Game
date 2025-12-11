@@ -535,9 +535,9 @@ function showExitConfirm() {
   quitBtn.style.background = "#ef4444";
   quitBtn.style.color = "#fff";
   quitBtn.style.cursor = "pointer";
-  quitBtn.addEventListener("click", () => {
+  quitBtn.addEventListener("click", async () => {
     overlay.remove();
-    finalizeSession("quit", {
+    await finalizeSession("quit", {
       skipSubmit: true,
       customTitle: "Bạn đã thoát game",
       customMessage:
@@ -696,9 +696,9 @@ function loadQuestionByIndex(idx) {
   updateButtonStates();
 }
 
-function nextQuestion() {
+async function nextQuestion() {
   if (questionsAnswered >= TARGET_QUESTIONS) {
-    finalizeSession("completed");
+    await finalizeSession("completed");
     return;
   }
 
@@ -816,10 +816,10 @@ function showEndGamePopup(isCorrect) {
 
     // Nút "Chơi lại" (cả level)
     popupReplayBtn.textContent = "Chơi lại";
-    popupReplayBtn.onclick = () => {
+    popupReplayBtn.onclick = async () => {
       hideResultPopup();
       // Gửi kết quả lên server rồi chơi lại
-      finalizeSession("completed");
+      await finalizeSession("completed");
       // Reset trạng thái và bắt đầu lại
       sessionContext.finished = false;
       sessionContext.score = 0;
@@ -835,9 +835,9 @@ function showEndGamePopup(isCorrect) {
 
     // Nút "Thoát game"
     popupNextBtn.textContent = "Thoát game";
-    popupNextBtn.onclick = () => {
+    popupNextBtn.onclick = async () => {
       hideResultPopup();
-      finalizeSession("completed");
+      await finalizeSession("completed");
       // Tuỳ route của bạn:
       window.location.href = "./select_game.html";
     };
@@ -865,9 +865,9 @@ function showEndGamePopup(isCorrect) {
 
     // Nút "Chơi lại" (cả level)
     popupNextBtn.textContent = "Chơi lại";
-    popupNextBtn.onclick = () => {
+    popupNextBtn.onclick = async() => {
       hideResultPopup();
-      finalizeSession("completed");
+      await finalizeSession("completed");
       sessionContext.finished = false;
       sessionContext.score = 0;
       questionsAnswered = 0;
@@ -891,9 +891,9 @@ function showEndGamePopup(isCorrect) {
     extraExitBtn.style.background = "#ef4444";
     extraExitBtn.style.color = "#fff";
     extraExitBtn.style.cursor = "pointer";
-    extraExitBtn.onclick = () => {
+    extraExitBtn.onclick = async () => {
       hideResultPopup();
-      finalizeSession("completed");
+      await finalizeSession("completed");
       window.location.href = "./select_game.html";
     };
 
@@ -922,10 +922,10 @@ function showSkipEndGamePopup() {
 
   // Nút "Chơi lại level này"
   popupReplayBtn.textContent = "Chơi lại";
-  popupReplayBtn.onclick = () => {
+  popupReplayBtn.onclick = async () => {
     hideResultPopup();
     // Gửi kết quả level hiện tại lên server
-    finalizeSession("completed");
+    await finalizeSession("completed");
     // Reset state để chơi lại từ đầu level
     sessionContext.finished = false;
     sessionContext.score = 0;
@@ -941,9 +941,9 @@ function showSkipEndGamePopup() {
 
   // Nút "Thoát game"
   popupNextBtn.textContent = "Thoát game";
-  popupNextBtn.onclick = () => {
+  popupNextBtn.onclick = async () => {
     hideResultPopup();
-    finalizeSession("completed");
+    await finalizeSession("completed");
     window.location.href = "./select_game.html";
   };
 
