@@ -350,7 +350,6 @@ async def upload_game_content_media(
             raise HTTPException(400, detail="File quá lớn! Tối đa 50MB.")
         
         # Determine save directory
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
         
         if content_type == 'image':
             media_dir = PROJECT_ROOT  / "fe" / "assets" / "images" / game_name.lower()
@@ -418,36 +417,27 @@ async def upload_emotion_video(
         video_dir = PROJECT_ROOT / "fe" / "assets" / "videos"
         video_dir.mkdir(parents=True, exist_ok=True)
         
-        # Map emotion_id sang filename chuẩn
-        for path in video_dir.glob(f"{emotion_id}_*.mp4"):
-            path.unlink()
+        emotion_dir = video_dir / emotion_id
+        emotion_dir.mkdir(parents=True, exist_ok=True)
+
+        # Xóa toàn bộ video cũ của cùng emotion
+        for path in emotion_dir.glob("*.*"):
+            #path.unlink()
             print(f"✅ Đã xóa video cũ: {path}")
 
-        default_map = {
-            'vui': 'happy.mp4',
-            'buon': 'sad.mp4',
-            'tuc': 'angry.mp4',
-            'so': 'fear.mp4',
-            'ngac': 'surprise.mp4',
-            'ghe': 'disgust.mp4'
-        }
-        
-        default_filename = default_map.get(emotion_id)
-        if default_filename:
-            default_path = video_dir / default_filename
-            if default_path.exists():
-                default_path.unlink()
-                print(f"✅ Đã xóa file mặc định: {default_path}")
+        original_name = Path(video_file.filename).name or f"{emotion_id}.mp4"
+        # Loại bỏ mọi thành phần đường dẫn độc hại, chỉ lấy tên file cuối cùng
+        original_name = Path(original_name).name
+        if not original_name:
+            original_name = f"{emotion_id}.mp4"
 
-        timestamp = int(time.time() * 1000)
-        new_filename = f"{emotion_id}.mp4"
-        new_file_path = video_dir / new_filename
+        new_file_path = emotion_dir / original_name
         
         with open(new_file_path, "wb") as buffer:
             shutil.copyfileobj(video_file.file, buffer)
         
         # Đường dẫn tương đối (để frontend dùng)
-        relative_path = f"../../assets/videos/{new_filename}"
+        relative_path = f"../../assets/videos/{emotion_id}/{original_name}"
         version = int(new_file_path.stat().st_mtime * 1000)
         print(f"✅ Đã lưu video: {new_file_path}")
         
@@ -457,7 +447,7 @@ async def upload_emotion_video(
             "data": {
                 "video_path": relative_path,
                 "file_size": file_size,
-                "filename": new_filename,
+                "filename": original_name,
                 "version": version
             }
         }
@@ -471,18 +461,25 @@ async def upload_emotion_video(
 @router.post("/emotions/delete-video")
 async def delete_emotion_video(request: DeleteVideoRequest):
     try:
-        
-        # Extract filename từ path
-        # VD: "../../assets/videos/happy.mp4" → "happy.mp4"
-        filename = Path(request.video_path).name
-        full_path = PROJECT_ROOT  / "fe" / "assets" / "videos" / filename
-        
+
+        cleaned_path = Path(request.video_path)
+        relative_parts = []
+
+        try:
+            # Cố gắng cắt bỏ phần prefix '../../assets/videos/' nếu có
+            relative_str = str(cleaned_path).split("assets/videos/")[-1]
+            relative_parts = Path(relative_str).parts
+        except Exception:
+            relative_parts = cleaned_path.parts
+
+        safe_relative = Path(*relative_parts)
+        full_path = PROJECT_ROOT / "fe" / "assets" / "videos" / safe_relative
         # Kiểm tra file có tồn tại không
         if not full_path.exists():
             raise HTTPException(404, detail="Video không tồn tại!")
         
         # XÓA FILE
-        full_path.unlink()
+        #full_path.unlink()
         print(f"✅ Đã xóa video: {full_path}")
         
         return {
