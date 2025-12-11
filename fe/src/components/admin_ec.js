@@ -62,9 +62,6 @@ function renderVideoGrid() {
         </div>
         <div class="video-info">
           <h3>${item.emotion}</h3>
-          <p style="font-size:12px;color:#7f8c8d;margin:5px 0;">
-            Level ${item.level} – ${item.title || ""}
-          </p>
           <p style="font-size:12px;color:#95a5a6;margin:5px 0;word-break:break-all;">
             📹 ${videoPath || "—"}
           </p>

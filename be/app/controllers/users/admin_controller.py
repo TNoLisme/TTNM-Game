@@ -24,6 +24,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[4]
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 # ==================== Request Schemas ====================
+class DeleteConceptVideoRequest(BaseModel):
+    concept_id: UUID
+    video_path: str
 class CreateUserRequest(BaseModel):
     username: str
     name: str
@@ -476,34 +479,75 @@ async def upload_emotion_video(
         print(f"❌ Upload error: {e}")
         raise HTTPException(500, detail=f"Lỗi upload video: {str(e)}")
 
-@router.post("/emotions/delete-video")
-async def delete_emotion_video(request: DeleteVideoRequest):
+@router.post("/emotion-concepts/delete-video")
+async def delete_emotion_concept_video(
+    payload: DeleteConceptVideoRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Xóa video của một Emotion Concept:
+    - (Optional) Xóa file vật lý trong fe/assets/videos/
+    - Set video_path = NULL trong bảng emotion_concepts
+    - KHÔNG xóa bản ghi Emotion Concept
+    """
     try:
+        concept_id = payload.concept_id
+        video_path = (payload.video_path or "").strip()
+
+        if not video_path:
+            raise HTTPException(status_code=400, detail="Thiếu video_path!")
+
+        # 1) Tìm đường dẫn file thực tế trên ổ
         project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
-        
-        # Extract filename từ path
-        # VD: "../../assets/videos/happy.mp4" → "happy.mp4"
-        filename = Path(request.video_path).name
-        full_path = project_root / "fe" / "assets" / "videos" / filename
-        
-        # Kiểm tra file có tồn tại không
-        if not full_path.exists():
-            raise HTTPException(404, detail="Video không tồn tại!")
-        
-        # XÓA FILE
-        #full_path.unlink()
-        print(f"✅ Đã xóa video: {full_path}")
-        
+
+        # video_path dạng "/assets/videos/xxx.mp4"
+        # -> rel_path = "assets/videos/xxx.mp4"
+        rel_path = video_path.lstrip("/")
+
+        # File thật nằm trong fe/assets/videos
+        # => PROJECT_ROOT / "fe" / "assets" / "videos" / filename
+        filename = Path(rel_path).name
+        file_path = project_root / "fe" / "assets" / "videos" / filename
+
+        # 2) Xóa file nếu tồn tại (không bắt buộc, nhưng nên làm cho sạch)
+        if file_path.exists():
+            try:
+                file_path.unlink()
+                print(f"✅ Đã xóa file video: {file_path}")
+            except Exception as e:
+                # Không vì lỗi xóa file mà fail cả API, chỉ log warning
+                print(f"⚠️ Không xóa được file video {file_path}: {e}")
+        else:
+            print(f"ℹ️ File video không tồn tại trên ổ: {file_path}")
+
+        # 3) Set video_path = NULL trong DB
+        repo = EmotionConceptRepository(db)
+        updated = repo.update_video_path(concept_id, None)
+
+        if not updated:
+            raise HTTPException(
+                status_code=404,
+                detail="Emotion concept không tồn tại!"
+            )
+
         return {
             "status": "success",
-            "message": "Đã xóa video thành công!"
+            "message": "Đã xóa video cho Emotion Concept thành công!",
+            "data": {
+                "concept_id": str(concept_id),
+                "video_path": None,
+            },
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ Delete error: {e}")
-        raise HTTPException(500, detail=f"Lỗi xóa video: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi xóa video: {str(e)}"
+        )
+
 @router.get("/emotions/videos")
 async def list_emotion_videos():
     try:
