@@ -17,7 +17,8 @@ import os
 import shutil
 from pathlib import Path
 from datetime import date, datetime, timedelta
-
+import time
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 # ==================== Request Schemas ====================
@@ -352,11 +353,11 @@ async def upload_game_content_media(
         project_root = Path(__file__).resolve().parent.parent.parent.parent
         
         if content_type == 'image':
-            media_dir = project_root / "fe" / "assets" / "images" / game_name.lower()
+            media_dir = PROJECT_ROOT  / "fe" / "assets" / "images" / game_name.lower()
         elif content_type == 'video':
-            media_dir = project_root / "fe" / "assets" / "videos" / game_name.lower()
+            media_dir = PROJECT_ROOT  / "fe" / "assets" / "videos" / game_name.lower()
         else:  # audio
-            media_dir = project_root / "fe" / "assets" / "audio"
+            media_dir = PROJECT_ROOT  / "fe" / "assets" / "audio"
         
         # Create directory if not exists
         media_dir.mkdir(parents=True, exist_ok=True)
@@ -414,15 +415,15 @@ async def upload_emotion_video(
         if file_size > 50 * 1024 * 1024:
             raise HTTPException(400, detail="Video quá lớn! Tối đa 50MB.")
         
-        # Đường dẫn thư mục lưu video
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
-        video_dir = project_root / "fe" / "assets" / "videos"
-        
-        # Tạo thư mục nếu chưa tồn tại
+        video_dir = PROJECT_ROOT / "fe" / "assets" / "videos"
         video_dir.mkdir(parents=True, exist_ok=True)
         
         # Map emotion_id sang filename chuẩn
-        EMOTION_FILENAMES = {
+        for path in video_dir.glob(f"{emotion_id}_*.mp4"):
+            path.unlink()
+            print(f"✅ Đã xóa video cũ: {path}")
+
+        default_map = {
             'vui': 'happy.mp4',
             'buon': 'sad.mp4',
             'tuc': 'angry.mp4',
@@ -431,21 +432,23 @@ async def upload_emotion_video(
             'ghe': 'disgust.mp4'
         }
         
-        new_filename = EMOTION_FILENAMES.get(emotion_id, f"{emotion_id}.mp4")
+        default_filename = default_map.get(emotion_id)
+        if default_filename:
+            default_path = video_dir / default_filename
+            if default_path.exists():
+                default_path.unlink()
+                print(f"✅ Đã xóa file mặc định: {default_path}")
+
+        timestamp = int(time.time() * 1000)
+        new_filename = f"{emotion_id}_{timestamp}.mp4"
         new_file_path = video_dir / new_filename
         
-        # XÓA VIDEO CŨ NẾU TỒN TẠI
-        if new_file_path.exists():
-            new_file_path.unlink()
-            print(f"✅ Đã xóa video cũ: {new_file_path}")
-        
-        # LƯU VIDEO MỚI
         with open(new_file_path, "wb") as buffer:
             shutil.copyfileobj(video_file.file, buffer)
         
         # Đường dẫn tương đối (để frontend dùng)
         relative_path = f"../../assets/videos/{new_filename}"
-        
+        version = int(new_file_path.stat().st_mtime * 1000)
         print(f"✅ Đã lưu video: {new_file_path}")
         
         return {
@@ -454,7 +457,8 @@ async def upload_emotion_video(
             "data": {
                 "video_path": relative_path,
                 "file_size": file_size,
-                "filename": new_filename
+                "filename": new_filename,
+                "version": version
             }
         }
         
@@ -467,12 +471,11 @@ async def upload_emotion_video(
 @router.post("/emotions/delete-video")
 async def delete_emotion_video(request: DeleteVideoRequest):
     try:
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
         
         # Extract filename từ path
         # VD: "../../assets/videos/happy.mp4" → "happy.mp4"
         filename = Path(request.video_path).name
-        full_path = project_root / "fe" / "assets" / "videos" / filename
+        full_path = PROJECT_ROOT  / "fe" / "assets" / "videos" / filename
         
         # Kiểm tra file có tồn tại không
         if not full_path.exists():
@@ -492,7 +495,39 @@ async def delete_emotion_video(request: DeleteVideoRequest):
     except Exception as e:
         print(f"❌ Delete error: {e}")
         raise HTTPException(500, detail=f"Lỗi xóa video: {str(e)}")
+@router.get("/emotions/videos")
+async def list_emotion_videos():
+    try:
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        video_dir = project_root / "fe" / "assets" / "videos"
 
+        EMOTION_FILENAMES = {
+            'vui': 'happy.mp4',
+            'buon': 'sad.mp4',
+            'tuc': 'angry.mp4',
+            'so': 'fear.mp4',
+            'ngac': 'surprise.mp4',
+            'ghe': 'disgust.mp4'
+        }
+
+        videos = []
+        for emotion_id, filename in EMOTION_FILENAMES.items():
+            file_path = video_dir / filename
+            exists = file_path.exists()
+            videos.append({
+                "id": emotion_id,
+                "path": f"../../assets/videos/{filename}" if exists else "",
+                "version": int(file_path.stat().st_mtime * 1000) if exists else 0
+            })
+
+        return {
+            "status": "success",
+            "data": {"videos": videos}
+        }
+
+    except Exception as e:
+        print(f"❌ Error listing emotion videos: {e}")
+        raise HTTPException(500, detail=f"Không thể tải danh sách video cảm xúc: {str(e)}")
 # ==================== ✅ REPORTS MANAGEMENT ====================
 @router.get("/reports/statistics")
 async def get_reports_statistics(db: Session = Depends(get_db)):
