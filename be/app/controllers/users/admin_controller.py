@@ -431,13 +431,13 @@ async def upload_emotion_video(
         if not original_name:
             original_name = f"{emotion_id}.mp4"
 
-        new_file_path = emotion_dir / original_name
+        new_file_path = video_dir / original_name
         
         with open(new_file_path, "wb") as buffer:
             shutil.copyfileobj(video_file.file, buffer)
         
         # Đường dẫn tương đối (để frontend dùng)
-        relative_path = f"../../assets/videos/{emotion_id}/{original_name}"
+        relative_path = f"../../assets/videos/{original_name}"
         version = int(new_file_path.stat().st_mtime * 1000)
         print(f"✅ Đã lưu video: {new_file_path}")
         
