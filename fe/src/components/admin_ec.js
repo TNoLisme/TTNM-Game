@@ -202,7 +202,7 @@ function setupEmotionEvents() {
       // Cập nhật đường dẫn video mới và lưu state
       const newPath = data?.data?.video_path || video.path;
       const newVersion = data?.data?.version;
-      updateVideoPath(video.id, newPath);
+      updateVideoPath(video.id, newPath, newVersion);
 
       showNotification(`✅ Đã thay thế video "${video.name}"!`, "success");
       closeModal("video-modal");
