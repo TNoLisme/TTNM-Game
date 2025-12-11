@@ -440,7 +440,7 @@ async def upload_emotion_video(
                 print(f"✅ Đã xóa file mặc định: {default_path}")
 
         timestamp = int(time.time() * 1000)
-        new_filename = f"{emotion_id}_{timestamp}.mp4"
+        new_filename = f"{emotion_id}.mp4"
         new_file_path = video_dir / new_filename
         
         with open(new_file_path, "wb") as buffer:
