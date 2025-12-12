@@ -131,7 +131,7 @@ class AdminService:
                 role=role,
                 name=data.get("name")
             )
-            self.users_repo.save_user(user)
+            self.users_repo.save(user)
 
             if role == RoleEnum.child:
                 required_child_fields = ["age", "gender", "date_of_birth", "phone_number"]
@@ -259,7 +259,7 @@ class AdminService:
                 except KeyError:
                     return {"status": "failed", "message": f"Invalid role: {data['role']}"}
             
-            updated_user = self.users_repo.save_user(user)
+            updated_user = self.users_repo.save(user)
             
             if updated_user.role == RoleEnum.child:
                 child = self.child_repo.get_by_user_id(user_id)
