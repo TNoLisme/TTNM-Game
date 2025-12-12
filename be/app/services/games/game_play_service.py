@@ -15,6 +15,7 @@ from app.services.analytics.child_progress_service import ChildProgressService
 from app.services.sessions.sessions_service import SessionsService
 from app.services.sessions.session_questions_service import SessionQuestionsService
 from app.services.games.game_service import GameService
+import json
 
 
 class GamePlayService:
@@ -92,19 +93,56 @@ class GamePlayService:
             "learning_cards": learning_cards
         }
     
-    def end_session_and_update_progress(self, session_id: UUID, results: List[Dict[str, Any]], review_emotions: List[str] = None ) -> Dict:
+    def end_session_and_update_progress(
+        self,
+        session_id: UUID,
+        results: List[Dict[str, Any]],
+        review_emotions: List[str] = None
+    ) -> Dict:
 
         session = self.session_service.get_by_id(session_id)
         if not session:
             raise ValueError(f"Session {session_id} not found")
 
         final_score = 0
-        emotion_errors = session.emotion_errors
+
+        # ------------------ CHUYỂN EMOTION_ERRORS VỀ DICT ------------------
+        raw_emotion_errors = session.emotion_errors or {}
+
+        # Debug xem DB đang lưu kiểu gì (chạy 1 lần rồi có thể xoá)
+        print("DEBUG emotion_errors from session:", type(raw_emotion_errors), raw_emotion_errors)
+
+        if isinstance(raw_emotion_errors, str):
+            try:
+                emotion_errors = json.loads(raw_emotion_errors) if raw_emotion_errors else {}
+            except Exception as e:
+                print("[WARN] emotion_errors không phải JSON hợp lệ, reset về {}. Lỗi:", e)
+                emotion_errors = {}
+        else:
+            # Nếu đã là dict (hoặc None) thì ép về dict
+            emotion_errors = dict(raw_emotion_errors) if raw_emotion_errors else {}
+
         total_response_time = 0
         total_correct = 0
 
         for res in results:
+            # res phải là dict, nếu là string thì sẽ lỗi .get
+            if isinstance(res, str):
+                # thử parse JSON nếu lỡ gửi string
+                try:
+                    res = json.loads(res)
+                except Exception:
+                    print("[WARN] Một phần tử trong results là string không parse được JSON:", res)
+                    continue
+
             question_uuid = res.get("question_id")
+            if isinstance(question_uuid, str):
+                try:
+                    question_uuid = UUID(question_uuid)
+                except Exception:
+                    print(f"[WARN] question_id '{question_uuid}' không phải UUID hợp lệ")
+                    continue
+
             is_correct = res.get("is_correct", False)
             used_hint = res.get("used_hint", False)
 
@@ -138,20 +176,24 @@ class GamePlayService:
             else:
                 # emotion gốc chính là correct_answer
                 emotion = correct_answer_str
+                # Lúc này emotion_errors đã là dict, dùng .get an toàn
                 emotion_errors[emotion] = emotion_errors.get(emotion, 0) + 1
 
+        # Cập nhật session
         session.score = final_score
-        session.emotion_errors = emotion_errors
+        session.emotion_errors = emotion_errors  # dict đã được chuẩn hóa
         session.state = SessionStateEnum.end
         session.end_time = datetime.now()
 
         old_error = session.emotion_errors
+
         # Lấy danh sách các câu hỏi mà user chơi cho tiến trình này
         session_questions_list = self.session_questions_service.get_session_by_id(session.session_id)
         session.questions = session_questions_list
 
         updated_session = session
 
+        # Cập nhật tiến trình
         progress = self.child_progress_service.update_progress_after_session(
             child_id=session.user_id,
             game_id=session.game_id,
@@ -160,6 +202,7 @@ class GamePlayService:
             review_emotions=review_emotions
         )
 
+        # Lưu lại session vào DB
         updated_session = self.session_service.update(session)
 
         return {

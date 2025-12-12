@@ -28,8 +28,7 @@ const showToast = (message, type = 'success') => {
     }, 3000);
 };
 
-// REDIRECT + LƯU USER ĐẦY ĐỦ
-const redirectToHome = (userFromAPI) => {
+const redirectBasedOnRole = (userFromAPI) => {
     if (!userFromAPI || typeof userFromAPI !== 'object') {
         showError('Không thể đọc dữ liệu người dùng.');
         return;
@@ -40,17 +39,36 @@ const redirectToHome = (userFromAPI) => {
         showError('Thiếu mã người dùng từ máy chủ. Vui lòng thử lại.');
         return;
     }
+    role = userFromAPI.role;
 
     const saveUser = { ...userFromAPI, user_id };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
-    console.log('%c🚀 LƯU USER_ID:', 'color: blue;', saveUser);
-    showToast('Chào mừng ' + (saveUser.name || saveUser.username || 'bạn'), 'success');
-    setTimeout(() => location.href = '/src/pages/home.html', 1500);
 
+    console.log('%c🚀 LƯU USER:', 'color: blue; font-weight: bold;', saveUser);
+    console.log('%c🔑 ROLE:', 'color: green; font-weight: bold;', role);
+
+    let redirectUrl = '/src/pages/home.html'; // Default cho child
+    let welcomeMsg = 'Chào mừng ' + (saveUser.fullName || saveUser.name || saveUser.username || 'bạn');
+
+    if (role === 'admin') {
+        redirectUrl = '/src/pages/admin.html'; 
+        welcomeMsg = '👋 Chào Admin ' + (saveUser.fullName || saveUser.username);
+        console.log('%c🎯 REDIRECT TO ADMIN DASHBOARD', 'color: red; font-weight: bold;');
+    } else if (role === 'child') {
+        redirectUrl = '/src/pages/home.html';
+        console.log('%c🎯 REDIRECT TO HOME', 'color: blue; font-weight: bold;');
+    } else {
+        console.warn('⚠️ Unknown role:', role, '- redirecting to home');
+    }
+
+    showToast(welcomeMsg, 'success');
+    
+    setTimeout(() => {
+        location.href = redirectUrl;
+    }, 1500);
 };
 
-
-// HANDLE LOGIN CHUẨN
+// HANDLE LOGIN (ĐÃ BỎ ACCESS_TOKEN)
 const handleLogin = async (e) => {
     e.preventDefault();
     showError('');
@@ -70,11 +88,34 @@ const handleLogin = async (e) => {
         });
 
         const data = await res.json();
-        console.log('Login response:', data);  // DEBUG
+        console.log('%c📥 LOGIN RESPONSE:', 'color: purple; font-weight: bold;', data);
 
-        if (res.ok && (data.success || data.user)) {
-            const user = data.user || data.data || data;
-            redirectToHome(user);
+        if (res.ok && (data.success || data.user || data.data)) {
+            // Xử lý nhiều cấu trúc response khác nhau
+            let user = null;
+            
+            // Cấu trúc 1: {success: true, user: {...}}
+            if (data.user) {
+                user = data.user;
+            }
+            // Cấu trúc 2: {data: {user: {...}}}
+            else if (data.data) {
+                user = data.data.user || data.data;
+            }
+            // Cấu trúc 3: Flat object {user_id, username, ...}
+            else {
+                user = data;
+            }
+            
+            // Kiểm tra có đủ dữ liệu không
+            if (!user || !user.user_id) {
+                throw new Error('Response thiếu thông tin user');
+            }
+            
+            console.log('%c✅ EXTRACTED USER:', 'color: blue; font-weight: bold;', user);
+            
+            // Redirect dựa trên role
+            redirectBasedOnRole(user);
             return;
         } else {
             throw new Error(data.message || data.detail || 'Sai tài khoản hoặc mật khẩu.');

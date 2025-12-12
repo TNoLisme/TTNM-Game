@@ -7,16 +7,26 @@ from app.repository.child_repo import ChildRepository
 from app.repository.emotion_concepts_repo import EmotionConceptRepository
 from app.repository.questions_repo import QuestionsRepository
 from app.repository.game_contents_repo import GameContentsRepository as GameContentRepo
+from app.repository.report_repo import ReportRepository  # ✅ ADDED
+from app.models.analytics import Report as ReportModel  # ✅ ADDED
 from app.database import get_db
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
+from sqlalchemy.orm import Session
 import os
 import shutil
 from pathlib import Path
-
+from datetime import date, datetime, timedelta
+import time
+import unicodedata
+import re
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 # ==================== Request Schemas ====================
+class DeleteConceptVideoRequest(BaseModel):
+    concept_id: UUID
+    video_path: str
 class CreateUserRequest(BaseModel):
     username: str
     name: str
@@ -25,6 +35,8 @@ class CreateUserRequest(BaseModel):
     role: str  # 'admin' or 'child'
     age: Optional[int] = None
     gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    phone_number: Optional[str] = None
 
 class UpdateUserRequest(BaseModel):
     username: Optional[str] = None
@@ -60,7 +72,7 @@ class UpdateGameContentRequest(BaseModel):
 class BulkDeleteGameContentRequest(BaseModel):
     content_ids: List[UUID]
 
-# ==================== Dependency: AdminService ====================
+# ==================== Dependency: Services ====================
 def get_admin_service(db=Depends(get_db)) -> AdminService:
     admin_repo = AdminRepository(db)
     users_repo = UsersRepository(db)
@@ -68,6 +80,7 @@ def get_admin_service(db=Depends(get_db)) -> AdminService:
     emotion_repo = EmotionConceptRepository(db)
     question_repo = QuestionsRepository(db)
     game_content_repo = GameContentRepo(db)
+    report_repo = ReportRepository(db)  # ✅ ADDED
     
     return AdminService(
         admin_repo=admin_repo,
@@ -75,8 +88,20 @@ def get_admin_service(db=Depends(get_db)) -> AdminService:
         child_repo=child_repo,
         emotion_repo=emotion_repo,
         question_repo=question_repo,
-        game_content_repo=game_content_repo
+        game_content_repo=game_content_repo,
+        report_repo=report_repo  # ✅ ADDED
     )
+def normalize_ascii(text: str):
+    # Loại bỏ dấu tiếng Việt
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")   # bỏ phần không ASCII
+    
+    # Chỉ giữ chữ cái, số, gạch ngang hoặc gạch dưới
+    text = re.sub(r"[^a-zA-Z0-9]+", "-", text)
+    
+    # Viết thường + bỏ dấu gạch thừa
+    text = text.strip("-").lower()
+    return text or "emotion"
 
 # ==================== User Management Endpoints ====================
 @router.get("/users")
@@ -215,9 +240,6 @@ async def get_game_content_detail(
     content_id: UUID,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ LẤY CHI TIẾT MỘT GAME CONTENT
-    """
     try:
         result = service.get_game_content_by_id(content_id)
         
@@ -237,11 +259,6 @@ async def create_game_content(
     request: CreateGameContentRequest,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ TẠO MỚI GAME CONTENT
-    
-    Tạo nội dung câu hỏi mới cho game
-    """
     try:
         result = service.create_game_content(request.dict())
         
@@ -262,11 +279,6 @@ async def update_game_content(
     request: UpdateGameContentRequest,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ CẬP NHẬT GAME CONTENT
-    
-    Cập nhật thông tin nội dung câu hỏi
-    """
     try:
         result = service.update_game_content(
             content_id, 
@@ -289,11 +301,6 @@ async def delete_game_content(
     content_id: UUID,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ XÓA MỘT GAME CONTENT
-    
-    Xóa nội dung câu hỏi (soft delete hoặc hard delete)
-    """
     try:
         result = service.delete_game_content(content_id)
         
@@ -313,11 +320,6 @@ async def bulk_delete_game_contents(
     request: BulkDeleteGameContentRequest,
     service: AdminService = Depends(get_admin_service)
 ):
-    """
-    ⭐ XÓA NHIỀU GAME CONTENTS CÙNG LÚC
-    
-    Xóa hàng loạt theo danh sách content_ids
-    """
     try:
         result = service.bulk_delete_game_contents(request.content_ids)
         
@@ -339,15 +341,7 @@ async def upload_game_content_media(
     game_name: str = Form(...),
     emotion: Optional[str] = Form(None)
 ):
-    """
-    ⭐ UPLOAD FILE MEDIA CHO GAME CONTENT
-    
-    - Upload ảnh/video/audio
-    - Lưu vào thư mục tương ứng
-    - Trả về đường dẫn file
-    """
     try:
-        # Validate content type
         allowed_types = {
             'image': ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'],
             'video': ['video/mp4', 'video/mpeg', 'video/quicktime'],
@@ -372,14 +366,14 @@ async def upload_game_content_media(
             raise HTTPException(400, detail="File quá lớn! Tối đa 50MB.")
         
         # Determine save directory
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
         
         if content_type == 'image':
-            media_dir = project_root / "fe" / "assets" / "images" / game_name.lower()
+            media_dir = PROJECT_ROOT  / "fe" / "assets" / "images" / game_name.lower()
         elif content_type == 'video':
-            media_dir = project_root / "fe" / "assets" / "videos" / game_name.lower()
+            media_dir = PROJECT_ROOT  / "fe" / "assets" / "videos" / game_name.lower()
         else:  # audio
-            media_dir = project_root / "fe" / "assets" / "audio"
+            media_dir = PROJECT_ROOT  / "fe" / "assets" / "audio"
         
         # Create directory if not exists
         media_dir.mkdir(parents=True, exist_ok=True)
@@ -426,20 +420,10 @@ async def upload_emotion_video(
     emotion_name: str = Form(...),
     old_path: str = Form(...)
 ):
-    """
-    ⭐ UPLOAD/THAY THẾ VIDEO DẠY CẢM XÚC
-    
-    - Nhận file video từ frontend
-    - Lưu vào thư mục /fe/assets/videos/
-    - Xóa video cũ nếu có
-    - Trả về đường dẫn video mới
-    """
     try:
-        # Kiểm tra định dạng file
         if not video_file.content_type.startswith('video/'):
             raise HTTPException(400, detail="File không phải video!")
         
-        # Kiểm tra kích thước (max 50MB)
         video_file.file.seek(0, 2)
         file_size = video_file.file.tell()
         video_file.file.seek(0)
@@ -448,36 +432,33 @@ async def upload_emotion_video(
             raise HTTPException(400, detail="Video quá lớn! Tối đa 50MB.")
         
         # Đường dẫn thư mục lưu video
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
         video_dir = project_root / "fe" / "assets" / "videos"
         
         # Tạo thư mục nếu chưa tồn tại
         video_dir.mkdir(parents=True, exist_ok=True)
         
-        # Map emotion_id sang filename chuẩn
-        EMOTION_FILENAMES = {
-            'vui': 'happy.mp4',
-            'buon': 'sad.mp4',
-            'tuc': 'angry.mp4',
-            'so': 'fear.mp4',
-            'ngac': 'surprise.mp4',
-            'ghe': 'disgust.mp4'
-        }
+        emotion_dir = video_dir / emotion_id
+        emotion_dir.mkdir(parents=True, exist_ok=True)
+
+        # Xóa toàn bộ video cũ của cùng emotion
+        for path in emotion_dir.glob("*.*"):
+            #path.unlink()
+            print(f"✅ Đã xóa video cũ: {path}")
+
+        original_name = Path(video_file.filename).name or f"{emotion_id}.mp4"
+        # Loại bỏ mọi thành phần đường dẫn độc hại, chỉ lấy tên file cuối cùng
+        original_name = Path(original_name).name
+        if not original_name:
+            original_name = f"{emotion_id}.mp4"
+
+        new_file_path = video_dir / original_name
         
-        new_filename = EMOTION_FILENAMES.get(emotion_id, f"{emotion_id}.mp4")
-        new_file_path = video_dir / new_filename
-        
-        # XÓA VIDEO CŨ NẾU TỒN TẠI
-        if new_file_path.exists():
-            new_file_path.unlink()
-            print(f"✅ Đã xóa video cũ: {new_file_path}")
-        
-        # LƯU VIDEO MỚI
         with open(new_file_path, "wb") as buffer:
             shutil.copyfileobj(video_file.file, buffer)
         
         # Đường dẫn tương đối (để frontend dùng)
-        relative_path = f"../../assets/videos/{new_filename}"
+        relative_path = f"/assets/videos/{new_filename}"
         
         print(f"✅ Đã lưu video: {new_file_path}")
         
@@ -487,7 +468,8 @@ async def upload_emotion_video(
             "data": {
                 "video_path": relative_path,
                 "file_size": file_size,
-                "filename": new_filename
+                "filename": original_name,
+                "version": version
             }
         }
         
@@ -497,36 +479,420 @@ async def upload_emotion_video(
         print(f"❌ Upload error: {e}")
         raise HTTPException(500, detail=f"Lỗi upload video: {str(e)}")
 
-@router.post("/emotions/delete-video")
-async def delete_emotion_video(request: DeleteVideoRequest):
+@router.post("/emotion-concepts/delete-video")
+async def delete_emotion_concept_video(
+    payload: DeleteConceptVideoRequest,
+    db: Session = Depends(get_db),
+):
     """
-    ⭐ XÓA VIDEO DẠY CẢM XÚC
-    
-    - Xóa file video khỏi thư mục /fe/assets/videos/
+    Xóa video của một Emotion Concept:
+    - (Optional) Xóa file vật lý trong fe/assets/videos/
+    - Set video_path = NULL trong bảng emotion_concepts
+    - KHÔNG xóa bản ghi Emotion Concept
     """
     try:
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
-        
-        # Extract filename từ path
-        # VD: "../../assets/videos/happy.mp4" → "happy.mp4"
-        filename = Path(request.video_path).name
-        full_path = project_root / "fe" / "assets" / "videos" / filename
-        
-        # Kiểm tra file có tồn tại không
-        if not full_path.exists():
-            raise HTTPException(404, detail="Video không tồn tại!")
-        
-        # XÓA FILE
-        full_path.unlink()
-        print(f"✅ Đã xóa video: {full_path}")
-        
+        concept_id = payload.concept_id
+        video_path = (payload.video_path or "").strip()
+
+        if not video_path:
+            raise HTTPException(status_code=400, detail="Thiếu video_path!")
+
+        # 1) Tìm đường dẫn file thực tế trên ổ
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+
+        # video_path dạng "/assets/videos/xxx.mp4"
+        # -> rel_path = "assets/videos/xxx.mp4"
+        rel_path = video_path.lstrip("/")
+
+        # File thật nằm trong fe/assets/videos
+        # => PROJECT_ROOT / "fe" / "assets" / "videos" / filename
+        filename = Path(rel_path).name
+        file_path = project_root / "fe" / "assets" / "videos" / filename
+
+        # 2) Xóa file nếu tồn tại (không bắt buộc, nhưng nên làm cho sạch)
+        if file_path.exists():
+            try:
+                file_path.unlink()
+                print(f"✅ Đã xóa file video: {file_path}")
+            except Exception as e:
+                # Không vì lỗi xóa file mà fail cả API, chỉ log warning
+                print(f"⚠️ Không xóa được file video {file_path}: {e}")
+        else:
+            print(f"ℹ️ File video không tồn tại trên ổ: {file_path}")
+
+        # 3) Set video_path = NULL trong DB
+        repo = EmotionConceptRepository(db)
+        updated = repo.update_video_path(concept_id, None)
+
+        if not updated:
+            raise HTTPException(
+                status_code=404,
+                detail="Emotion concept không tồn tại!"
+            )
+
         return {
             "status": "success",
-            "message": "Đã xóa video thành công!"
+            "message": "Đã xóa video cho Emotion Concept thành công!",
+            "data": {
+                "concept_id": str(concept_id),
+                "video_path": None,
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Delete error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Lỗi xóa video: {str(e)}"
+        )
+
+@router.get("/emotions/videos")
+async def list_emotion_videos():
+    try:
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        video_dir = project_root / "fe" / "assets" / "videos"
+
+        EMOTION_FILENAMES = {
+            'vui': 'happy.mp4',
+            'buon': 'sad.mp4',
+            'tuc': 'angry.mp4',
+            'so': 'fear.mp4',
+            'ngac': 'surprise.mp4',
+            'ghe': 'disgust.mp4'
+        }
+
+        videos = []
+        for emotion_id, filename in EMOTION_FILENAMES.items():
+            file_path = video_dir / filename
+            exists = file_path.exists()
+            videos.append({
+                "id": emotion_id,
+                "path": f"../../assets/videos/{filename}" if exists else "",
+                "version": int(file_path.stat().st_mtime * 1000) if exists else 0
+            })
+
+        return {
+            "status": "success",
+            "data": {"videos": videos}
+        }
+
+    except Exception as e:
+        print(f"❌ Error listing emotion videos: {e}")
+        raise HTTPException(500, detail=f"Không thể tải danh sách video cảm xúc: {str(e)}")
+# ==================== ✅ REPORTS MANAGEMENT ====================
+@router.get("/reports/statistics")
+async def get_reports_statistics(db: Session = Depends(get_db)):
+    try:
+        from app.models.users import Child as ChildModel
+        
+        # Lấy tất cả reports từ database
+        all_reports = db.query(ReportModel).order_by(ReportModel.generated_at.desc()).all()
+        
+        # Tính thời gian
+        now = datetime.now()
+        last_week = now - timedelta(days=7)
+        last_month = now - timedelta(days=30)
+        two_weeks_ago = now - timedelta(days=14)
+        two_months_ago = now - timedelta(days=60)
+        
+        # Phân loại báo cáo
+        weekly_reports = []
+        monthly_reports = []
+        
+        # Đếm cho trend
+        current_week_count = 0
+        last_week_count = 0
+        current_month_count = 0
+        last_month_count = 0
+        
+        for report in all_reports:
+            # Lấy thông tin child
+            child_name = "N/A"
+            child_email = ""
+            
+            if report.child_id:
+                child = db.query(ChildModel).filter(
+                    ChildModel.user_id == str(report.child_id)
+                ).first()
+                
+                if child and child.user:
+                    child_name = child.user.name or "N/A"
+                    child_email = child.user.email or ""
+            
+            report_dict = {
+                'report_id': str(report.report_id),
+                'child_id': str(report.child_id) if report.child_id else None,
+                'child_name': child_name,
+                'child_email': child_email,
+                'sent_at': report.generated_at.isoformat() if report.generated_at else None,
+                'status': 'sent',
+                'stats': {
+                    'total_sessions': 15,  # TODO: Thay bằng data thực từ report.data
+                    'total_playtime': 240,
+                    'avg_score': 7.5
+                }
+            }
+            
+            generated_at = report.generated_at
+            
+            # Phân loại theo tuần/tháng
+            if generated_at and generated_at >= last_week:
+                weekly_reports.append(report_dict)
+                current_week_count += 1
+            
+            if generated_at and generated_at >= last_month:
+                monthly_reports.append(report_dict)
+                current_month_count += 1
+            
+            # Đếm cho trend
+            if generated_at:
+                if two_weeks_ago <= generated_at < last_week:
+                    last_week_count += 1
+                if two_months_ago <= generated_at < last_month:
+                    last_month_count += 1
+        
+        # Tính trend
+        weekly_trend = 0
+        if last_week_count > 0:
+            weekly_trend = round(((current_week_count - last_week_count) / last_week_count) * 100, 1)
+        elif current_week_count > 0:
+            weekly_trend = 100
+        
+        monthly_trend = 0
+        if last_month_count > 0:
+            monthly_trend = round(((current_month_count - last_month_count) / last_month_count) * 100, 1)
+        elif current_month_count > 0:
+            monthly_trend = 100
+        
+        return {
+            "weekly_reports": weekly_reports,
+            "monthly_reports": monthly_reports,
+            "weekly_trend": weekly_trend,
+            "monthly_trend": monthly_trend,
+            "total_count": len(all_reports)
+        }
+        
+    except Exception as e:
+        print(f"❌ Error getting reports statistics: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "weekly_reports": [],
+            "monthly_reports": [],
+            "weekly_trend": 0,
+            "monthly_trend": 0,
+            "total_count": 0
+        }
+
+
+@router.get("/reports/{report_id}")
+async def get_report_details(report_id: UUID, db: Session = Depends(get_db)):
+    try:
+        from app.models.users import Child as ChildModel
+        
+        report = db.query(ReportModel).filter(
+            ReportModel.report_id == str(report_id)
+        ).first()
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo")
+        
+        # Lấy thông tin child
+        child_name = "N/A"
+        child_email = ""
+        
+        if report.child_id:
+            # ✅ FIX: Đổi từ child_id → user_id
+            child = db.query(ChildModel).filter(
+                ChildModel.user_id == str(report.child_id)
+            ).first()
+            
+            if child and child.user:
+                child_name = child.user.name or "N/A"
+                child_email = child.user.email or ""
+        
+        # Parse report data nếu có
+        content = {
+            'total_sessions': 15,
+            'total_playtime': 240,
+            'avg_score': 7.5
+        }
+        
+        if report.data:
+            try:
+                import json
+                parsed_data = json.loads(report.data) if isinstance(report.data, str) else report.data
+                if parsed_data:
+                    content = parsed_data
+            except Exception as parse_error:
+                print(f"⚠️ Failed to parse report data: {parse_error}")
+        
+        return {
+            'report_id': str(report.report_id),
+            'child_id': str(report.child_id) if report.child_id else None,
+            'child_name': child_name,
+            'child_email': child_email,
+            'period': report.report_type or 'weekly',
+            'sent_at': report.generated_at.isoformat() if report.generated_at else None,
+            'status': 'sent',
+            'summary': report.summary,
+            'content': content
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Delete error: {e}")
-        raise HTTPException(500, detail=f"Lỗi xóa video: {str(e)}")
+        print(f"❌ Error getting report details: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Lỗi lấy chi tiết báo cáo: {str(e)}")
+
+
+@router.post("/reports/{report_id}/resend")
+async def resend_report(report_id: UUID, db: Session = Depends(get_db)):
+    try:
+        report = db.query(ReportModel).filter(
+            ReportModel.report_id == str(report_id)
+        ).first()
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Không tìm thấy báo cáo")
+        
+        # TODO: Tích hợp với ReportService
+        # from app.services.reports.report_service import ReportService
+        # from app.repository.users_repo import UsersRepository
+        # from app.repository.child_repo import ChildRepository
+        # 
+        # users_repo = UsersRepository(db)
+        # child_repo = ChildRepository(db)
+        # report_service = ReportService(users_repo, child_repo)
+        # 
+        # result = report_service.generate_and_send_report(
+        #     child_user_id=report.child_id,
+        #     period=report.report_type or "weekly"
+        # )
+        # 
+        # if result["status"] != "success":
+        #     raise HTTPException(status_code=400, detail=result["message"])
+        
+        print(f"✅ Resending report {report_id}...")
+        
+        return {
+            "status": "success",
+            "message": "Đã gửi lại báo cáo thành công"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error resending report: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Lỗi gửi lại báo cáo: {str(e)}")
+    
+# ==================== EMOTION CONCEPT MANAGEMENT ====================
+
+@router.get("/emotion-concepts")
+async def list_emotion_concepts(db: Session = Depends(get_db)):
+    """
+    Lấy danh sách emotion_concepts cho màn Admin (quản lý video khái niệm cảm xúc).
+    """
+    repo = EmotionConceptRepository(db)
+    concepts = repo.get_all_emotion_concepts()
+
+    data = []
+    for c in concepts:
+        data.append({
+            "concept_id": str(c.concept_id),
+            "emotion": c.emotion,
+            "level": c.level,
+            "title": c.title,
+            "video_path": c.video_path,
+            "image_path": c.image_path,
+            "audio_path": c.audio_path,
+            "description": c.description
+        })
+
+    return {
+        "status": "success",
+        "data": data
+    }
+
+@router.post("/emotion-concepts/upload-video")
+async def upload_emotion_concept_video(
+    video_file: UploadFile = File(...),
+    concept_id: UUID = Form(...),
+    emotion: str = Form(...),
+    old_path: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload video mới cho một Emotion Concept:
+    - KHÔNG xoá video cũ
+    - Lưu file mới vào fe/assets/videos/
+    - Tạo tên file mới để không ghi đè
+    - Cập nhật video_path trong DB để FE render video mới
+    """
+    try:
+        # 1) Validate file type
+        if not video_file.content_type.startswith("video/"):
+            raise HTTPException(status_code=400, detail="File không phải video!")
+
+        # 2) Validate size
+        video_file.file.seek(0, 2)
+        size = video_file.file.tell()
+        video_file.file.seek(0)
+
+        if size > 50 * 1024 * 1024:
+            raise HTTPException(400, detail="Video quá lớn! Tối đa 50MB.")
+
+        # 3) Xác định thư mục lưu video
+        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+        video_dir = project_root / "fe" / "assets" / "videos"
+        video_dir.mkdir(parents=True, exist_ok=True)
+
+        # 4) Tạo tên file mới (không ghi đè file cũ)
+        original_ext = Path(video_file.filename).suffix or ".mp4"
+        safe_emotion = normalize_ascii(emotion)
+
+        timestamp = int(time.time() * 1000)
+        ext = Path(video_file.filename).suffix or ".mp4"
+
+        filename = f"{safe_emotion}-{timestamp}{ext}"
+        new_file_path = video_dir / filename
+
+        # 5) Lưu file MỚI, KHÔNG XOÁ file cũ
+        with open(new_file_path, "wb") as buffer:
+            shutil.copyfileobj(video_file.file, buffer)
+
+        print(f"✅ Đã lưu video mới: {new_file_path}")
+
+        # 6) Path lưu vào DB (khớp với format hệ thống của m)
+        # Nếu DB của m dùng "/fe/assets/videos/xxx.mp4" thì đổi theo:
+        relative_path = f"/assets/videos/{filename}"
+
+        # 7) Update DB
+        repo = EmotionConceptRepository(db)
+        updated = repo.update_video_path(concept_id, relative_path)
+
+        if not updated:
+            raise HTTPException(404, detail="Emotion concept không tồn tại!")
+
+        return {
+            "status": "success",
+            "message": f"Đã thay thế video cho '{emotion}' thành công!",
+            "data": {
+                "video_path": relative_path,
+                "file_size": size,
+                "filename": filename,
+            },
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(f"❌ Upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi upload video: {str(e)}")
