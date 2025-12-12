@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - EmoGarden</title>
     <link rel="stylesheet" href="../styles/admin.css" />
-    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
 </head>
 <body>
     <!-- Header -->
@@ -16,7 +15,7 @@
         </div>
         <div class="header-right">
             <span class="admin-name" id="admin-name">Admin User</span>
-            <a href="#" id="logout-btn" class="btn-logout">Đăng xuất</a>
+            <a href="#" id="logout-btn" class="btn-logout">🚪 Đăng xuất</a>
         </div>
     </header>
 
@@ -26,11 +25,11 @@
         <aside class="sidebar">
             <nav class="sidebar-nav">
                 <a href="#dashboard" class="nav-item active" data-section="dashboard">
-                    <span class="icon"></span>
+                    <span class="icon">📊</span>
                     <span class="text">Dashboard</span>
                 </a>
                 <a href="#users" class="nav-item" data-section="users">
-                    <span class="icon"></span>
+                    <span class="icon">👥</span>
                     <span class="text">Quản lý Users</span>
                 </a>
                 <a href="#emotions" class="nav-item" data-section="emotions">
@@ -52,11 +51,11 @@
         <main class="main-content">
             <!-- Dashboard Section -->
             <section id="dashboard-section" class="content-section active">
-                <h1>Dashboard Tổng Quan</h1>
+                <h1>📊 Dashboard Tổng Quan</h1>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-icon"></div>
+                        <div class="stat-icon">👥</div>
                         <div class="stat-info">
                             <h3 id="total-users">0</h3>
                             <p>Tổng Users</p>
@@ -70,7 +69,7 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon"></div>
+                        <div class="stat-icon">🎮</div>
                         <div class="stat-info">
                             <h3 id="total-game-contents">0</h3>
                             <p>Nội dung Game</p>
@@ -87,13 +86,13 @@
 
                 <div class="charts-container">
                     <div class="chart-card">
-                        <h3>Người dùng mới (7 ngày qua)</h3>
+                        <h3>📈 Người dùng mới (7 ngày qua)</h3>
                         <div id="users-chart" class="chart-placeholder">
                             <p>Biểu đồ sẽ được hiển thị ở đây</p>
                         </div>
                     </div>
                     <div class="chart-card">
-                        <h3>Hoạt động gần đây</h3>
+                        <h3>🎯 Hoạt động gần đây</h3>
                         <div id="activity-log" class="activity-list">
                             <div class="activity-item">✅ Admin đã đăng nhập</div>
                             <div class="activity-item">📹 Video "Vui vẻ" được cập nhật</div>
@@ -106,14 +105,14 @@
             <!-- Users Management Section -->
             <section id="users-section" class="content-section">
                 <div class="section-header">
-                    <h1>Quản lý Users</h1>
+                    <h1>👥 Quản lý Users</h1>
                     <button class="btn btn-primary" id="add-user-btn">
-                        <span>+</span> Thêm User
+                        <span>➕</span> Thêm User
                     </button>
                 </div>
 
                 <div class="filters">
-                    <input type="text" id="search-users" placeholder="Tìm kiếm user..." class="search-input" />
+                    <input type="text" id="search-users" placeholder="🔍 Tìm kiếm user..." class="search-input" />
                     <select id="filter-role" class="filter-select">
                         <option value="">Tất cả vai trò</option>
                         <option value="admin">Admin</option>
@@ -372,7 +371,7 @@
     <div id="user-modal" class="modal">
         <div class="modal-content">
             <span class="close" id="close-user-modal">×</span>
-            <h2 id="user-modal-title">Thêm User Mới</h2>
+            <h2 id="user-modal-title">➕ Thêm User Mới</h2>
             <form id="user-form">
                 <div class="form-row">
                     <div class="form-group">
@@ -429,8 +428,8 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Lưu</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-user-btn">Hủy</button>
+                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-user-btn">❌ Hủy</button>
                 </div>
             </form>
         </div>
@@ -551,6 +550,5 @@
     </div>
 
     <script type="module" src="../components/admin.js"></script>
-    <script src="../components/chatbot_widget.js"></script>
 </body>
 </html>
