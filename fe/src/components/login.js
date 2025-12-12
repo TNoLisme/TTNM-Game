@@ -6,7 +6,6 @@ const showError = (message) => {
     if (errorEl) errorEl.textContent = message || '';
 };
 
-
 const showToast = (message, type = 'success') => {
     let container = document.querySelector('.toast-container');
     if (!container) {
@@ -39,9 +38,10 @@ const redirectBasedOnRole = (userFromAPI) => {
         showError('Thiếu mã người dùng từ máy chủ. Vui lòng thử lại.');
         return;
     }
-    role = userFromAPI.role;
 
-    const saveUser = { ...userFromAPI, user_id };
+    const role = (userFromAPI.accountType || userFromAPI.role || '').toLowerCase();
+    
+    const saveUser = { ...userFromAPI, user_id, role };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
 
     console.log('%c🚀 LƯU USER:', 'color: blue; font-weight: bold;', saveUser);
@@ -74,7 +74,10 @@ const handleLogin = async (e) => {
     showError('');
     const username = document.querySelector('#username').value.trim();
     const password = document.querySelector('#password').value.trim();
-    if (!username || !password) return showError('Nhập đầy đủ thông tin!');
+    
+    if (!username || !password) {
+        return showError('Nhập đầy đủ thông tin!');
+    }
 
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
@@ -121,7 +124,7 @@ const handleLogin = async (e) => {
             throw new Error(data.message || data.detail || 'Sai tài khoản hoặc mật khẩu.');
         }
     } catch (err) {
-        console.error('Login error:', err);
+        console.error('%c❌ LOGIN ERROR:', 'color: red; font-weight: bold;', err);
         showError(err.message || 'Lỗi kết nối server.');
     } finally {
         btn.disabled = false;
@@ -129,40 +132,24 @@ const handleLogin = async (e) => {
     }
 };
 
-// === QUÊN MẬT KHẨU: 3 BƯỚC (EMAIL -> OTP -> ĐỔI MẬT KHẨU) ===
+// === QUÊN MẬT KHẨU ===
 function openForgotModal(e) {
     e.preventDefault();
     const modal = document.getElementById('forgot-modal');
     modal.style.display = 'flex';
-    document.getElementById('step-email').style.display = 'block';
-    document.getElementById('step-otp').style.display = 'none';
-    document.getElementById('step-reset').style.display = 'none';
+    document.getElementById('otp-pass-section').style.display = 'none';
+    document.getElementById('reset-error').textContent = '';
+    document.getElementById('forgot-email').value = '';
+}
+
+function closeForgotModal() {
+    document.getElementById('forgot-modal').style.display = 'none';
+    document.getElementById('otp-pass-section').style.display = 'none';
     document.getElementById('reset-error').textContent = '';
     document.getElementById('forgot-email').value = '';
     document.getElementById('forgot-otp').value = '';
     document.getElementById('new-password').value = '';
     document.getElementById('confirm-password').value = '';
-}
-
-function closeForgotModal() {
-    const modal = document.getElementById('forgot-modal');
-    if (modal) modal.style.display = 'none';
-    const stepEmail = document.getElementById('step-email');
-    const stepOtp = document.getElementById('step-otp');
-    const stepReset = document.getElementById('step-reset');
-    if (stepEmail) stepEmail.style.display = 'block';
-    if (stepOtp) stepOtp.style.display = 'none';
-    if (stepReset) stepReset.style.display = 'none';
-    const resetEl = document.getElementById('reset-error');
-    if (resetEl) resetEl.textContent = '';
-    const emailInput = document.getElementById('forgot-email');
-    const otpInput = document.getElementById('forgot-otp');
-    const newPassInput = document.getElementById('new-password');
-    const confirmInput = document.getElementById('confirm-password');
-    if (emailInput) emailInput.value = '';
-    if (otpInput) otpInput.value = '';
-    if (newPassInput) newPassInput.value = '';
-    if (confirmInput) confirmInput.value = '';
 }
 
 async function sendOTP() {
@@ -183,14 +170,12 @@ async function sendOTP() {
         });
         const data = await res.json();
         if (res.ok) {
-            const stepEmail = document.getElementById('step-email');
-            const stepOtp = document.getElementById('step-otp');
-            if (stepEmail) stepEmail.style.display = 'none';
-            if (stepOtp) stepOtp.style.display = 'block';
+            document.getElementById('otp-pass-section').style.display = 'block';
+            btn.style.display = 'none';
             showModalError('OTP đã gửi! Kiểm tra email.', 'green');
-            showToast('OTP đã gửi, vui lòng kiểm tra email', 'success');
+            showToast('OTP sent!', 'success');
         } else {
-            showModalError(data.detail || data.message || 'Lỗi gửi OTP.');
+            showModalError(data.detail || 'Lỗi gửi OTP.');
         }
     } catch (err) {
         showModalError('Lỗi kết nối.');
@@ -200,64 +185,14 @@ async function sendOTP() {
     }
 }
 
-async function verifyOTP() {
-    const email = document.getElementById('forgot-email').value.trim();
-    const otp = document.getElementById('forgot-otp').value.trim();
-
-    if (otp.length !== 6) {
-        showModalError('OTP phải gồm 6 số.');
-        return;
-    }
-
-    const btn = document.getElementById('verify-otp-btn');
-    btn.disabled = true;
-    btn.textContent = 'Đang kiểm tra...';
-
-    try {
-        const res = await fetch(`${API_URL}/users/verify-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, otp })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showModalError('OTP đúng, hãy tạo mật khẩu mới.', 'green');
-            showToast('OTP chính xác!', 'success');
-            const stepOtp = document.getElementById('step-otp');
-            const stepReset = document.getElementById('step-reset');
-            if (stepOtp) stepOtp.style.display = 'none';
-            if (stepReset) stepReset.style.display = 'block';
-        } else {
-            showModalError(data.detail || data.message || 'OTP sai hoặc hết hạn.');
-        }
-    } catch (err) {
-        showModalError('Lỗi kết nối.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Xác nhận OTP';
-    }
-}
-
 async function resetPasswordWithOTP() {
     const email = document.getElementById('forgot-email').value.trim();
     const otp = document.getElementById('forgot-otp').value.trim();
     const newPass = document.getElementById('new-password').value;
     const confirm = document.getElementById('confirm-password').value;
 
-    if (otp.length !== 6) {
-        showModalError('Mã OTP phải gồm 6 số.');
-        return;
-    }
-    if (newPass.length < 8) {
-        showModalError('Mật khẩu mới phải có ít nhất 8 ký tự.');
-        return;
-    }
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?`~]/.test(newPass)) {
-        showModalError('Mật khẩu mới phải có ít nhất 8 ký tự và 1 ký tự đặc biệt.');
-        return;
-    }
-    if (newPass !== confirm) {
-        showModalError('Mật khẩu xác nhận không khớp.');
+    if (otp.length !== 6 || newPass.length < 8 || newPass !== confirm) {
+        showModalError('Kiểm tra OTP/Mật khẩu!');
         return;
     }
 
@@ -276,17 +211,7 @@ async function resetPasswordWithOTP() {
             showToast('Đổi mật khẩu thành công!', 'success');
             closeForgotModal();
         } else {
-            let msg = 'Lỗi đổi mật khẩu.';
-            if (res.status === 422) {
-                msg = 'Mật khẩu mới không hợp lệ. Mật khẩu phải có ít nhất 8 ký tự và 1 ký tự đặc biệt.';
-            } else if (data) {
-                if (typeof data.detail === 'string') {
-                    msg = data.detail;
-                } else if (typeof data.message === 'string') {
-                    msg = data.message;
-                }
-            }
-            showModalError(msg);
+            showModalError(data.detail || 'OTP sai.');
         }
     } catch (err) {
         showModalError('Lỗi kết nối.');
@@ -308,7 +233,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('forgot-password-link')?.addEventListener('click', openForgotModal);
     document.getElementById('close-modal')?.addEventListener('click', closeForgotModal);
     document.getElementById('send-otp-btn')?.addEventListener('click', sendOTP);
-    document.getElementById('verify-otp-btn')?.addEventListener('click', verifyOTP);
     document.getElementById('reset-pass-btn')?.addEventListener('click', resetPasswordWithOTP);
     document.getElementById('forgot-modal')?.addEventListener('click', (e) => e.target === e.currentTarget && closeForgotModal());
+    
+    // DEBUG: Log current storage on page load
+    console.log('%c🔍 DEBUG - Current Storage:', 'color: purple; font-weight: bold;');
+    console.log('currentUser:', localStorage.getItem('currentUser'));
 });
