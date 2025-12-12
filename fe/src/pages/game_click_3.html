@@ -7,9 +7,15 @@
     <title>Ai là ai & đang cảm xúc gì?</title>
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/game_click_3.css" />
+    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
 </head>
 
 <body>
+    <!-- Top back button bar -->
+    <div class="top-back-bar">
+        <button id="back-button" class="back-btn global-back-btn" type="button" onclick="window.history.back()">&#x2190; Quay lại</button>
+    </div>
+
     <!-- Màn hình chơi game -->
     <div id="game-screen" class="screen">
         <div class="game-container">
@@ -87,6 +93,7 @@
 
     <!-- Chỉ load JS MỘT LẦN, KHÔNG dùng type="module" -->
     <script src="../components/game_click_3.js"></script>
+    <script src="../components/chatbot_widget.js"></script>
 </body>
 
 </html>

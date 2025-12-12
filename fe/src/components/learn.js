@@ -168,6 +168,7 @@ function renderDots() {
     b.addEventListener("click", () => {
       current = idx;
       updateCarousel();
+      maybeSpeakSituationFromUserAction();
     });
     dotsWrap.appendChild(b);
   });
@@ -179,6 +180,9 @@ function renderSituationPanel() {
     //  Chưa chọn cảm xúc → ẩn panel, không text, không loa
     if (!currentEmotion) {
         situationPanel.style.display = "none";
+        situationPanel.style.visibility = "visible";
+        situationPanel.style.opacity = "1";
+        situationPanel.style.pointerEvents = "auto";
         situationText.textContent =
             "Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.";
         return;
@@ -194,14 +198,32 @@ function renderSituationPanel() {
     }
 
     if (current === 0) {
-        // 👉 Trang 1: VIDEO → chỉ có video, ẩn panel (không text, không loa)
-        situationPanel.style.display = "none";
+        // 👉 Trang 1: VIDEO → giữ chỗ panel nhưng ẩn nội dung để khung tổng không giật
+        situationPanel.style.display = "flex";
+        situationPanel.style.visibility = "hidden";
+        situationPanel.style.opacity = "0";
+        situationPanel.style.pointerEvents = "none";
         situationText.textContent = "";
     } else {
-        // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text + loa
+        // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text
         situationPanel.style.display = "flex"; // hoặc "" nếu CSS set sẵn display:flex
+        situationPanel.style.visibility = "visible";
+        situationPanel.style.opacity = "1";
+        situationPanel.style.pointerEvents = "auto";
         situationText.textContent = info.text; // An đánh rơi kem rồi, nên An buồn và khóc.
     }
+}
+
+// Chỉ tự đọc khi người dùng thật sự thao tác (next/prev/chọn chấm)
+function maybeSpeakSituationFromUserAction() {
+  if (!situationPanel || !situationText) return;
+  if (!currentEmotion) return;
+  if (current === 0) return; // đang ở trang video thì không đọc
+
+  const text = situationText.textContent.trim();
+  if (!text) return;
+
+  speakVietnamese(text);
 }
 
 function updateCarousel() {
@@ -222,11 +244,13 @@ function updateCarousel() {
 function goPrev() {
   current--;
   updateCarousel();
+  maybeSpeakSituationFromUserAction();
 }
 
 function goNext() {
   current++;
   updateCarousel();
+  maybeSpeakSituationFromUserAction();
 }
 
 // ================ LỌC THEO CẢM XÚC ================
@@ -341,9 +365,12 @@ async function init() {
   initEmotionFilters();
 
   allItems = await fetchLessonsOrFallback();
-  // Khi mới vào: mặc định cảm xúc "happy"
-  currentEmotion = "happy";
-  applyFilter("happy");
+
+  // Cho phép mở trực tiếp theo emotion từ query param (vd: ?emotion=happy)
+  const params = new URLSearchParams(window.location.search);
+  const initialEmotion = (params.get("emotion") || "happy").toLowerCase();
+  currentEmotion = initialEmotion;
+  applyFilter(initialEmotion);
 
   // ban đầu: chưa chọn cảm xúc → ẩn panel
   if (situationPanel) {

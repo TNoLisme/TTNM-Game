@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Đăng nhập - EmoGarden</title>
     <link rel="stylesheet" href="../styles/login.css" />
+    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
 </head>
 
 <body>
@@ -50,7 +51,7 @@
                     <a id="forgot-password-link" href="#">Quên mật khẩu?</a>
                 </div>
 
-                <div class="auth-footer">© 2025 EmoGarden. All rights reserved.</div>
+                <div class="auth-footer"> 2025 EmoGarden. All rights reserved.</div>
             </div>
         </div>
     </div>
@@ -61,12 +62,21 @@
             <span id="close-modal" class="close-btn">&times;</span>
             <h3>Quên Mật Khẩu</h3>
 
-            <input id="forgot-email" type="email" placeholder="Email của bạn" class="modal-input" />
-            <button id="send-otp-btn" class="modal-button primary">Gửi OTP</button>
+            <!-- Bước 1: nhập email -->
+            <div id="step-email">
+                <input id="forgot-email" type="email" placeholder="Email của bạn" class="modal-input" />
+                <button id="send-otp-btn" class="modal-button primary">Gửi OTP</button>
+            </div>
 
-            <div id="otp-pass-section" style="display:none; margin-top:15px;">
+            <!-- Bước 2: nhập OTP -->
+            <div id="step-otp" style="display:none; margin-top:15px;">
                 <input id="forgot-otp" type="text" placeholder="Nhập OTP (6 số)" 
                        maxlength="6" class="modal-input" />
+                <button id="verify-otp-btn" class="modal-button primary">Xác nhận OTP</button>
+            </div>
+
+            <!-- Bước 3: đổi mật khẩu -->
+            <div id="step-reset" style="display:none; margin-top:15px;">
                 <input id="new-password" type="password" placeholder="Mật khẩu mới (≥8 ký tự)" 
                        minlength="8" class="modal-input" />
                 <input id="confirm-password" type="password" placeholder="Xác nhận mật khẩu" 
@@ -79,6 +89,7 @@
     </div>
 
     <script src="../components/login.js"></script>
+    <script src="../components/chatbot_widget.js"></script>
 </body>
 
 </html>

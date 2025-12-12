@@ -55,6 +55,10 @@ class UsersRepository(BaseRepository[UserModel, UserDomain]):
         print(f"[LOGIN] User: {username} → {user_model}")
         return self.mapper_class.to_domain(user_model) if user_model else None
 
+    def update_user(self, user: UserDomain) -> UserDomain:
+        """Cập nhật thông tin user (sử dụng cơ chế save/merge an toàn)."""
+        return self.save(user)
+
     # Alias để dễ gọi
     get_user_by_id = get_by_id
     get_all_users = get_all
