@@ -120,97 +120,86 @@ function updateTrendIndicator(elementId, trend) {
 // ==========================================
 function renderReportsTable(data) {
     const tbody = $('reports-tbody');
-    if (!tbody) {
-        console.warn('⚠️ Element #reports-tbody not found');
-        return;
-    }
+    if (!tbody) return;
     
     const allReports = [
-        ...(data.weekly_reports || []),
-        ...(data.monthly_reports || [])
+        ...(data.weekly_reports || []).map(r => ({...r, period: 'weekly'})),
+        ...(data.monthly_reports || []).map(r => ({...r, period: 'monthly'}))
     ];
     
     if (allReports.length === 0) {
         tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 30px; color: #7f8c8d;">
-                    📭 Chưa có báo cáo nào được gửi
+            <tr class="no-data">
+                <td colspan="7">
+                    <span class="no-data-icon">📭</span>
+                    <div class="no-data-text">Chưa có báo cáo nào được gửi</div>
                 </td>
             </tr>
         `;
         return;
     }
     
-    allReports.sort((a, b) => {
-        const dateA = new Date(a.generated_at || 0);
-        const dateB = new Date(b.generated_at || 0);
-        return dateB - dateA;
-    });
+    // Sort by date desc
+    allReports.sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
     
-    tbody.innerHTML = allReports.map(report => renderReportRow(report)).join('');
-}
-
-function renderReportRow(report) {
-    const reportId = report.report_id || '';
-    const childId = report.child_id || '';
-    const reportType = report.report_type || 'weekly'; // 'weekly' hoặc 'monthly'
-    const generatedAt = report.generated_at || report.sent_at; // generated_at từ DB
-    const summary = report.summary || '';
-    const data = report.data || {}; // JSON data
-    
-    const shortId = reportId.substring(0, 8);
-    
-    let parsedData = {};
-    try {
-        parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-    } catch (e) {
-        console.warn('⚠️ Cannot parse report data:', e);
-    }
-    
-    return `
+    tbody.innerHTML = allReports.map(report => {
+        const childInitial = report.child_name ? report.child_name.charAt(0).toUpperCase() : '?';
+        
+        return `
         <tr>
             <td>
-                <code style="font-size: 11px; background: #ecf0f1; padding: 2px 6px; border-radius: 3px;" title="${reportId}">
-                    ${shortId}...
+                <code style="font-size: 11px; background: #ecf0f1; padding: 4px 8px; border-radius: 4px; display: block; overflow: hidden; text-overflow: ellipsis;">
+                    ${report.report_id.substring(0, 8)}...
                 </code>
             </td>
             <td>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span>👤</span>
-                    <div>
-                        <strong>${escapeHtml(report.child_name || 'N/A')}</strong><br>
-                        <small style="color: #7f8c8d;">${escapeHtml(report.child_email || '')}</small>
+                <div class="child-info-cell">
+                    <div class="child-avatar">${childInitial}</div>
+                    <div class="child-details">
+                        <span class="child-name" title="${report.child_name || 'N/A'}">${report.child_name || 'N/A'}</span>
+                        <span class="child-email" title="${report.child_email || ''}">${report.child_email || ''}</span>
                     </div>
                 </div>
             </td>
             <td>
-                <span class="badge ${reportType === 'weekly' ? 'badge-primary' : 'badge-success'}">
-                    ${reportType === 'weekly' ? '📅 Tuần' : '📆 Tháng'}
+                <span class="period-badge ${report.period}">
+                    ${report.period === 'weekly' ? '📅 Tuần' : '📆 Tháng'}
                 </span>
             </td>
             <td>
-                <div style="font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-                    ${escapeHtml(summary || 'Chưa có tóm tắt')}
+                <div class="report-summary-cell" title="${report.summary || 'Chưa có tóm tắt'}">
+                    ${report.summary || 'Chưa có tóm tắt'}
                 </div>
             </td>
             <td>
-                <div style="font-size: 13px;">
-                    <div>📊 ${parsedData.total || parsedData.total_sessions || 0} phiên</div>
-                    <div>✅ ${parsedData.correct || 0} đúng</div>
-                    <div>⭐ ${parsedData.avg_score || 0} điểm</div>
+                <div class="mini-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-value">${report.stats?.total_sessions || 0}</span> phiên
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⏱️</span>
+                        <span class="stat-value">${report.stats?.total_playtime || 0}</span> phút
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value">${report.stats?.avg_score || 0}</span> điểm
+                    </div>
                 </div>
             </td>
-            <td>${formatDateTime(generatedAt)}</td>
+            <td>${formatDateTime(report.sent_at)}</td>
             <td>
-                <button class="btn-icon btn-view" onclick="viewReportDetails('${reportId}')" title="Xem chi tiết">
-                    👁️
-                </button>
-                <button class="btn-icon btn-resend" onclick="resendReport('${reportId}')" title="Gửi lại">
-                    🔄
-                </button>
+                <div class="action-buttons">
+                    <button class="btn-action btn-view" onclick="viewReportDetails('${report.report_id}')" title="Xem chi tiết">
+                        👁️ Xem
+                    </button>
+                    <button class="btn-action btn-resend" onclick="resendReport('${report.report_id}')" title="Gửi lại">
+                        🔄 Gửi lại
+                    </button>
+                </div>
             </td>
         </tr>
-    `;
+    `}).join('');
 }
 
 // ==========================================
