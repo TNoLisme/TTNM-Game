@@ -139,50 +139,63 @@ async def preview_report(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== USER ENDPOINTS ====================
-
 @router.post("/request-report")
 async def request_own_report(
     period: str = Query("weekly", regex="^(weekly|monthly)$"),
-    current_user = get_current_user(),
+    user_id: str = Query(...), 
     background_tasks: BackgroundTasks = None,
     db=Depends(get_db)
 ):
     print(f"\n{'='*60}")
     print(f"📧 REQUEST REPORT ENDPOINT HIT")
-    print(f"   User ID: {current_user.user_id}")
-    print(f"   Username: {current_user.username}")
-    print(f"   Email: {current_user.email}")
+    print(f"   User ID (from query): {user_id}")
     print(f"   Period: {period}")
     print(f"{'='*60}\n")
     
     try:
-        if not current_user.email:
+        # Chuyển string sang UUID
+        try:
+            user_uuid = UUID(user_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="User ID không hợp lệ")
+        
+        user_repo = UsersRepository(db)
+        child_repo = ChildRepository(db)
+        
+        # Lấy thông tin user
+        user = user_repo.get_user_by_id(user_uuid)
+        if not user:
+            print(f"❌ User not found: {user_id}")
+            raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+        
+        if not user.email:
             print(f"❌ User has no email!")
             raise HTTPException(
                 status_code=400,
                 detail="Tài khoản chưa có email. Vui lòng cập nhật email trong profile."
             )
         
-        user_repo = UsersRepository(db)
-        child_repo = ChildRepository(db)
+        print(f"   Username: {user.username}")
+        print(f"   Email: {user.email}")
+        
         service = ReportService(user_repo, child_repo)
         
         if background_tasks:
             print(f"✅ Adding report generation to background tasks")
             background_tasks.add_task(
                 service.generate_and_send_report,
-                current_user.user_id,
+                user_uuid,
                 period
             )
             
             return {
                 "status": "success",
-                "message": "Đang tạo báo cáo. Email sẽ được gửi trong giây lát.",
-                "email": current_user.email
+                "message": f"Đang tạo báo cáo {period}. Email sẽ được gửi đến {user.email} trong giây lát.",
+                "email": user.email
             }
         else:
             print(f"⚠️  No background tasks, running synchronously")
-            result = service.generate_and_send_report(current_user.user_id, period)
+            result = service.generate_and_send_report(user_uuid, period)
             return result
         
     except HTTPException:
@@ -192,7 +205,7 @@ async def request_own_report(
         print(f"❌ ERROR in request_own_report:")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
+    
 # ==================== TEST ENDPOINT ====================
 
 @router.post("/test-email")
