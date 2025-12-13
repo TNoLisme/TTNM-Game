@@ -181,7 +181,7 @@ function setupFaceSlices() {
     <div id="faceWrapper"
       style="
         position: relative;
-        width: 640px
+        width: 640px;
         height: 360px;
         max-width: 100%;
         margin: 0 auto;

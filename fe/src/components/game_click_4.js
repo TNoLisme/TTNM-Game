@@ -15,6 +15,12 @@ function showSystemPopup(title, message, onClose, btnText = 'OK') {
 
     if (!modal || !titleEl || !msgEl || !btnEl) {
         // Fallback nếu modal chưa sẵn sàng
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert(message, title).then(() => {
+                if (onClose) onClose();
+            });
+            return;
+        }
         alert(message);
         if (onClose) onClose();
         return;
@@ -38,6 +44,8 @@ let currentIndex = 0;
 let score = 0;
 let answered = false;
 let usedHint = false;
+let selectedAnswer = null;
+let selectedButton = null;
 
 let user = null;
 let gameId = null;
@@ -73,7 +81,7 @@ function initDetectiveGame() {
         hintText: document.getElementById('hint-text'),
         hintBtn: document.getElementById('hint-btn'),
         soundBtn: document.getElementById('sound-btn'),
-        exitBtn: document.getElementById('exit-btn'),
+        submitBtn: document.getElementById('submit-answer-btn'),
         answers: document.querySelectorAll('.answer-option'),
         feedbackModal: document.getElementById('feedback-modal'),
         modalIcon: document.getElementById('modal-icon'),
@@ -84,14 +92,22 @@ function initDetectiveGame() {
 
     elements.hintBtn.addEventListener('click', onHintClick);
     elements.soundBtn.addEventListener('click', speakCurrentQuestion);
-    elements.exitBtn.addEventListener('click', onExitClick);
     elements.nextQuestionBtn.addEventListener('click', onNextQuestion);
+    if (elements.submitBtn) {
+        elements.submitBtn.addEventListener('click', onSubmitAnswer);
+    }
 
     elements.answers.forEach(btn => {
         btn.addEventListener('click', () => onAnswerClick(btn));
     });
 
     startSession();
+}
+
+function formatQuestionText(text) {
+    const s = (text || '').trim();
+    if (s.length < 120) return s;
+    return s.replace(/([.!?])\s+/g, '$1\n');
 }
 
 async function startSession() {
@@ -135,15 +151,20 @@ function loadQuestion(index) {
     const q = questions[index];
     answered = false;
     usedHint = false;
+    selectedAnswer = null;
+    selectedButton = null;
+    if (elements.submitBtn) {
+        elements.submitBtn.disabled = true;
+    }
 
     elements.questionMedia.innerHTML = '';
 
-    elements.questionText.textContent = q.question_text;
+    elements.questionText.textContent = formatQuestionText(q.question_text);
     elements.hintText.textContent = '';
 
     elements.answers.forEach((btn, idx) => {
         const emo = EMOTION_CHOICES[idx];
-        btn.classList.remove('correct', 'incorrect');
+        btn.classList.remove('correct', 'incorrect', 'selected');
 
         if (emo) {
             btn.style.display = 'inline-flex';
@@ -182,22 +203,36 @@ function speakCurrentQuestion() {
     window.speechSynthesis.speak(utterance);
 }
 
-function onExitClick() {
-    if (confirm('Thoát game và quay lại màn chọn game?')) {
-        window.location.href = './select_game.html';
-    }
-}
-
 function onAnswerClick(btn) {
     if (answered) return;
     const q = questions[currentIndex];
     if (!q) return;
 
+    selectedButton = btn;
+    selectedAnswer = btn.dataset.answer;
+
+    elements.answers.forEach((b) => {
+        b.classList.toggle('selected', b === btn);
+    });
+
+    if (elements.submitBtn) {
+        elements.submitBtn.disabled = !selectedAnswer;
+    }
+}
+
+function onSubmitAnswer() {
+    if (answered) return;
+    const q = questions[currentIndex];
+    if (!q) return;
+    if (!selectedAnswer || !selectedButton) {
+        showSystemPopup('Thông báo', 'Hãy chọn một cảm xúc trước khi trả lời.');
+        return;
+    }
+
     answered = true;
 
-    const chosen = btn.dataset.answer;
     const correctAnswer = q.correct_answer;
-    const isCorrect = normalizeEmotion(chosen) === normalizeEmotion(correctAnswer);
+    const isCorrect = normalizeEmotion(selectedAnswer) === normalizeEmotion(correctAnswer);
 
     if (isCorrect) {
         score += 10;
@@ -206,7 +241,7 @@ function onAnswerClick(btn) {
 
     localResults.push({
         question_id: q.question_id,
-        answer: chosen,
+        answer: selectedAnswer,
         is_correct: isCorrect,
         used_hint: usedHint,
         response_time_ms: 5000,
@@ -216,10 +251,14 @@ function onAnswerClick(btn) {
         b.disabled = true;
         if (normalizeEmotion(b.dataset.answer) === normalizeEmotion(correctAnswer)) {
             b.classList.add('correct');
-        } else if (b === btn && !isCorrect) {
+        } else if (b === selectedButton && !isCorrect) {
             b.classList.add('incorrect');
         }
     });
+
+    if (elements.submitBtn) {
+        elements.submitBtn.disabled = true;
+    }
 
     showFeedback(isCorrect, correctAnswer);
 }

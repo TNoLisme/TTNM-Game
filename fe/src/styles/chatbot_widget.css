@@ -274,6 +274,100 @@
   background: #1565c0;
 }
 
+.eg-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 2200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.eg-confirm-overlay.eg-confirm-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.eg-confirm-dialog {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(219, 234, 254, 0.9);
+  overflow: hidden;
+  transform: translateY(6px);
+  transition: transform 0.18s ease;
+}
+
+.eg-confirm-overlay.eg-confirm-open .eg-confirm-dialog {
+  transform: translateY(0);
+}
+
+.eg-confirm-header {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #4facfe, #1976d2);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.eg-confirm-body {
+  padding: 14px 16px 6px;
+  color: #0f172a;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.eg-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 16px 16px;
+}
+
+.eg-confirm-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.eg-confirm-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.eg-confirm-cancel {
+  background: #e3f2fd;
+  color: #0b3c7d;
+  border: 1px solid #bbdefb;
+}
+
+.eg-confirm-cancel:hover {
+  filter: brightness(0.98);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.15);
+  transform: translateY(-1px);
+}
+
+.eg-confirm-ok {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 12px 30px rgba(29, 78, 216, 0.35);
+}
+
+.eg-confirm-ok:hover {
+  filter: brightness(1.02);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(29, 78, 216, 0.45);
+}
+
 @keyframes eg-chatbot-wave {
   0% {
     transform: scaleY(0.4);

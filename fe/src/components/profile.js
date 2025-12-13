@@ -36,21 +36,37 @@ async function loadProfile() {
 
         window.currentProfile = data;
     } catch (e) {
-        showError("Load lỗi: " + e.message);
-        console.error(e);
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Load lỗi: ' + e.message, 'Thông báo');
+            console.error(e);
+        } else {
+            alert("Load lỗi: " + e.message);
+            console.error(e);
+        }
     }
 }
 
 async function saveProfile(e) {
     e.preventDefault();
     const userId = getUserId();
-    if (!userId) return alert("Chưa đăng nhập bro!");
+    if (!userId) {
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Chưa đăng nhập!', 'Thông báo');
+            return;
+        }
+        return alert("Chưa đăng nhập bro!");
+    }
 
     const newPassword = $("edit-password").value;
     const confirmPassword = $("edit-password-confirm").value;
 
     if (newPassword && newPassword !== confirmPassword) {
-        showToast("Mật khẩu mới và mật khẩu xác nhận không khớp!", "error");
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Mật khẩu mới và mật khẩu xác nhận không khớp!', 'Thông báo');
+            $("edit-password-confirm").focus();
+            return;
+        }
+        alert("Mật khẩu mới và mật khẩu xác nhận không khớp!");
         $("edit-password-confirm").focus();
         return;
     }
@@ -87,11 +103,21 @@ async function saveProfile(e) {
             throw new Error(err.detail || "Lỗi server");
         }
 
-        showToast("Thông tin cá nhân đã được cập nhật thành công!", "success");
-        closeModal();
-        loadProfile();
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Thông tin cá nhân đã được cập nhật thành công!', 'Thông báo');
+            closeModal();
+            loadProfile();
+        } else {
+            alert("Thông tin cá nhân đã được cập nhật thành công!");
+            closeModal();
+            loadProfile();
+        }
     } catch (err) {
-        showToast("Lỗi: " + err.message, "error");
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Lỗi: ' + err.message, 'Thông báo');
+        } else {
+            alert("Lỗi: " + err.message);
+        }
     }
 }
 
@@ -104,25 +130,47 @@ async function requestReport(period) {
     console.log("Current profile:", window.currentProfile);
     
     if (!token) {
-        showToast("Vui lòng đăng nhập để nhận báo cáo!", "error");
-        console.error("❌ No token found in localStorage");
-        return;
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Vui lòng đăng nhập để nhận báo cáo!', 'Thông báo');
+            console.error("❌ No token found in localStorage");
+            return;
+        }
+        return alert("Vui lòng đăng nhập để nhận báo cáo!");
     }
 
     if (!window.currentProfile) {
-        showToast("Đang tải thông tin người dùng...", "info");
-        await loadProfile();
-        if (!window.currentProfile) {
-            showToast("Không thể tải thông tin người dùng", "error");
-            return;
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Đang tải thông tin người dùng...', 'Thông báo');
+            await loadProfile();
+            if (!window.currentProfile) {
+                window.egModal.alert('Không thể tải thông tin người dùng', 'Thông báo');
+                return;
+            }
+        } else {
+            alert("Đang tải thông tin người dùng...");
+            await loadProfile();
+            if (!window.currentProfile) {
+                alert("Không thể tải thông tin người dùng");
+                return;
+            }
         }
     }
 
     const periodText = period === "weekly" ? "tuần" : "tháng";
     const userEmail = window.currentProfile?.email || 'email của bạn';
 
-    if (!confirm(`Gửi báo cáo ${periodText} này qua email?\n\nBáo cáo sẽ được gửi đến: ${userEmail}`)) {
-        return;
+    if (window.egModal && typeof window.egModal.confirm === 'function') {
+        const ok = await window.egModal.confirm(
+            `Gửi báo cáo ${periodText} này qua email?\n\nBáo cáo sẽ được gửi đến: ${userEmail}`,
+            'Xác nhận gửi báo cáo',
+            'Gửi',
+            'Hủy'
+        );
+        if (!ok) return;
+    } else {
+        if (!confirm(`Gửi báo cáo ${periodText} này qua email?\n\nBáo cáo sẽ được gửi đến: ${userEmail}`)) {
+            return;
+        }
     }
 
     showToast(`Đang tạo báo cáo ${periodText}... Vui lòng đợi`, "info");
@@ -146,22 +194,34 @@ async function requestReport(period) {
         if (!res.ok) {
             if (res.status === 401) {
                 console.error("❌ 401 Unauthorized - Token invalid/expired");
-                showToast("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!", "error");
-                setTimeout(() => {
-                    localStorage.clear();
-                    location.href = "/src/pages/login.html";
-                }, 2000);
-                return;
+                if (window.egModal && typeof window.egModal.alert === 'function') {
+                    window.egModal.alert('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!', 'Thông báo');
+                    setTimeout(() => {
+                        localStorage.clear();
+                        location.href = "/src/pages/login.html";
+                    }, 2000);
+                    return;
+                }
+                return alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
             }
             throw new Error(data.detail || data.message || "Lỗi khi tạo báo cáo");
         }
 
-        showToast(`✅ Báo cáo ${periodText} đang được gửi đến email của bạn!`, "success");
-        console.log("✅ Report requested successfully:", data);
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert(`✅ Báo cáo ${periodText} đang được gửi đến email của bạn!`, 'Thông báo');
+            console.log("✅ Report requested successfully:", data);
+        } else {
+            alert(`✅ Báo cáo ${periodText} đang được gửi đến email của bạn!`);
+            console.log("✅ Report requested successfully:", data);
+        }
 
     } catch (err) {
         console.error("❌ Report error:", err);
-        showToast(`❌ Lỗi: ${err.message}`, "error");
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert(`❌ Lỗi: ${err.message}`, 'Thông báo');
+        } else {
+            alert(`❌ Lỗi: ${err.message}`);
+        }
     }
 }
 
@@ -176,7 +236,13 @@ function showError(msg) {
 }
 
 function openEditModal() {
-    if (!window.currentProfile) return alert("Tải profile trước!");
+    if (!window.currentProfile) {
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Tải profile trước!', 'Thông báo');
+            return;
+        }
+        return alert("Tải profile trước!");
+    }
     const d = window.currentProfile;
 
     const modal = document.getElementById("edit-modal");
@@ -258,7 +324,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (editBtn) editBtn.onclick = openEditModal;
     if (form) form.onsubmit = saveProfile;
     if (closeBtn) closeBtn.onclick = closeModal;
-    if (logout) logout.onclick = () => confirm("Đăng xuất?") && (localStorage.clear(), location.href = "/src/pages/login.html");
+    if (logout) logout.onclick = (e) => {
+        e.preventDefault();
+        const doLogout = () => {
+            localStorage.clear();
+            location.href = "/src/pages/login.html";
+        };
+
+        if (window.egModal && typeof window.egModal.confirm === 'function') {
+            window.egModal
+                .confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
+                .then((ok) => {
+                    if (!ok) return;
+                    doLogout();
+                });
+            return;
+        }
+
+        if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
+        doLogout();
+    };
 
     if (weeklyReportBtn) {
         weeklyReportBtn.onclick = () => requestReport("weekly");

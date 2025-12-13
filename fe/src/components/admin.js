@@ -9,8 +9,16 @@ function getAuthToken() {
     const token = localStorage.getItem('access_token');
     if (!token) {
         console.error('❌ No access token found!');
-        alert('⛔ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
-        window.location.href = '../pages/login.html';
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal
+                .alert('⛔ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!', 'Thông báo')
+                .then(() => {
+                    window.location.href = '../pages/login.html';
+                });
+        } else {
+            alert('⛔ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+            window.location.href = '../pages/login.html';
+        }
         return null;
     }
     return token;
@@ -44,8 +52,14 @@ function checkAdminRole() {
     console.log('access_token:', accessToken ? 'EXISTS ✅' : 'MISSING ❌');
 
     if (!currentUserStr || !accessToken) {
-        alert('⛔ Bạn chưa đăng nhập!');
-        window.location.href = '../pages/login.html';
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('⛔ Bạn chưa đăng nhập!', 'Thông báo').then(() => {
+                window.location.href = '../pages/login.html';
+            });
+        } else {
+            alert('⛔ Bạn chưa đăng nhập!');
+            window.location.href = '../pages/login.html';
+        }
         return false;
     }
 
@@ -53,8 +67,15 @@ function checkAdminRole() {
     const role = (userData.role || userData.accountType || '').toLowerCase().trim();
 
     if (role !== 'admin') {
-        alert(`⛔ Bạn không có quyền truy cập! Role của bạn: ${role}`);
-        window.location.href = '../pages/login.html';
+        const msg = `⛔ Bạn không có quyền truy cập! Role của bạn: ${role}`;
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert(msg, 'Không có quyền').then(() => {
+                window.location.href = '../pages/login.html';
+            });
+        } else {
+            alert(msg);
+            window.location.href = '../pages/login.html';
+        }
         return false;
     }
 
@@ -180,7 +201,12 @@ window.editUser = (id) => {
 };
 
 window.deleteUser = async (id) => {
-    if (!confirm("⚠️ Bạn có chắc chắn muốn xóa user này?")) return;
+    if (window.egModal && typeof window.egModal.confirm === 'function') {
+        const ok = await window.egModal.confirm('⚠️ Bạn có chắc chắn muốn xóa user này?', 'Xác nhận xóa', 'Xóa', 'Hủy');
+        if (!ok) return;
+    } else {
+        if (!confirm("⚠️ Bạn có chắc chắn muốn xóa user này?")) return;
+    }
 
     try {
         
@@ -349,6 +375,18 @@ window.editEmotion = function(id) {
 
 // Delete Emotion
 window.deleteEmotion = function(id) {
+    if (window.egModal && typeof window.egModal.confirm === 'function') {
+        window.egModal
+            .confirm('⚠️ Bạn có chắc chắn muốn xóa cảm xúc này?', 'Xác nhận xóa', 'Xóa', 'Hủy')
+            .then((ok) => {
+                if (!ok) return;
+                currentEmotions = currentEmotions.filter(e => e.id !== id);
+                saveEmotions(currentEmotions);
+                renderEmotionsGrid(currentEmotions);
+                showNotification('✅ Đã xóa cảm xúc thành công!', 'success');
+            });
+        return;
+    }
     if (confirm('⚠️ Bạn có chắc chắn muốn xóa cảm xúc này?')) {
         currentEmotions = currentEmotions.filter(e => e.id !== id);
         saveEmotions(currentEmotions);
@@ -511,6 +549,18 @@ window.editQuestion = function(id) {
 
 // Delete Question
 window.deleteQuestion = function(id) {
+    if (window.egModal && typeof window.egModal.confirm === 'function') {
+        window.egModal
+            .confirm('⚠️ Bạn có chắc chắn muốn xóa câu hỏi này?', 'Xác nhận xóa', 'Xóa', 'Hủy')
+            .then((ok) => {
+                if (!ok) return;
+                currentQuestions = currentQuestions.filter(q => q.id !== id);
+                saveQuestions(currentQuestions);
+                renderQuestionsTable(currentQuestions);
+                showNotification('✅ Đã xóa câu hỏi thành công!', 'success');
+            });
+        return;
+    }
     if (confirm('⚠️ Bạn có chắc chắn muốn xóa câu hỏi này?')) {
         currentQuestions = currentQuestions.filter(q => q.id !== id);
         saveQuestions(currentQuestions);
@@ -639,6 +689,15 @@ function showNotification(message, type = 'success') {
 // LOGOUT
 // ==========================================
 $('logout-btn')?.addEventListener('click', () => {
+    if (window.egModal && typeof window.egModal.confirm === 'function') {
+        window.egModal.confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy').then((ok) => {
+            if (!ok) return;
+            localStorage.removeItem("currentUser");
+            localStorage.removeItem("access_token");
+            window.location.href = "../pages/login.html";
+        });
+        return;
+    }
     if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
         localStorage.removeItem("currentUser");
         localStorage.removeItem("access_token");

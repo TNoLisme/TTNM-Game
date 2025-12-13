@@ -46,6 +46,215 @@
     }
   }
 
+  function waitForBodyReady() {
+    if (document && document.body) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      const done = () => resolve();
+
+      if (document && document.readyState !== 'loading') {
+        setTimeout(done, 0);
+        return;
+      }
+
+      document.addEventListener('DOMContentLoaded', done, { once: true });
+    });
+  }
+
+  function ensureEgModal() {
+    if (document.getElementById('eg-confirm-modal')) return;
+
+    if (!document.body) {
+      throw new Error('document.body not ready');
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'eg-confirm-modal';
+    overlay.className = 'eg-confirm-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+
+    overlay.innerHTML = `
+      <div class="eg-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="eg-confirm-modal-title">
+        <div class="eg-confirm-header" id="eg-confirm-modal-title"></div>
+        <div class="eg-confirm-body" id="eg-confirm-modal-body"></div>
+        <div class="eg-confirm-actions" id="eg-confirm-modal-actions"></div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+  }
+
+  function egModalOpen(options) {
+    return waitForBodyReady().then(() => {
+      const variant = options && options.variant ? options.variant : 'alert';
+      const title = options && options.title ? options.title : 'Thông báo';
+      const message = options && options.message ? options.message : '';
+      const okText = options && options.okText ? options.okText : 'OK';
+      const cancelText = options && options.cancelText ? options.cancelText : 'Hủy';
+
+      try {
+        ensureEgModal();
+      } catch (e) {
+        if (variant === 'confirm') {
+          return confirm(message);
+        }
+        alert(message);
+        return true;
+      }
+
+      const overlay = document.getElementById('eg-confirm-modal');
+      const titleEl = document.getElementById('eg-confirm-modal-title');
+      const bodyEl = document.getElementById('eg-confirm-modal-body');
+      const actionsEl = document.getElementById('eg-confirm-modal-actions');
+
+      if (!overlay || !titleEl || !bodyEl || !actionsEl) {
+        if (variant === 'confirm') {
+          return confirm(message);
+        }
+        alert(message);
+        return true;
+      }
+
+      titleEl.textContent = title;
+      bodyEl.textContent = message;
+      actionsEl.innerHTML = '';
+
+      const okBtn = document.createElement('button');
+      okBtn.type = 'button';
+      okBtn.className = 'eg-confirm-btn eg-confirm-ok';
+      okBtn.textContent = okText;
+
+      let cancelBtn = null;
+      if (variant === 'confirm') {
+        cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'eg-confirm-btn eg-confirm-cancel';
+        cancelBtn.textContent = cancelText;
+        actionsEl.appendChild(cancelBtn);
+      }
+
+      actionsEl.appendChild(okBtn);
+
+      return new Promise((resolve) => {
+        let resolved = false;
+
+        function cleanup(result) {
+          if (resolved) return;
+          resolved = true;
+
+          overlay.classList.remove('eg-confirm-open');
+          overlay.setAttribute('aria-hidden', 'true');
+
+          overlay.removeEventListener('click', onOverlayClick);
+          okBtn.removeEventListener('click', onOk);
+          cancelBtn && cancelBtn.removeEventListener('click', onCancel);
+          document.removeEventListener('keydown', onKeydown, true);
+
+          resolve(result);
+        }
+
+        function onCancel() {
+          cleanup(false);
+        }
+
+        function onOk() {
+          cleanup(true);
+        }
+
+        function onOverlayClick(e) {
+          if (e.target === overlay) cleanup(false);
+        }
+
+        function onKeydown(e) {
+          if (e.key === 'Escape') cleanup(false);
+        }
+
+        overlay.classList.add('eg-confirm-open');
+        overlay.setAttribute('aria-hidden', 'false');
+
+        overlay.addEventListener('click', onOverlayClick);
+        okBtn.addEventListener('click', onOk);
+        cancelBtn && cancelBtn.addEventListener('click', onCancel);
+        document.addEventListener('keydown', onKeydown, true);
+
+        const focusTarget = cancelBtn || okBtn;
+        if (focusTarget && typeof focusTarget.focus === 'function') {
+          setTimeout(() => focusTarget.focus(), 0);
+        }
+      });
+    });
+  }
+
+  function egModalAlert(message, title) {
+    return egModalOpen({
+      variant: 'alert',
+      title: title || 'Thông báo',
+      message: message || '',
+      okText: 'OK',
+    }).then(() => true);
+  }
+
+  function egModalConfirm(message, title, okText, cancelText) {
+    return egModalOpen({
+      variant: 'confirm',
+      title: title || 'Xác nhận',
+      message: message || '',
+      okText: okText || 'Đồng ý',
+      cancelText: cancelText || 'Hủy',
+    });
+  }
+
+  if (!window.egModal) {
+    window.egModal = {
+      alert: egModalAlert,
+      confirm: egModalConfirm,
+    };
+  }
+
+  function performLogout() {
+    try {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+    } catch (e) {
+      // ignore
+    }
+
+    try {
+      sessionStorage.removeItem('gameCV_active_session');
+    } catch (e) {
+      // ignore
+    }
+
+    window.location.href = '/src/pages/login.html';
+  }
+
+  function installLogoutConfirmHandler() {
+    if (window.__eg_logout_confirm_installed) return;
+    window.__eg_logout_confirm_installed = true;
+
+    document.addEventListener(
+      'click',
+      async (e) => {
+        const target = e.target && e.target.closest
+          ? e.target.closest('#logout-button, #logout-btn, .logout-btn')
+          : null;
+        if (!target) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const ok = await (window.egModal && typeof window.egModal.confirm === 'function'
+          ? window.egModal.confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
+          : egModalConfirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy'));
+        if (!ok) return;
+        performLogout();
+      },
+      true
+    );
+  }
+
   function createMessageElement(text, role) {
     const el = document.createElement('div');
     el.className = `eg-chatbot-message eg-chatbot-message-${role}`;
@@ -502,9 +711,15 @@
     addMessage('Chào bé! Mình là trợ lý EmoGarden, có thể giúp bé hiểu cách chơi game này.', 'assistant');
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initChatbotWidget);
-  } else {
+  function initAll() {
     initChatbotWidget();
+  }
+
+  installLogoutConfirmHandler();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
   }
 })();

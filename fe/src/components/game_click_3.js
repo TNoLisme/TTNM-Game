@@ -230,7 +230,11 @@ function speakHints() {
 // Nộp bài
 function submitAnswer() {
     if (Object.keys(gameState.answers).length !== gameState.characters.length) {
-        alert('Hãy đặt tên cho tất cả các khuôn mặt trước khi nộp bài!');
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Hãy đặt tên cho tất cả các khuôn mặt trước khi nộp bài!', 'Thiếu thông tin');
+        } else {
+            alert('Hãy đặt tên cho tất cả các khuôn mặt trước khi nộp bài!');
+        }
         return;
     }
 

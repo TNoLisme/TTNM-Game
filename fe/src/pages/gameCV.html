@@ -32,6 +32,7 @@
             <p class="scenario-description" id="scenario-description"></p>
             <div class="target-emotion" id="target-emotion"></div>
             <div class="countdown" id="countdown"></div>
+            <div class="round-timer" id="round-timer" aria-label="Thời gian còn lại"></div>
             
             <div class="button-group">
                 <button id="hint-btn" class="game-btn hint-btn">💡 Gợi ý</button>
@@ -48,12 +49,16 @@
         <!-- Right Panel: Camera & Detection -->
         <div class="right-panel">
             <div class="camera-container">
+                <div class="camera-placeholder" id="camera-placeholder">
+                    <div class="camera-placeholder-icon">📷</div>
+                    <div class="camera-placeholder-text">Nhấn Bắt đầu để bật camera</div>
+                </div>
                 <video id="camera-video" autoplay playsinline></video>
             </div>
             
-            <div class="detection-info">
-                <div class="detected-emotion-icon" id="detected-emotion-icon">👤</div>
-                <div class="detected-emotion-percent" id="detected-emotion-percent">0%</div>
+            <div class="detection-info" id="detection-info">
+                <div class="detected-emotion-icon" id="detected-emotion-icon" aria-hidden="true"></div>
+                <div class="detected-emotion-percent" id="detected-emotion-percent" aria-label="Độ khớp phần trăm"></div>
             </div>
 
             <div class="traffic-light">
@@ -107,8 +112,8 @@
         </div>
     </div>
 
-    <script src="/src/components/gameCV.js"></script>
     <script src="../components/chatbot_widget.js"></script>
+    <script src="/src/components/gameCV.js"></script>
 </body>
 
 </html>

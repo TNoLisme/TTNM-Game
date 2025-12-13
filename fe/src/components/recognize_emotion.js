@@ -19,6 +19,8 @@ let learnedEmotions = [];
 
 let learningCards = {};
 
+let selectedAnswer = null;
+
 function normalizeEmotion(text) {
     return (text || '').trim().toLowerCase();
 }
@@ -49,7 +51,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     user = JSON.parse(localStorage.getItem('currentUser'));
     if (!user) {
-        alert('Vui lòng đăng nhập!');
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            await window.egModal.alert('Vui lòng đăng nhập!', 'Thông báo');
+        } else {
+            alert('Vui lòng đăng nhập!');
+        }
         window.location.href = './login.html';
         return;
     }
@@ -59,7 +65,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     level = parseInt(urlParams.get('level'));
 
     if (!gameId || !level) {
-        alert('Thiếu thông tin game hoặc level');
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            await window.egModal.alert('Thiếu thông tin game hoặc level', 'Thiếu thông tin');
+        } else {
+            alert('Thiếu thông tin game hoặc level');
+        }
         window.location.href = './select_game.html';
         return;
     }
@@ -117,7 +127,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error(err);
-        alert("Lỗi khởi động game: " + err.message);
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            await window.egModal.alert("Lỗi khởi động game: " + err.message, 'Lỗi');
+        } else {
+            alert("Lỗi khởi động game: " + err.message);
+        }
         return;
     }
 
@@ -140,7 +154,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadQuestion(i) {
         if (i >= questions.length) {
             await sendFinalResults();
-            alert('Hoàn thành level!');
+            if (window.egModal && typeof window.egModal.alert === 'function') {
+                await window.egModal.alert('Hoàn thành level!', 'Hoàn thành');
+            } else {
+                alert('Hoàn thành level!');
+            }
             window.location.href = './select_game.html';
             return;
         }
@@ -149,6 +167,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const q = questions[i];
 
         elements.questionArea.innerHTML = '';
+
+        selectedAnswer = null;
+        if (elements.nextHintBtn) {
+            elements.nextHintBtn.disabled = true;
+        }
 
         if (q.media_path && q.media_path.match(/\.(jpeg|jpg|gif|png)$/)) {
             const img = document.createElement('img');
@@ -189,10 +212,76 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.learningModal.classList.add('hidden');
     }
 
-    // Popup Sai/Đúng (Đã sửa logic hiển thị nút)
-    function showFeedback(correct, correctAns, emotion) {
+    function setSelectedAnswer(answer) {
+        selectedAnswer = answer;
+        elements.answers.forEach(b => {
+            if (b.dataset.answer === answer) b.classList.add('selected');
+            else b.classList.remove('selected');
+        });
+        if (elements.nextHintBtn) {
+            elements.nextHintBtn.disabled = !selectedAnswer;
+        }
+    }
+
+    function showWarning() {
+        if (!elements.warningModal) return;
+        elements.warningModal.classList.remove('hidden');
+    }
+
+    function hideWarning() {
+        if (!elements.warningModal) return;
+        elements.warningModal.classList.add('hidden');
+    }
+
+    function gradeSelectedAnswer() {
+        if (answered) return;
+        const q = questions[currentIndex];
+
+        if (!selectedAnswer) {
+            showWarning();
+            return;
+        }
+
+        answered = true;
+        const chosen = selectedAnswer;
+        const correct = normalizeEmotion(chosen) === normalizeEmotion(q.correct_answer);
+        const emotion = q.correct_answer;
         const emotionKey = normalizeEmotion(emotion);
 
+        if (correct) score += 10;
+
+        localResults.push({
+            question_id: q.question_id,
+            answer: chosen,
+            is_correct: correct,
+            used_hint: usedHint,
+            response_time_ms: 5000
+        });
+
+        if (!correct) {
+            emotionErrors[emotionKey] = (emotionErrors[emotionKey] || 0) + 1;
+            if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
+                learnedEmotions.push(emotionKey);
+                showFeedback(false, q.correct_answer, emotion);
+                return;
+            }
+        }
+
+        elements.answers.forEach(b => {
+            if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
+            else if (b.dataset.answer === chosen && !correct) b.classList.add('incorrect');
+            b.disabled = true;
+        });
+
+        if (elements.nextHintBtn) {
+            elements.nextHintBtn.disabled = true;
+        }
+
+        showFeedback(correct, q.correct_answer, emotion);
+    }
+
+    function showFeedback(correct, correctAns, emotion) {
+        const emotionKey = normalizeEmotion(emotion);
         elements.modalTitle.textContent = correct ? 'CHÍNH XÁC!' : 'SAI RỒI!';
         elements.modalTitle.style.color = correct ? '#10b981' : '#ef4444';
         elements.modalMsg.textContent = correct ? 'Giỏi lắm!' : `Đáp án đúng: ${correctAns}`;
@@ -332,45 +421,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!btn) return;
         btn.onclick = () => {
             if (answered) return;
-            answered = true;
-
-            const q = questions[currentIndex];
-            const chosen = btn.dataset.answer;
-            const correct = normalizeEmotion(chosen) === normalizeEmotion(q.correct_answer);
-            const emotion = q.correct_answer;
-            const emotionKey = normalizeEmotion(emotion);
-
-            if (correct) score += 10;
-
-            localResults.push({
-                question_id: q.question_id,
-                answer: chosen,
-                is_correct: correct,
-                used_hint: usedHint,
-                response_time_ms: 5000
-            });
-
-            if (!correct) {
-                emotionErrors[emotionKey] = (emotionErrors[emotionKey] || 0) + 1;
-
-                // --- LOGIC POPUP TỰ ĐỘNG KHI SAI NHIỀU ---
-                if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
-                    learnedEmotions.push(emotionKey);
-
-                    // KHÔNG RETURN: Sau khi push learnedEmotions, nó phải chạy xuống showFeedback
-                    // showFeedback sẽ kiểm tra và hiển thị nút "Học Lại" duy nhất.
-                }
-            }
-
-            // Disable nút sau khi chọn
-            elements.answers.forEach(b => {
-                if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
-                else if (b === btn && !correct) b.classList.add('incorrect');
-                b.disabled = true;
-            });
-
-            // Gọi showFeedback. Hàm này sẽ tự động kiểm tra isForcedLearning
-            showFeedback(correct, q.correct_answer, emotion);
+            if (btn.disabled) return;
+            setSelectedAnswer(btn.dataset.answer);
         };
     });
+
+    if (elements.closeWarn) {
+        elements.closeWarn.onclick = hideWarning;
+    }
+
+    if (elements.nextHintBtn) {
+        elements.nextHintBtn.onclick = gradeSelectedAnswer;
+    }
 });
