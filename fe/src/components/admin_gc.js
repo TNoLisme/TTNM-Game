@@ -3,7 +3,6 @@ import { API_URL, $, fetchAPI, openModal, closeModal, showNotification, getEmoti
 let currentGameContents = [];
 let editingGameContentId = null;
 let currentMediaFile = null;
-let currentFilters = {};
 let availableGames = []; // Lưu danh sách games từ API
 
 // Load danh sách games từ API
@@ -21,8 +20,8 @@ async function loadAvailableGames() {
         
         console.log(`✅ Loaded ${availableGames.length} games:`, availableGames);
         
-        // Populate game select dropdown
-        populateGameSelect();
+        // Populate game select dropdown trong filter
+        populateGameFilterSelect();
         
     } catch (err) {
         console.error("❌ Load games error:", err);
@@ -30,8 +29,23 @@ async function loadAvailableGames() {
     }
 }
 
-// Populate game select dropdown
-function populateGameSelect() {
+// Populate game select dropdown cho FILTER
+function populateGameFilterSelect() {
+    const filterSelect = $('filter-game-id');
+    if (filterSelect) {
+        filterSelect.innerHTML = '<option value="">-- Tất cả games --</option>';
+        
+        availableGames.forEach(game => {
+            const option = document.createElement('option');
+            option.value = game.game_id;
+            option.textContent = `${game.name} (Level ${game.level})`;
+            filterSelect.appendChild(option);
+        });
+    }
+}
+
+// Populate game select dropdown cho MODAL (thêm/sửa)
+function populateGameModalSelect() {
     const selectElement = $('gc-game-select');
     if (!selectElement) return;
     
@@ -46,15 +60,18 @@ function populateGameSelect() {
     });
 }
 
-async function loadGameContents(filters = {}) {
+async function loadGameContents() {
     try {
-        currentFilters = filters;
-        
+        // Build URL với tất cả filters hiện tại
         let url = `${API_URL}/game-contents?skip=0&limit=100`;
         
-        if (filters.game_id) url += `&game_id=${encodeURIComponent(filters.game_id)}`;
-        if (filters.level) url += `&level=${encodeURIComponent(filters.level)}`;
-        if (filters.emotion) url += `&emotion=${encodeURIComponent(filters.emotion)}`;
+        const gameIdFilter = $('filter-game-id')?.value?.trim();
+        const levelFilter = $('filter-level')?.value;
+        const emotionFilter = $('filter-emotion')?.value;
+        
+        if (gameIdFilter) url += `&game_id=${encodeURIComponent(gameIdFilter)}`;
+        if (levelFilter) url += `&level=${encodeURIComponent(levelFilter)}`;
+        if (emotionFilter) url += `&emotion=${encodeURIComponent(emotionFilter)}`;
         
         console.log('📡 Loading game contents from:', url);
         
@@ -72,16 +89,8 @@ async function loadGameContents(filters = {}) {
         
         console.log(`✅ Loaded ${currentGameContents.length} game contents`);
         
-        const searchTerm = $('search-game-contents')?.value?.trim() || '';
-        if (searchTerm) {
-            filterGameContents(searchTerm);
-        } else {
-            renderGameContentsTable(currentGameContents);
-        }
-        
-        if ($('total-game-contents')) {
-            $('total-game-contents').textContent = currentGameContents.length;
-        }
+        // Áp dụng search filter nếu có
+        applyCurrentFilters();
         
     } catch (err) {
         console.error("❌ Load game contents error:", err);
@@ -137,42 +146,50 @@ function renderGameContentsTable(contents) {
     }).join('');
 }
 
-function filterGameContents(searchTerm = '') {
-    if (!searchTerm || searchTerm.trim() === '') {
-        renderGameContentsTable(currentGameContents);
-        return;
-    }
-
-    const term = searchTerm.toLowerCase().trim();
+function applyCurrentFilters() {
+    const searchTerm = $('search-game-contents')?.value?.trim() || '';
     
-    const filtered = currentGameContents.filter(content => {
-        return (
-            content.content_id?.toLowerCase().includes(term) ||
-            content.game_id?.toLowerCase().includes(term) ||
-            content.question_text?.toLowerCase().includes(term) ||
-            content.emotion?.toLowerCase().includes(term) ||
-            content.content_type?.toLowerCase().includes(term) ||
-            content.correct_answer?.toLowerCase().includes(term) ||
-            content.explanation?.toLowerCase().includes(term)
-        );
-    });
+    console.log('🔍 Applying search filter:', searchTerm);
+    
+    let filtered = [...currentGameContents];
+    
+    // Apply search
+    if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(content => {
+            return (
+                content.content_id?.toLowerCase().includes(term) ||
+                content.game_id?.toLowerCase().includes(term) ||
+                content.question_text?.toLowerCase().includes(term) ||
+                content.emotion?.toLowerCase().includes(term) ||
+                content.content_type?.toLowerCase().includes(term) ||
+                content.correct_answer?.toLowerCase().includes(term) ||
+                content.explanation?.toLowerCase().includes(term)
+            );
+        });
+    }
+    
+    console.log(`✅ Filtered: ${filtered.length} / ${currentGameContents.length} game contents`);
     
     renderGameContentsTable(filtered);
     
+    // Update total count
     if ($('total-game-contents')) {
         $('total-game-contents').textContent = filtered.length;
     }
 }
 
 function resetFilters() {
+    // Clear all filters
     if ($('filter-game-id')) $('filter-game-id').value = '';
     if ($('filter-level')) $('filter-level').value = '';
     if ($('filter-emotion')) $('filter-emotion').value = '';
     if ($('search-game-contents')) $('search-game-contents').value = '';
     
-    currentFilters = {};
-    
+    // Reload data
     loadGameContents();
+    
+    showNotification('Đã xóa bộ lọc', 'success');
 }
 
 function setupGameContentEvents() {
@@ -185,6 +202,9 @@ function setupGameContentEvents() {
         $('game-content-form').reset();
         currentMediaFile = null;
         $('gc-media-preview').style.display = 'none';
+        
+        // Populate modal select
+        populateGameModalSelect();
         
         // Reset game select
         if ($('gc-game-select')) {
@@ -200,14 +220,13 @@ function setupGameContentEvents() {
         openModal('game-content-modal');
     });
 
-    // Khi chọn game, set game_id tương ứng
+    // Khi chọn game trong modal, set game_id tương ứng
     $('gc-game-select')?.addEventListener('change', (e) => {
         const selectedGameId = e.target.value;
         if ($('gc-game-id')) {
             $('gc-game-id').value = selectedGameId;
         }
         
-        // Log để debug
         console.log('✅ Selected game:', selectedGameId);
         const selectedGame = availableGames.find(g => g.game_id === selectedGameId);
         if (selectedGame) {
@@ -215,26 +234,27 @@ function setupGameContentEvents() {
         }
     });
 
-    // Apply filters button
-    $('apply-filters-btn')?.addEventListener('click', () => {
-        const filters = {};
-        
-        const gameId = $('filter-game-id')?.value?.trim();
-        const level = $('filter-level')?.value;
-        const emotion = $('filter-emotion')?.value;
-        
-        if (gameId) filters.game_id = gameId;
-        if (level) filters.level = level;
-        if (emotion) filters.emotion = emotion;
-        
-        console.log('🔍 Applying filters:', filters);
-        loadGameContents(filters);
+    // ✅ Auto-apply filters khi chọn game
+    $('filter-game-id')?.addEventListener('change', () => {
+        console.log('🔄 Game filter changed, reloading...');
+        loadGameContents();
+    });
+
+    // ✅ Auto-apply filters khi chọn level
+    $('filter-level')?.addEventListener('change', () => {
+        console.log('🔄 Level filter changed, reloading...');
+        loadGameContents();
+    });
+
+    // ✅ Auto-apply filters khi chọn emotion
+    $('filter-emotion')?.addEventListener('change', () => {
+        console.log('🔄 Emotion filter changed, reloading...');
+        loadGameContents();
     });
 
     // Reset filters button
     $('reset-filters-btn')?.addEventListener('click', () => {
         resetFilters();
-        showNotification('Đã xóa bộ lọc', 'success');
     });
 
     // Search input với debounce
@@ -242,8 +262,14 @@ function setupGameContentEvents() {
     $('search-game-contents')?.addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-            filterGameContents(e.target.value);
-        }, 300);
+            applyCurrentFilters();
+        }, 300); // Debounce 300ms
+    });
+
+    // Refresh button
+    $('refresh-game-contents-btn')?.addEventListener('click', async () => {
+        await loadGameContents();
+        showNotification('Đã làm mới danh sách game contents', 'success');
     });
 
     $('gc-media-file')?.addEventListener('change', (e) => {
@@ -365,7 +391,7 @@ function setupGameContentEvents() {
             showNotification("✔ Thành công!", "success");
             closeModal("game-content-modal");
             
-            loadGameContents(currentFilters);
+            loadGameContents();
 
         } catch (err) {
             console.error('❌ Save error:', err);
@@ -395,6 +421,9 @@ window.editGameContent = async (content_id) => {
         console.log('📝 Editing content:', content);
         
         $('game-content-modal-title').textContent = '✏️ Chỉnh sửa Nội dung Game';
+        
+        // Populate modal select
+        populateGameModalSelect();
         
         // Set game select và disable (không cho đổi game khi edit)
         if ($('gc-game-select')) {
@@ -434,7 +463,7 @@ window.deleteGameContent = async (content_id) => {
 
         showNotification("✅ Đã xóa nội dung!", "success");
         
-        loadGameContents(currentFilters);
+        loadGameContents();
 
     } catch (err) {
         console.error('❌ Delete error:', err);
