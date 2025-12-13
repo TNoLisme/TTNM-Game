@@ -39,7 +39,7 @@ const redirectBasedOnRole = (userFromAPI) => {
         showError('Thiếu mã người dùng từ máy chủ. Vui lòng thử lại.');
         return;
     }
-    role = userFromAPI.role;
+    role = userFromAPI.accountType;
 
     const saveUser = { ...userFromAPI, user_id };
     localStorage.setItem('currentUser', JSON.stringify(saveUser));
@@ -65,7 +65,7 @@ const redirectBasedOnRole = (userFromAPI) => {
     
     setTimeout(() => {
         location.href = redirectUrl;
-    }, 1500);
+    }, 1000);
 };
 
 // HANDLE LOGIN (ĐÃ BỎ ACCESS_TOKEN)

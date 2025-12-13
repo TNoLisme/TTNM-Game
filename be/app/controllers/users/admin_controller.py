@@ -7,8 +7,8 @@ from app.repository.child_repo import ChildRepository
 from app.repository.emotion_concepts_repo import EmotionConceptRepository
 from app.repository.questions_repo import QuestionsRepository
 from app.repository.game_contents_repo import GameContentsRepository as GameContentRepo
-from app.repository.report_repo import ReportRepository  # ✅ ADDED
-from app.models.analytics import Report as ReportModel  # ✅ ADDED
+from app.repository.report_repo import ReportRepository
+from app.models.analytics import Report as ReportModel
 from app.database import get_db
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
@@ -118,6 +118,22 @@ async def list_users(
     
     return result
 
+@router.get("/users/search")
+async def search_users(
+    name: str = Query(..., min_length=1),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    service: AdminService = Depends(get_admin_service)
+):
+    """Tìm kiếm users theo tên"""
+    result = service.search_users(name, skip, limit)
+    
+    if result["status"] != "success":
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    return result
+
+
 @router.post("/users")
 async def create_user(
     request: CreateUserRequest,
@@ -191,44 +207,58 @@ async def list_children(
     
     return result
 
-@router.get("/users/search")
-async def search_users(
-    name: str = Query(..., min_length=1),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
-    service: AdminService = Depends(get_admin_service)
-):
-    """Tìm kiếm users theo tên"""
-    result = service.search_users(name, skip, limit)
-    
-    if result["status"] != "success":
-        raise HTTPException(status_code=400, detail=result["message"])
-    
-    return result
-
 # ==================== GAME CONTENT MANAGEMENT ====================
-
 @router.get("/game-contents")
 async def list_game_contents(
     game_id: Optional[UUID] = Query(None),
     level: Optional[int] = Query(None),
     emotion: Optional[str] = Query(None),
+    search: Optional[str] = Query(None, description="Tìm kiếm theo nội dung câu hỏi"), # ✅ Thêm tham số search
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     service: AdminService = Depends(get_admin_service)
 ):
     try:
+        # Nếu có search text, ta tạm thời lấy danh sách lớn hơn để filter tại code 
+        # (Lý tưởng là Repo hỗ trợ search, nhưng ở đây dùng cách này để không sửa sâu Repo)
+        actual_limit = 1000 if search else limit
+        
         result = service.get_game_contents(
             game_id=game_id,
             level=level,
             emotion=emotion,
-            skip=skip,
-            limit=limit
+            skip=0 if search else skip, # Nếu search thì lấy từ đầu để filter
+            limit=actual_limit
         )
         
         if result["status"] != "success":
             raise HTTPException(status_code=400, detail=result["message"])
         
+        contents = result["data"]["game_contents"]
+        total = result["data"]["total"]
+
+        # ✅ Logic tìm kiếm theo nội dung câu hỏi
+        if search:
+            search_lower = search.lower()
+            filtered_contents = [
+                c for c in contents 
+                if c.get("question_text") and search_lower in c["question_text"].lower()
+            ]
+            
+            # Cập nhật lại total và contents sau khi filter
+            total = len(filtered_contents)
+            
+            # Manual Pagination sau khi filter
+            start = skip
+            end = skip + limit
+            contents = filtered_contents[start:end]
+            
+            # Cập nhật lại data trả về
+            result["data"]["game_contents"] = contents
+            result["data"]["total"] = total
+            result["data"]["skip"] = skip
+            result["data"]["limit"] = limit
+
         return result
         
     except Exception as e:
@@ -412,7 +442,7 @@ async def upload_game_content_media(
         print(f"❌ Upload media error: {e}")
         raise HTTPException(500, detail=f"Lỗi upload file: {str(e)}")
 
-# ==================== VIDEO MANAGEMENT (CŨ - GIỮ NGUYÊN) ====================
+
 @router.post("/emotions/upload-video")
 async def upload_emotion_video(
     video_file: UploadFile = File(...),
@@ -421,47 +451,52 @@ async def upload_emotion_video(
     old_path: str = Form(...)
 ):
     try:
-        if not video_file.content_type.startswith('video/'):
+        # Kiểm tra định dạng file
+        if not video_file.content_type.startswith("video/"):
             raise HTTPException(400, detail="File không phải video!")
-        
+
+        # Kiểm tra kích thước file
         video_file.file.seek(0, 2)
         file_size = video_file.file.tell()
         video_file.file.seek(0)
-        
+
         if file_size > 50 * 1024 * 1024:
             raise HTTPException(400, detail="Video quá lớn! Tối đa 50MB.")
-        
+
         # Đường dẫn thư mục lưu video
         project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
         video_dir = project_root / "fe" / "assets" / "videos"
-        
+
         # Tạo thư mục nếu chưa tồn tại
         video_dir.mkdir(parents=True, exist_ok=True)
-        
+
         emotion_dir = video_dir / emotion_id
         emotion_dir.mkdir(parents=True, exist_ok=True)
 
-        # Xóa toàn bộ video cũ của cùng emotion
+        # Xóa toàn bộ video cũ của emotion (hiện đang chỉ in log)
         for path in emotion_dir.glob("*.*"):
-            #path.unlink()
-            print(f"✅ Đã xóa video cũ: {path}")
+            # path.unlink()
+            print(f"Đã xóa video cũ: {path}")
 
+        # Chuẩn hóa tên file
         original_name = Path(video_file.filename).name or f"{emotion_id}.mp4"
-        # Loại bỏ mọi thành phần đường dẫn độc hại, chỉ lấy tên file cuối cùng
         original_name = Path(original_name).name
+
         if not original_name:
             original_name = f"{emotion_id}.mp4"
 
         new_file_path = video_dir / original_name
-        
+
+        # Lưu file video mới
         with open(new_file_path, "wb") as buffer:
             shutil.copyfileobj(video_file.file, buffer)
-        
-        # Đường dẫn tương đối (để frontend dùng)
-        relative_path = f"/assets/videos/{new_filename}"
-        
-        print(f"✅ Đã lưu video: {new_file_path}")
-        
+
+        # Tính version dựa trên mtime để cache-busting
+        relative_path = f"/assets/videos/{original_name}"
+        version = int(new_file_path.stat().st_mtime * 1000)
+
+        print(f"Đã lưu video: {new_file_path}")
+
         return {
             "status": "success",
             "message": f"Đã thay thế video '{emotion_name}' thành công!",
@@ -472,11 +507,11 @@ async def upload_emotion_video(
                 "version": version
             }
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Upload error: {e}")
+        print(f"Upload error: {e}")
         raise HTTPException(500, detail=f"Lỗi upload video: {str(e)}")
 
 @router.post("/emotion-concepts/delete-video")

@@ -5,17 +5,50 @@ import { API_URL, $, fetchAPI, openModal, closeModal, showNotification, getEmoti
 let currentGameContents = [];
 let editingGameContentId = null;
 let currentMediaFile = null;
+let gamesList = []; // Cache danh sách games
+
+// 🆕 Tải danh sách Game để đưa vào Dropdown
+async function loadGamesList() {
+    try {
+        // Giả định endpoint API lấy tất cả games là /games/
+        const res = await fetchAPI("http://localhost:8000/games/");
+        if (!res.ok) throw new Error("Không thể tải danh sách Games");
+
+        const data = await res.json();
+        gamesList = data.data || data; // Tùy cấu trúc trả về
+
+        populateGameDropdown();
+
+    } catch (err) {
+        console.error("❌ Load games error:", err);
+    }
+}
+
+function populateGameDropdown() {
+    const select = $('gc-game-id');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">-- Chọn Game --</option>';
+
+    gamesList.forEach(game => {
+        const option = document.createElement('option');
+        option.value = game.game_id;
+        option.textContent = game.name || game.game_id;
+        select.appendChild(option);
+    });
+}
 
 async function loadGameContents(filters = {}) {
     try {
         let url = `${API_URL}/game-contents?skip=0&limit=100`;
-        
-        if (filters.game_id) url += `&game_id=${filters.game_id}`;
+
+        // 🔄 Cập nhật Search: Dùng search=... thay vì game_id
+        if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
         if (filters.level) url += `&level=${filters.level}`;
         if (filters.emotion) url += `&emotion=${filters.emotion}`;
-        
+
         console.log('📡 Loading game contents from:', url);
-        
+
         const res = await fetchAPI(url);
 
         if (!res.ok) {
@@ -24,18 +57,15 @@ async function loadGameContents(filters = {}) {
         }
 
         const data = await res.json();
-        console.log('📦 Received data:', data);
-        
+
         currentGameContents = data.data?.game_contents || [];
-        
-        console.log(`✅ Loaded ${currentGameContents.length} game contents`);
-        
+
         renderGameContentsTable(currentGameContents);
-        
+
         if ($('total-game-contents')) {
             $('total-game-contents').textContent = data.data?.total || currentGameContents.length;
         }
-        
+
     } catch (err) {
         console.error("❌ Load game contents error:", err);
         showNotification(`Lỗi tải nội dung game: ${err.message}`, 'error');
@@ -83,120 +113,110 @@ function renderGameContentsTable(contents) {
 }
 
 function setupGameContentEvents() {
+    // Gọi load games khi khởi tạo
+    loadGamesList();
+
     $('add-game-content-btn')?.addEventListener('click', () => {
         editingGameContentId = null;
         $('game-content-modal-title').textContent = '➕ Thêm Nội dung Game';
         $('game-content-form').reset();
         currentMediaFile = null;
         $('gc-media-preview').style.display = 'none';
-        
+
         $('gc-game-id').disabled = false;
-        $('gc-game-id').value = '';
-        
+
         openModal('game-content-modal');
     });
 
     $('apply-filters-btn')?.addEventListener('click', () => {
         const filters = {
-            game_id: $('filter-game-id').value,
+            search: $('filter-question').value, // 🆕 Thay đổi ID filter
             level: $('filter-level').value,
             emotion: $('filter-emotion').value
         };
-        
-        console.log('🔍 Applying filters:', filters);
+
         loadGameContents(filters);
     });
 
+    // Sự kiện chọn file media (Giữ nguyên)
     $('gc-media-file')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        
+
         if (!file) {
             currentMediaFile = null;
             $('gc-media-preview').style.display = 'none';
             return;
         }
-        
+
         currentMediaFile = file;
         const previewContent = $('gc-media-preview-content');
-        
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewContent.innerHTML = `<img src="${e.target.result}" style="max-width: 300px; border-radius: 8px;">`;
-                $('gc-media-preview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else if (file.type.startsWith('video/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewContent.innerHTML = `<video src="${e.target.result}" controls style="max-width: 300px; border-radius: 8px;"></video>`;
-                $('gc-media-preview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else if (file.type.startsWith('audio/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewContent.innerHTML = `<audio src="${e.target.result}" controls style="width: 100%;"></audio>`;
-                $('gc-media-preview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            let html = '';
+            if (file.type.startsWith('image/')) {
+                html = `<img src="${e.target.result}" style="max-width: 300px; border-radius: 8px;">`;
+            } else if (file.type.startsWith('video/')) {
+                html = `<video src="${e.target.result}" controls style="max-width: 300px; border-radius: 8px;"></video>`;
+            } else if (file.type.startsWith('audio/')) {
+                html = `<audio src="${e.target.result}" controls style="width: 100%;"></audio>`;
+            }
+            previewContent.innerHTML = html;
+            $('gc-media-preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
     });
 
     $('game-content-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const submitBtn = e.target.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         submitBtn.textContent = '⏳ Đang xử lý...';
-        
+
         try {
             let mediaPath = null;
-            
+
+            // Logic Upload file (Giữ nguyên)
             if (currentMediaFile) {
                 const formData = new FormData();
                 formData.append('file', currentMediaFile);
                 formData.append('content_type', $('gc-content-type').value);
-                formData.append('game_name', 'emotion_game');
+                // Lấy tên game để tạo folder (nếu có, không thì default)
+                const gameSelect = $('gc-game-id');
+                const gameName = gameSelect.options[gameSelect.selectedIndex].text || 'emotion_game';
+                formData.append('game_name', gameName.replace(/[^a-zA-Z0-9]/g, '')); // Clean name
                 formData.append('emotion', $('gc-emotion').value || '');
-                
-                console.log('📤 Uploading media...');
-                
+
                 const uploadRes = await fetch(`${API_URL}/game-contents/upload-media`, {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const uploadData = await uploadRes.json();
-                
                 if (!uploadRes.ok || uploadData.status !== 'success') {
                     throw new Error(uploadData.message || 'Lỗi upload media');
                 }
-                
                 mediaPath = uploadData.data.media_path;
-                console.log('✅ Media uploaded:', mediaPath);
             }
-            
+
+            // 🆕 Lấy giá trị Emotion làm Correct Answer
+            const emotionVal = $('gc-emotion').value || null;
+
             const data = {
-                game_id: $('gc-game-id').value.trim(),
+                game_id: $('gc-game-id').value,
                 level: parseInt($('gc-level').value),
                 content_type: $('gc-content-type').value,
                 question_text: $('gc-question-text').value,
-                correct_answer: $('gc-correct-answer').value || null,
-                emotion: $('gc-emotion').value || null,
+                correct_answer: emotionVal, // 👈 Tự động gán
+                emotion: emotionVal,
                 explanation: $('gc-explanation').value || null,
                 media_path: mediaPath
             };
-            
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            if (!uuidRegex.test(data.game_id)) {
-                throw new Error('Game ID phải là UUID hợp lệ (VD: 550e8400-e29b-41d4-a716-446655440000)');
-            }
-            
-            console.log('💾 Saving game content:', data);
-            
+
+            if (!data.game_id) throw new Error('Vui lòng chọn Game!');
+
             let res;
-            
             if (editingGameContentId) {
                 res = await fetchAPI(`${API_URL}/game-contents/${editingGameContentId}`, {
                     method: "PUT",
@@ -234,33 +254,32 @@ function setupGameContentEvents() {
 
 window.editGameContent = async (content_id) => {
     editingGameContentId = content_id;
-    
+
     try {
         const res = await fetchAPI(`${API_URL}/game-contents/${content_id}`);
-        
+
         if (!res.ok) {
             throw new Error('Không tìm thấy nội dung');
         }
-        
+
         const data = await res.json();
         const content = data.data;
-        
-        console.log('📝 Editing content:', content);
-        
+
         $('game-content-modal-title').textContent = '✏️ Chỉnh sửa Nội dung Game';
-        
+
+        // Populate fields
         $('gc-game-id').value = content.game_id;
-        $('gc-game-id').disabled = false;
-        
+        $('gc-game-id').disabled = false; // Có thể disable nếu không muốn cho đổi game
+
         $('gc-level').value = content.level;
         $('gc-content-type').value = content.content_type;
         $('gc-emotion').value = content.emotion || '';
         $('gc-question-text').value = content.question_text;
-        $('gc-correct-answer').value = content.correct_answer || '';
+        // Bỏ correct_answer field vì nó tự động theo emotion
         $('gc-explanation').value = content.explanation || '';
-        
+
         openModal('game-content-modal');
-        
+
     } catch (err) {
         console.error('❌ Edit error:', err);
         showNotification(`❌ ${err.message}`, 'error');
