@@ -207,7 +207,7 @@
                         <thead>
                             <tr>
                                 <th>Content ID</th>
-                                <th>Game ID</th>
+                                <th>Game</th>
                                 <th>Level</th>
                                 <th>Loại</th>
                                 <th>Câu hỏi</th>
@@ -497,14 +497,18 @@
             <span class="close" id="close-game-content-modal">×</span>
             <h2 id="game-content-modal-title">➕ Thêm Nội dung Game</h2>
             <form id="game-content-form">
+                <!-- NEW: Game Selection Dropdown -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="gc-game-select">Chọn Game *</label>
+                    <select id="gc-game-select" required style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">-- Chọn game --</option>
+                    </select>
+                </div>
+
+                <!-- Hidden Game ID Field (auto-filled) -->
+                <input type="hidden" id="gc-game-id" />
+
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="gc-game-id">Game ID (Auto-generated) *</label>
-                        <input type="text" id="gc-game-id" required readonly style="background: #f0f0f0; cursor: not-allowed;">
-                        <small style="color: #7f8c8d; display: block; margin-top: 5px;">
-                            💡 Game ID được tạo tự động và không thể chỉnh sửa
-                        </small>
-                    </div>
                     <div class="form-group">
                         <label for="gc-level">Level (1-3) *</label>
                         <select id="gc-level" required>
@@ -514,9 +518,6 @@
                             <option value="3">Level 3 - Khó</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
                         <label for="gc-content-type">Loại nội dung *</label>
                         <select id="gc-content-type" required>
@@ -526,6 +527,9 @@
                             <option value="audio">🔊 Audio</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label for="gc-emotion">Cảm xúc</label>
                         <select id="gc-emotion">

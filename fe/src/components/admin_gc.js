@@ -3,20 +3,51 @@ import { API_URL, $, fetchAPI, openModal, closeModal, showNotification, getEmoti
 let currentGameContents = [];
 let editingGameContentId = null;
 let currentMediaFile = null;
-let currentFilters = {}; // Lưu filters hiện tại
+let currentFilters = {};
+let availableGames = []; // Lưu danh sách games từ API
 
-// Generate UUID v4
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
+// Load danh sách games từ API
+async function loadAvailableGames() {
+    try {
+        console.log('📡 Loading available games...');
+        const res = await fetchAPI(`${API_URL}/games?skip=0&limit=100`);
+        
+        if (!res.ok) {
+            throw new Error('Không thể tải danh sách games');
+        }
+        
+        const data = await res.json();
+        availableGames = data.data?.games || [];
+        
+        console.log(`✅ Loaded ${availableGames.length} games:`, availableGames);
+        
+        // Populate game select dropdown
+        populateGameSelect();
+        
+    } catch (err) {
+        console.error("❌ Load games error:", err);
+        showNotification(`Lỗi tải danh sách games: ${err.message}`, 'error');
+    }
+}
+
+// Populate game select dropdown
+function populateGameSelect() {
+    const selectElement = $('gc-game-select');
+    if (!selectElement) return;
+    
+    selectElement.innerHTML = '<option value="">-- Chọn game --</option>';
+    
+    availableGames.forEach(game => {
+        const option = document.createElement('option');
+        option.value = game.game_id;
+        option.textContent = `${game.name} (Level ${game.level})`;
+        option.dataset.gameType = game.game_type;
+        selectElement.appendChild(option);
     });
 }
 
 async function loadGameContents(filters = {}) {
     try {
-        // Lưu filters để dùng cho search
         currentFilters = filters;
         
         let url = `${API_URL}/game-contents?skip=0&limit=100`;
@@ -41,7 +72,6 @@ async function loadGameContents(filters = {}) {
         
         console.log(`✅ Loaded ${currentGameContents.length} game contents`);
         
-        // Áp dụng search nếu có
         const searchTerm = $('search-game-contents')?.value?.trim() || '';
         if (searchTerm) {
             filterGameContents(searchTerm);
@@ -80,10 +110,17 @@ function renderGameContentsTable(contents) {
         return;
     }
 
-    tbody.innerHTML = contents.map(content => `
+    tbody.innerHTML = contents.map(content => {
+        // Tìm tên game từ game_id
+        const game = availableGames.find(g => g.game_id === content.game_id);
+        const gameName = game ? game.name : content.game_id.substring(0, 8) + '...';
+        
+        return `
         <tr>
             <td title="${content.content_id}">${content.content_id.substring(0, 8)}...</td>
-            <td title="${content.game_id}">${content.game_id.substring(0, 8)}...</td>
+            <td title="${content.game_id}">
+                <span class="badge badge-primary">${gameName}</span>
+            </td>
             <td><span class="badge badge-info">Level ${content.level}</span></td>
             <td><span class="badge badge-secondary">${content.content_type}</span></td>
             <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(content.question_text)}">
@@ -96,7 +133,8 @@ function renderGameContentsTable(contents) {
                 <button class="btn btn-danger" onclick="window.deleteGameContent('${content.content_id}')" title="Xóa">🗑️</button>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function filterGameContents(searchTerm = '') {
@@ -121,27 +159,26 @@ function filterGameContents(searchTerm = '') {
     
     renderGameContentsTable(filtered);
     
-    // Update count
     if ($('total-game-contents')) {
         $('total-game-contents').textContent = filtered.length;
     }
 }
 
 function resetFilters() {
-    // Reset filter inputs
     if ($('filter-game-id')) $('filter-game-id').value = '';
     if ($('filter-level')) $('filter-level').value = '';
     if ($('filter-emotion')) $('filter-emotion').value = '';
     if ($('search-game-contents')) $('search-game-contents').value = '';
     
-    // Clear current filters
     currentFilters = {};
     
-    // Reload all data
     loadGameContents();
 }
 
 function setupGameContentEvents() {
+    // Load games khi khởi tạo
+    loadAvailableGames();
+    
     $('add-game-content-btn')?.addEventListener('click', () => {
         editingGameContentId = null;
         $('game-content-modal-title').textContent = '➕ Thêm Nội dung Game';
@@ -149,11 +186,33 @@ function setupGameContentEvents() {
         currentMediaFile = null;
         $('gc-media-preview').style.display = 'none';
         
-        // Auto-generate game_id cho nội dung mới
-        $('gc-game-id').value = generateUUID();
-        $('gc-game-id').disabled = true; // Không cho chỉnh sửa
+        // Reset game select
+        if ($('gc-game-select')) {
+            $('gc-game-select').value = '';
+            $('gc-game-select').disabled = false;
+        }
+        
+        // Ẩn game_id input (sẽ được set tự động khi chọn game)
+        if ($('gc-game-id')) {
+            $('gc-game-id').value = '';
+        }
         
         openModal('game-content-modal');
+    });
+
+    // Khi chọn game, set game_id tương ứng
+    $('gc-game-select')?.addEventListener('change', (e) => {
+        const selectedGameId = e.target.value;
+        if ($('gc-game-id')) {
+            $('gc-game-id').value = selectedGameId;
+        }
+        
+        // Log để debug
+        console.log('✅ Selected game:', selectedGameId);
+        const selectedGame = availableGames.find(g => g.game_id === selectedGameId);
+        if (selectedGame) {
+            console.log('📝 Game details:', selectedGame);
+        }
     });
 
     // Apply filters button
@@ -184,7 +243,7 @@ function setupGameContentEvents() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             filterGameContents(e.target.value);
-        }, 300); // Debounce 300ms
+        }, 300);
     });
 
     $('gc-media-file')?.addEventListener('change', (e) => {
@@ -231,6 +290,18 @@ function setupGameContentEvents() {
         submitBtn.textContent = '⏳ Đang xử lý...';
         
         try {
+            // Validate game selection
+            const gameId = $('gc-game-id')?.value?.trim();
+            if (!gameId) {
+                throw new Error('Vui lòng chọn game trước khi lưu!');
+            }
+            
+            // Validate UUID format
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(gameId)) {
+                throw new Error('Game ID không hợp lệ. Vui lòng chọn lại game.');
+            }
+            
             let mediaPath = null;
             
             if (currentMediaFile) {
@@ -258,7 +329,7 @@ function setupGameContentEvents() {
             }
             
             const data = {
-                game_id: $('gc-game-id').value.trim(),
+                game_id: gameId,
                 level: parseInt($('gc-level').value),
                 content_type: $('gc-content-type').value,
                 question_text: $('gc-question-text').value,
@@ -267,11 +338,6 @@ function setupGameContentEvents() {
                 explanation: $('gc-explanation').value || null,
                 media_path: mediaPath
             };
-            
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            if (!uuidRegex.test(data.game_id)) {
-                throw new Error('Game ID phải là UUID hợp lệ (VD: 550e8400-e29b-41d4-a716-446655440000)');
-            }
             
             console.log('💾 Saving game content:', data);
             
@@ -299,7 +365,6 @@ function setupGameContentEvents() {
             showNotification("✔ Thành công!", "success");
             closeModal("game-content-modal");
             
-            // Reload với filters hiện tại
             loadGameContents(currentFilters);
 
         } catch (err) {
@@ -331,9 +396,14 @@ window.editGameContent = async (content_id) => {
         
         $('game-content-modal-title').textContent = '✏️ Chỉnh sửa Nội dung Game';
         
-        // Game ID không được chỉnh sửa
+        // Set game select và disable (không cho đổi game khi edit)
+        if ($('gc-game-select')) {
+            $('gc-game-select').value = content.game_id;
+            $('gc-game-select').disabled = true; // Không cho chỉnh sửa game
+        }
+        
+        // Set game_id
         $('gc-game-id').value = content.game_id;
-        $('gc-game-id').disabled = true;
         
         $('gc-level').value = content.level;
         $('gc-content-type').value = content.content_type;
@@ -364,7 +434,6 @@ window.deleteGameContent = async (content_id) => {
 
         showNotification("✅ Đã xóa nội dung!", "success");
         
-        // Reload với filters hiện tại
         loadGameContents(currentFilters);
 
     } catch (err) {

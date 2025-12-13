@@ -9,6 +9,7 @@ from app.repository.questions_repo import QuestionsRepository
 from app.repository.game_contents_repo import GameContentsRepository as GameContentRepo
 from app.repository.report_repo import ReportRepository  # ✅ ADDED
 from app.models.analytics import Report as ReportModel  # ✅ ADDED
+from app.repository.games_repo import GamesRepository
 from app.database import get_db
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
@@ -206,6 +207,84 @@ async def search_users(
     
     return result
 
+# ==================== ✅ GAMES MANAGEMENT ====================
+
+@router.get("/games")
+async def list_games(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    """
+    Lấy danh sách tất cả games
+    - Dùng cho dropdown trong Game Contents management
+    - Return: game_id, name, game_type, level
+    """
+    try:
+        game_repo = GamesRepository(db)
+        games = game_repo.get_all()
+        
+        games_data = []
+        for game in games:
+            games_data.append({
+                "game_id": str(game.game_id),
+                "name": game.name,
+                "game_type": game.game_type,
+                "level": game.level,
+                "difficulty_level": game.difficulty_level,
+                "max_errors": game.max_errors,
+                "level_threshold": game.level_threshold,
+                "time_limit": game.time_limit
+            })
+        
+        return {
+            "status": "success",
+            "message": f"Đã tải {len(games_data)} games",
+            "data": {
+                "games": games_data,
+                "total": len(games_data)
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ List games error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, detail=f"Lỗi lấy danh sách games: {str(e)}")
+
+@router.get("/games/{game_id}")
+async def get_game_detail(
+    game_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Lấy thông tin chi tiết của một game"""
+    try:
+        game_repo = GamesRepository(db)
+        game = game_repo.get_game_by_id(game_id)
+        
+        if not game:
+            raise HTTPException(status_code=404, detail="Game không tồn tại")
+        
+        return {
+            "status": "success",
+            "data": {
+                "game_id": str(game.game_id),
+                "name": game.name,
+                "game_type": game.game_type,
+                "level": game.level,
+                "difficulty_level": game.difficulty_level,
+                "max_errors": game.max_errors,
+                "level_threshold": game.level_threshold,
+                "time_limit": game.time_limit
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Get game detail error: {e}")
+        raise HTTPException(500, detail=f"Lỗi lấy chi tiết game: {str(e)}")
+    
 # ==================== GAME CONTENT MANAGEMENT ====================
 
 @router.get("/game-contents")
