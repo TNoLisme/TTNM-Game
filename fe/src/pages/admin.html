@@ -115,12 +115,13 @@
                 </div>
                 <div class="filters">
                     <input type="text" id="search-users" placeholder="🔍 Tìm kiếm user theo tên ..." class="search-input" />
-                    <button class="btn btn-secondary" id="search-users-btn">Tìm kiếm</button>
+                    
                     <select id="filter-role" class="filter-select">
                         <option value="">Tất cả vai trò</option>
                         <option value="admin">Admin</option>
                         <option value="child">Child</option>
                     </select>
+                    <button class="btn btn-secondary" id="search-users-btn">Tìm kiếm</button>
                 </div>
                 <div class="table-container">
                     <table class="data-table" id="users-table">
@@ -418,12 +419,168 @@
         </div>
     </div>
 
-    <!-- Report Modal (Giữ nguyên) -->
+    <section id="reports-section" class="content-section">
+        <div class="section-header">
+            <h1>📋 Quản lý Reports</h1>
+            <button class="btn btn-secondary" id="refresh-reports-btn">
+                <span>🔄</span> Làm mới
+            </button>
+        </div>
+    
+        <!-- Statistics Cards -->
+        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 30px;">
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h3 id="weekly-reports-count">0</h3>
+                    <p>Báo cáo tuần</p>
+                    <small id="weekly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
+                        <span class="trend-icon">↗️</span> +0%
+                    </small>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📆</div>
+                <div class="stat-info">
+                    <h3 id="monthly-reports-count">0</h3>
+                    <p>Báo cáo tháng</p>
+                    <small id="monthly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
+                        <span class="trend-icon">↗️</span> +0%
+                    </small>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <h3 id="total-reports-count">0</h3>
+                    <p>Tổng báo cáo</p>
+                    <small style="font-size: 12px; display: block; margin-top: 5px; color: #7f8c8d;">
+                        Tất cả thời gian
+                    </small>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Filters -->
+        <div class="filters" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+            <input type="text" id="search-reports" placeholder="🔍 Tìm kiếm theo tên trẻ, email..." class="search-input"
+                style="flex: 1; min-width: 250px;" />
+            <select id="filter-report-period" class="filter-select" style="width: 150px;">
+                <option value="">Tất cả chu kỳ</option>
+                <option value="weekly">📅 Tuần</option>
+                <option value="monthly">📆 Tháng</option>
+            </select>
+            <button class="btn btn-secondary" id="reset-reports-filter-btn">
+                <span>🔄</span> Xóa bộ lọc
+            </button>
+        </div>
+    
+        <!-- Reports Table -->
+        <div class="table-container">
+            <table class="data-table" id="reports-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Report ID</th>
+                        <th style="width: 180px;">Trẻ</th>
+                        <th style="width: 100px;">Chu kỳ</th>
+                        <th style="width: 200px;">Tóm tắt</th>
+                        <th style="width: 100px;">Thống kê</th>
+                        <th style="width: 150px;">Ngày tạo</th>
+                        <th style="width: 140px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-tbody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px;">
+                            <div class="loading-spinner">⏳ Đang tải dữ liệu...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Pagination -->
+        <div class="pagination" id="reports-pagination" style="display: none;">
+            <button class="btn btn-secondary" id="reports-prev-page">← Trước</button>
+            <span id="reports-page-info">Trang 1 / 1</span>
+            <button class="btn btn-secondary" id="reports-next-page">Sau →</button>
+        </div>
+    </section>
+    </main>
+    </div>
+    
+    <!-- Report Detail Modal -->
     <div id="report-modal" class="modal">
-        <div class="modal-content large"><span class="close" id="close-report-modal">×</span>
-            <h2>Chi tiết báo cáo</h2>
-            <div class="report-details-container">...</div>
-            <div class="form-actions"><button class="btn btn-secondary" id="close-report-detail-btn">Đóng</button></div>
+        <div class="modal-content large">
+            <span class="close" id="close-report-modal">×</span>
+            <h2>📋 Chi tiết báo cáo</h2>
+        
+            <div class="report-details-container">
+                <!-- Header Info -->
+                <div class="report-header" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <strong>👶 Trẻ em:</strong>
+                            <p id="report-detail-child-name" style="margin: 5px 0;">-</p>
+                        </div>
+                        <div>
+                            <strong>📧 Email:</strong>
+                            <p id="report-detail-child-email" style="margin: 5px 0;">-</p>
+                        </div>
+                        <div>
+                            <strong>📅 Loại báo cáo:</strong>
+                            <p id="report-detail-period" style="margin: 5px 0;">-</p>
+                        </div>
+                        <div>
+                            <strong>📆 Ngày tạo:</strong>
+                            <p id="report-detail-sent-at" style="margin: 5px 0;">-</p>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Summary -->
+                <div class="report-summary" style="margin-bottom: 20px;">
+                    <h3>📝 Tóm tắt</h3>
+                    <p id="report-detail-summary"
+                        style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 1.6;">
+                        Đang tải...
+                    </p>
+                </div>
+        
+                <!-- Statistics -->
+                <div class="report-stats">
+                    <h3>📊 Thống kê chi tiết</h3>
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div class="stat-item"
+                            style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #1976d2;" id="report-detail-sessions">0
+                            </div>
+                            <div style="color: #666; margin-top: 5px;">Phiên chơi</div>
+                        </div>
+                        <div class="stat-item"
+                            style="background: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #7b1fa2;" id="report-detail-playtime">0
+                            </div>
+                            <div style="color: #666; margin-top: 5px;">Phút chơi</div>
+                        </div>
+                        <div class="stat-item"
+                            style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #388e3c;" id="report-detail-score">0
+                            </div>
+                            <div style="color: #666; margin-top: 5px;">Điểm TB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="button" class="btn btn-primary" id="resend-report-btn" data-report-id="">
+                    🔄 Gửi lại báo cáo
+                </button>
+                <button type="button" class="btn btn-secondary" id="close-report-detail-btn">
+                    ❌ Đóng
+                </button>
+            </div>
         </div>
     </div>
 

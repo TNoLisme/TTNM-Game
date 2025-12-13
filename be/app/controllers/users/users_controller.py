@@ -141,7 +141,7 @@ async def update_all_in_one(payload: dict = Body(...), db=Depends(get_db)):
     if "phone_number" in update and update["phone_number"]:
         child.phone_number = update["phone_number"].strip()
 
-    user_repo.save_user(user)
+    user_repo.save(user)
     child_repo.save(child)
     db.commit()
 
