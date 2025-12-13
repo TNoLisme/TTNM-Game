@@ -230,9 +230,6 @@ function renderReportsTable(reports) {
                     <button class="btn-action btn-view" onclick="window.viewReportDetails('${report.report_id}')" title="Xem chi tiết">
                         👁️ Xem
                     </button>
-                    <button class="btn-action btn-resend" onclick="window.resendReport('${report.report_id}')" title="Gửi lại">
-                        🔄 Gửi lại
-                    </button>
                 </div>
             </td>
         </tr>
