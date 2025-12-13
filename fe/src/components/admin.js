@@ -81,22 +81,14 @@ function calculateAge(dateOfBirth) {
 
 function getEmotionEmoji(emotion) {
     const emojis = {
-        'vui': '😊',
-        'vui vẻ': '😊',
-        'happy': '😊',
-        'buồn': '😢',
-        'buồn bã': '😢',
-        'sad': '😢',
-        'tức giận': '😠',
-        'angry': '😠',
-        'sợ hãi': '😨',
-        'fear': '😨',
-        'ngạc nhiên': '😲',
-        'surprise': '😲',
-        'ghê tởm': '🤢',
-        'disgust': '🤢'
+        'Vui vẻ': '😊',
+        'Buồn bã': '😢',
+        'Tức giận': '😠',
+        'Sợ hãi': '😨',
+        'Ngạc nhiên': '😲',
+        'Ghê tởm': '🤢'
     };
-    return emojis[emotion?.toLowerCase()] || '❓';
+    return emojis[emotion] || '❓';
 }
 
 // ==========================================

@@ -88,7 +88,7 @@ body {
    SIDEBAR
    ========================================== */
 .sidebar {
-    width: 260px;
+    width: 200px;
     background: white;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
     padding: 20px 0;
@@ -1349,7 +1349,7 @@ body {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 668px) {
     .admin-container {
         flex-direction: column;
     }
@@ -1370,7 +1370,7 @@ body {
         flex-direction: column;
         gap: 5px;
         padding: 10px 15px;
-        min-width: 80px;
+        min-width: 50px;
     }
 
     .nav-item.active {

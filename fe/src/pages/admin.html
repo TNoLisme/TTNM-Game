@@ -106,18 +106,26 @@
             <section id="users-section" class="content-section">
                 <div class="section-header">
                     <h1>👥 Quản lý Users</h1>
-                    <button class="btn btn-primary" id="add-user-btn">
-                        <span>➕</span> Thêm User
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" id="refresh-users-btn">
+                            <span>🔄</span> Làm mới
+                        </button>
+                        <button class="btn btn-primary" id="add-user-btn">
+                            <span>➕</span> Thêm User
+                        </button>
+                    </div>
                 </div>
 
                 <div class="filters">
                     <input type="text" id="search-users" placeholder="🔍 Tìm kiếm user..." class="search-input" />
-                    <select id="filter-role" class="filter-select">
+                    <select id="filter-user-role" class="filter-select">
                         <option value="">Tất cả vai trò</option>
                         <option value="admin">Admin</option>
                         <option value="child">Child</option>
                     </select>
+                    <button class="btn btn-secondary" id="reset-users-filter-btn">
+                        <span>🔄</span> Xóa bộ lọc
+                    </button>
                 </div>
 
                 <div class="table-container">
@@ -173,19 +181,25 @@
                     </button>
                 </div>
 
-                <div class="filters">
-                    <input type="text" id="filter-game-id" placeholder="🎮 Game ID..." class="search-input" />
-                    <input type="number" id="filter-level" placeholder="📊 Level..." class="search-input" style="width: 150px;" />
-                    <select id="filter-emotion" class="filter-select">
+                <div class="filters" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <input type="text" id="search-game-contents" placeholder="🔍 Tìm kiếm..." class="search-input" style="flex: 1; min-width: 200px;" />
+                    <select id="filter-level" class="filter-select" style="width: 120px;">
+                        <option value="">Tất cả level</option>
+                        <option value="1">Level 1</option>
+                        <option value="2">Level 2</option>
+                        <option value="3">Level 3</option>
+                    </select>
+                    <select id="filter-emotion" class="filter-select" style="width: 150px;">
                         <option value="">Tất cả cảm xúc</option>
-                        <option value="happy">😊 Vui vẻ</option>
-                        <option value="sad">😢 Buồn bã</option>
-                        <option value="angry">😠 Tức giận</option>
-                        <option value="fear">😨 Sợ hãi</option>
-                        <option value="surprise">😲 Ngạc nhiên</option>
-                        <option value="disgust">🤢 Ghê tởm</option>
+                        <option value="Vui vẻ">😊 Vui vẻ</option>
+                        <option value="Buồn bã">😢 Buồn bã</option>
+                        <option value="Tức giận">😠 Tức giận</option>
+                        <option value="Sợ hãi">😨 Sợ hãi</option>
+                        <option value="Ngạc nhiên">😲 Ngạc nhiên</option>
+                        <option value="Ghê tởm">🤢 Ghê tởm</option>
                     </select>
                     <button class="btn btn-secondary" id="apply-filters-btn">🔍 Lọc</button>
+                    <button class="btn btn-secondary" id="reset-filters-btn">🔄 Xóa lọc</button>
                 </div>
 
                 <div class="table-container">
@@ -213,7 +227,7 @@
                 </div>
             </section>
 
-            <!-- ✅ FIXED: Reports Management Section -->
+            <!-- Reports Management Section -->
             <section id="reports-section" class="content-section">
                 <div class="section-header">
                     <h1>📋 Quản lý Reports</h1>
@@ -257,27 +271,30 @@
                 </div>
 
                 <!-- Filters -->
-                <div class="filters">
-                    <input type="text" id="search-reports" placeholder="🔍 Tìm kiếm theo tên trẻ..." class="search-input" />
-                    <select id="filter-report-period" class="filter-select">
+                <div class="filters" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <input type="text" id="search-reports" placeholder="🔍 Tìm kiếm theo tên trẻ, email..." class="search-input" style="flex: 1; min-width: 250px;" />
+                    <select id="filter-report-period" class="filter-select" style="width: 150px;">
                         <option value="">Tất cả chu kỳ</option>
                         <option value="weekly">📅 Tuần</option>
                         <option value="monthly">📆 Tháng</option>
                     </select>
+                    <button class="btn btn-secondary" id="reset-reports-filter-btn">
+                        <span>🔄</span> Xóa bộ lọc
+                    </button>
                 </div>
 
-                <!-- ✅ FIXED: Reports Table - Đúng với schema database -->
+                <!-- Reports Table -->
                 <div class="table-container">
                     <table class="data-table" id="reports-table">
                         <thead>
                             <tr>
-                                <th style="width: 180px;">Report ID</th>
-                                <th style="width: 200px;">Trẻ</th>
+                                <th style="width: 100px;">Report ID</th>
+                                <th style="width: 180px;">Trẻ</th>
                                 <th style="width: 100px;">Chu kỳ</th>
-                                <th style="width: 350px;">Tóm tắt</th>
-                                <th style="width: 200px;">Thống kê</th>
-                                <th style="width: 200px;">Ngày tạo</th>
-                                <th style="width: 150px;">Thao tác</th>
+                                <th style="min-width: 200px;">Tóm tắt</th>
+                                <th style="width: 180px;">Thống kê</th>
+                                <th style="width: 150px;">Ngày tạo</th>
+                                <th style="width: 140px;">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="reports-tbody">
@@ -300,6 +317,7 @@
         </main>
     </div>
 
+    <!-- Report Detail Modal -->
     <div id="report-modal" class="modal">
         <div class="modal-content large">
             <span class="close" id="close-report-modal">×</span>
@@ -318,11 +336,11 @@
                             <p id="report-detail-child-email" style="margin: 5px 0;">-</p>
                         </div>
                         <div>
-                            <strong>📅 Chu kỳ:</strong>
+                            <strong>📅 Loại báo cáo:</strong>
                             <p id="report-detail-period" style="margin: 5px 0;">-</p>
                         </div>
                         <div>
-                            <strong>📆 Ngày gửi:</strong>
+                            <strong>📆 Ngày tạo:</strong>
                             <p id="report-detail-sent-at" style="margin: 5px 0;">-</p>
                         </div>
                     </div>
@@ -357,8 +375,8 @@
             </div>
 
             <div class="form-actions" style="margin-top: 20px;">
-                <button type="button" class="btn btn-primary" id="resend-report-btn">
-                    📧 Gửi lại báo cáo
+                <button type="button" class="btn btn-primary" id="resend-report-btn" data-report-id="">
+                    🔄 Gửi lại báo cáo
                 </button>
                 <button type="button" class="btn btn-secondary" id="close-report-detail-btn">
                     ❌ Đóng
@@ -367,7 +385,7 @@
         </div>
     </div>
 
-    <!-- Existing Modals (User, Video, Game Content) remain unchanged -->
+    <!-- User Modal -->
     <div id="user-modal" class="modal">
         <div class="modal-content">
             <span class="close" id="close-user-modal">×</span>
@@ -435,6 +453,7 @@
         </div>
     </div>
 
+    <!-- Video Modal -->
     <div id="video-modal" class="modal">
         <div class="modal-content large">
             <span class="close" id="close-video-modal">×</span>
@@ -472,6 +491,7 @@
         </div>
     </div>
 
+    <!-- Game Content Modal -->
     <div id="game-content-modal" class="modal">
         <div class="modal-content large">
             <span class="close" id="close-game-content-modal">×</span>
@@ -479,15 +499,20 @@
             <form id="game-content-form">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="gc-game-id">Game ID *</label>
-                        <input type="text" id="gc-game-id" required placeholder="Nhập UUID của game">
+                        <label for="gc-game-id">Game ID (Auto-generated) *</label>
+                        <input type="text" id="gc-game-id" required readonly style="background: #f0f0f0; cursor: not-allowed;">
                         <small style="color: #7f8c8d; display: block; margin-top: 5px;">
-                            💡 VD: 550e8400-e29b-41d4-a716-446655440000
+                            💡 Game ID được tạo tự động và không thể chỉnh sửa
                         </small>
                     </div>
                     <div class="form-group">
-                        <label for="gc-level">Level *</label>
-                        <input type="number" id="gc-level" min="1" required>
+                        <label for="gc-level">Level (1-3) *</label>
+                        <select id="gc-level" required>
+                            <option value="">-- Chọn level --</option>
+                            <option value="1">Level 1 - Dễ</option>
+                            <option value="2">Level 2 - Trung bình</option>
+                            <option value="3">Level 3 - Khó</option>
+                        </select>
                     </div>
                 </div>
 
@@ -505,12 +530,12 @@
                         <label for="gc-emotion">Cảm xúc</label>
                         <select id="gc-emotion">
                             <option value="">-- Chọn cảm xúc --</option>
-                            <option value="happy">😊 Vui vẻ</option>
-                            <option value="sad">😢 Buồn bã</option>
-                            <option value="angry">😠 Tức giận</option>
-                            <option value="fear">😨 Sợ hãi</option>
-                            <option value="surprise">😲 Ngạc nhiên</option>
-                            <option value="disgust">🤢 Ghê tởm</option>
+                            <option value="Vui vẻ">😊 Vui vẻ</option>
+                            <option value="Buồn bã">😢 Buồn bã</option>
+                            <option value="Tức giận">😠 Tức giận</option>
+                            <option value="Sợ hãi">😨 Sợ hãi</option>
+                            <option value="Ngạc nhiên">😲 Ngạc nhiên</option>
+                            <option value="Ghê tởm">🤢 Ghê tởm</option>
                         </select>
                     </div>
                 </div>
@@ -521,10 +546,6 @@
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="gc-correct-answer">Đáp án đúng</label>
-                        <input type="text" id="gc-correct-answer">
-                    </div>
                     <div class="form-group">
                         <label for="gc-media-file">File media</label>
                         <input type="file" id="gc-media-file" accept="image/*,video/*,audio/*">

@@ -16,7 +16,11 @@ async function loadUsers() {
 
         const data = await res.json();
         currentUsers = data.data.users || [];
-        renderUsersTable(currentUsers);
+        
+        console.log(`✅ Loaded ${currentUsers.length} users`);
+        
+        // Áp dụng filters hiện tại
+        applyCurrentFilters();
         
         if ($('total-users')) {
             $('total-users').textContent = currentUsers.length;
@@ -36,19 +40,24 @@ function renderUsersTable(users) {
         return;
     }
 
-    if (!users.length) {
+    if (!users || users.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align:center">Không có dữ liệu</td>
+                <td colspan="8" style="text-align:center; padding: 30px;">
+                    <div style="color: #999;">
+                        <i class="fas fa-user-slash" style="font-size: 48px; margin-bottom: 10px;"></i>
+                        <p>Không tìm thấy user nào</p>
+                    </div>
+                </td>
             </tr>`;
         return;
     }
 
     tbody.innerHTML = users.map(user => `
         <tr>
-            <td>${user.user_id.substring(0, 8)}...</td>
-            <td><strong>${user.username}</strong></td>
-            <td>${user.email}</td>
+            <td title="${user.user_id}">${user.user_id.substring(0, 8)}...</td>
+            <td><strong>${escapeHtml(user.username)}</strong></td>
+            <td>${escapeHtml(user.email)}</td>
             <td><span class="badge badge-${user.role}">${user.role}</span></td>
             <td>${user.age || 'N/A'}</td>
             <td>${user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A'}</td>
@@ -56,11 +65,58 @@ function renderUsersTable(users) {
                 <span class="badge badge-active">Hoạt động</span>
             </td>
             <td class="actions">
-                <button class="btn btn-warning" onclick="window.editUser('${user.user_id}')">✏️</button>
-                <button class="btn btn-danger" onclick="window.deleteUser('${user.user_id}')">🗑️</button>
+                <button class="btn btn-warning" onclick="window.editUser('${user.user_id}')" title="Chỉnh sửa">✏️</button>
+                <button class="btn btn-danger" onclick="window.deleteUser('${user.user_id}')" title="Xóa">🗑️</button>
             </td>
         </tr>
     `).join('');
+}
+
+function applyCurrentFilters() {
+    const searchTerm = $('search-users')?.value?.trim() || '';
+    const roleFilter = $('filter-user-role')?.value || '';
+    
+    console.log('🔍 Applying filters:', { searchTerm, roleFilter });
+    
+    let filtered = [...currentUsers];
+    
+    // Apply search
+    if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(user => {
+            return (
+                user.username?.toLowerCase().includes(term) ||
+                user.email?.toLowerCase().includes(term) ||
+                user.name?.toLowerCase().includes(term) ||
+                user.user_id?.toLowerCase().includes(term) ||
+                user.phone_number?.includes(term)
+            );
+        });
+    }
+    
+    // Apply role filter
+    if (roleFilter) {
+        filtered = filtered.filter(user => user.role === roleFilter);
+    }
+    
+    console.log(`✅ Filtered: ${filtered.length} / ${currentUsers.length} users`);
+    
+    renderUsersTable(filtered);
+}
+
+function resetFilters() {
+    // Clear search input
+    const searchInput = $('search-users');
+    if (searchInput) searchInput.value = '';
+    
+    // Clear role filter
+    const roleFilter = $('filter-user-role');
+    if (roleFilter) roleFilter.value = '';
+    
+    // Show all users
+    renderUsersTable(currentUsers);
+    
+    showNotification('Đã xóa bộ lọc', 'success');
 }
 
 function toggleChildFields(role) {
@@ -97,6 +153,31 @@ function setupUserEvents() {
         toggleChildFields('child');
         
         openModal('user-modal');
+    });
+
+    // Search với debounce
+    let searchTimeout;
+    $('search-users')?.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            applyCurrentFilters();
+        }, 300); // Debounce 300ms
+    });
+
+    // Role filter
+    $('filter-user-role')?.addEventListener('change', () => {
+        applyCurrentFilters();
+    });
+
+    // Reset filters button
+    $('reset-users-filter-btn')?.addEventListener('click', () => {
+        resetFilters();
+    });
+
+    // Refresh button
+    $('refresh-users-btn')?.addEventListener('click', async () => {
+        await loadUsers();
+        showNotification('Đã làm mới danh sách users', 'success');
     });
 
     $('user-role')?.addEventListener('change', (e) => {
@@ -304,5 +385,12 @@ window.deleteUser = async (id) => {
         showNotification(`❌ ${err.message}`, 'error');
     }
 };
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 export { loadUsers, setupUserEvents };
