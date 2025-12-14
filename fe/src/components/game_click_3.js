@@ -7,6 +7,19 @@ let questions = []; // Mảng câu hỏi BE trả về
 let localResults = []; // Mảng lưu kết quả để gửi lên /games/end-level
 let remainingQuestions = [];
 
+let gameInfo = null;
+let isEmotionMatchGame = false;
+
+function normalizeText(text) {
+  return (text || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d");
+}
+
 // ====== BIẾN GIỐNG LOGIC recognize_emotion ======
 let maxErrors = 1;
 let emotionErrors = {};
@@ -84,6 +97,36 @@ window.addEventListener("DOMContentLoaded", async () => {
     alert("Thiếu thông tin game hoặc level");
     window.location.href = "./select_game.html";
     return;
+  }
+
+  // 2.5. Lấy thông tin game để set tiêu đề/copy cho đúng game
+  try {
+    const gameRes = await fetch(`/games/${gameId}`);
+    if (gameRes.ok) {
+      gameInfo = await gameRes.json();
+      const normalizedName = normalizeText(gameInfo?.name);
+      isEmotionMatchGame =
+        normalizedName.includes("cam xuc dung cho") ||
+        (normalizedName.includes("cam xuc") && normalizedName.includes("dung cho")) ||
+        (normalizedName.includes("chon") && normalizedName.includes("cam xuc") && normalizedName.includes("tinh huong"));
+
+      if (gameInfo?.name) {
+        document.title = gameInfo.name;
+        const titleEl = document.querySelector(".game-title");
+        if (titleEl) {
+          titleEl.textContent = `${gameInfo.name} 🎭`;
+        }
+      }
+
+      if (isEmotionMatchGame) {
+        const hintTitle = document.querySelector('.hint-content h3');
+        if (hintTitle) hintTitle.textContent = '💡 Tình huống:';
+        const namesTitle = document.querySelector('.names-section h3');
+        if (namesTitle) namesTitle.textContent = '🎴 Kéo thẻ cảm xúc vào ô phía dưới mỗi khuôn mặt:';
+      }
+    }
+  } catch (e) {
+    // ignore
   }
 
   // 3. Gọi BE để START SESSION + LẤY DỮ LIỆU CÂU HỎI
@@ -245,7 +288,19 @@ function renderHints() {
   const hintsContainer = document.getElementById("hints-list");
   hintsContainer.innerHTML = gameState.characters
     .map((char, index) => {
-      const emo = char.emotion || "một cảm xúc nào đó";
+      const emo = char.emotion || char.name || "một cảm xúc nào đó";
+
+      if (isEmotionMatchGame) {
+        return `
+            <p>
+                ${index + 1}. 
+                Bạn nhỏ này đang cảm thấy 
+                "<strong>${emo}</strong>", 
+                hãy kéo thẻ cảm xúc phù hợp vào đúng khuôn mặt.
+            </p>
+        `;
+      }
+
       return `
             <p>
                 ${index + 1}. 
