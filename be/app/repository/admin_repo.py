@@ -82,5 +82,6 @@ class AdminRepository(BaseRepository[UserModel, UserDomain]):
         """Tìm kiếm users theo tên"""
         user_models = self.db_session.query(self.model_class)\
             .filter(self.model_class.name.ilike(f"%{name}%"))\
+            .order_by(self.model_class.name)\
             .offset(skip).limit(limit).all()
         return [self.mapper_class.to_domain(user) for user in user_models]

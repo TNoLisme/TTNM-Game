@@ -28,3 +28,4 @@ class Child(Base):
     progress = relationship("ChildProgress", back_populates="child")
     session_history = relationship("SessionHistory", back_populates="child")
     reports = relationship("Report", back_populates="child")
+    user = relationship("User", back_populates="child", foreign_keys=[user_id])

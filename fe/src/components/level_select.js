@@ -25,12 +25,12 @@ const GAME_CV_REQUEST_ID = '61f5e09e-eefa-44c1-86e1-87dfceac3b8e'.toLowerCase();
 
 function getGameHtmlFile(gameId) {
     const map = {
-        '3bcb2108-721c-4a15-a585-31f3084ed000': './recognize_emotion.html', // Chiếc hộp cảm xúc
-        '33ecafaa-ec7e-40d2-9c67-ed0a29ac0051': './game_click_2.html',      // Xưởng lắp ghép cảm xúc
-        '08bbffbf-d147-4556-bccb-b7621cafbf15': './game_click_3.html',      // Cảm xúc đúng chỗ
-        'aacaf79e-e15e-42a9-a3d1-a522720d919b': './game_click_4.html',      // Thám tử cảm xúc
-        'e05909f3-3dee-42a6-9a75-fd985b1bdf47': './gameCV.html',            // Câu chuyện trên khuôn mặt
-        '61f5e09e-eefa-44c1-86e1-87dfceac3b8e': './game_cv_2.html'          // thử thách cảm xúc
+        '6c2358b3-9720-446a-94a3-111edf1ce9e1': './recognize_emotion.html',
+        'd74bbd1c-8940-4e98-94cf-5d2f29ee57a8': './game_click_2.html',
+        'bc95c5d8-e01a-4895-96fa-ccae65a18dc2': './game_click_3.html',
+        '91c00bab-78bf-4a2c-8d75-ee0b787fec1e': './game_click_4.html',
+        'd9f34ee9-583c-453f-89ff-50f24aaa663b': './gameCV.html',
+        '1c7a0065-7652-4f1f-bdf4-fdcb07cd4fc9': './game_cv_2.html'
     };
     return map[gameId.toLowerCase()];
 }
