@@ -12,13 +12,22 @@ body {
     --cv-accent: #4facfe;
     --cv-deep: #0b3c7d;
     --cv-bg-gradient: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    --game-content-width: 1200px;
+    --question-box-height: 340px;
+    --answers-card-height: 260px;
 }
 
 .game-main-content {
-    max-width: 1200px;
+    max-width: var(--game-content-width);
     margin: 0 auto;
     padding: 0;
     font-family: 'Poppins', sans-serif;
+}
+
+.game-area-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .game-header {
@@ -50,6 +59,24 @@ body {
     display: flex;
     gap: 10px;
     align-items: center;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.stat-pill {
+    padding: 6px 14px;
+    background: rgba(25, 118, 210, 0.08);
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--cv-deep);
+    border: 1px solid rgba(25, 118, 210, 0.22);
+    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.28);
 }
 
 .back-btn {
@@ -97,6 +124,41 @@ body {
     box-shadow: 0 10px 22px rgba(148, 163, 184, 0.28);
 }
 
+.btn {
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--cv-accent) 0%, var(--cv-primary) 100%);
+    color: #f9fafb;
+}
+
+.btn-secondary {
+    background: #ffffff;
+    color: var(--cv-primary);
+    border: 2px solid rgba(25, 118, 210, 0.35);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--cv-deep);
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .action-btn {
     padding: 8px 14px;
     border: none;
@@ -111,42 +173,64 @@ body {
     font-weight: 600;
 }
 
-.action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.45);
-}
-
-.exit-btn {
-    background: linear-gradient(135deg, #fb7185 0%, #f97316 100%);
-}
-
-.exit-icon {
-    width: 20px;
-    height: 20px;
-}
-
-.game-area-grid {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 16px;
-}
-
 .question-box {
     background: rgba(255, 255, 255, 0.97);
     border-radius: 18px;
     border: 1px solid rgba(25, 118, 210, 0.18);
     padding: 16px 18px;
-    min-height: 0;
+    min-height: var(--question-box-height);
+    max-height: var(--question-box-height);
+    overflow: hidden;
 
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    text-align: center;
+    box-shadow: 0 14px 36px rgba(148, 163, 184, 0.35);
+}
+
+.question-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    box-shadow: 0 14px 36px rgba(148, 163, 184, 0.35);
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding-right: 6px;
 }
 
-/* === BỔ SUNG: STYLE CHO ẢNH CÂU HỎI === */
+.question-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.hint-row {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+}
+
+.hint-row #sound-btn {
+    justify-self: end;
+    white-space: nowrap;
+}
+
+.hint-text {
+    font-size: 0.95rem;
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.6;
+    min-width: 0;
+}
+
 .question-image {
     width: 100%;
     max-width: 100%;
@@ -167,15 +251,41 @@ body {
     white-space: pre-line;
 }
 
-.answer-area-grid {
+.answers-card {
     background: rgba(255, 255, 255, 0.97);
     border-radius: 18px;
     border: 1px solid rgba(25, 118, 210, 0.18);
     box-shadow: 0 14px 36px rgba(148, 163, 184, 0.35);
     padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: var(--answers-card-height);
+    max-height: var(--answers-card-height);
+    overflow: hidden;
+}
+
+.answers-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cv-deep);
+}
+
+.answers-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.controls-row {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    align-items: center;
 }
 
 .answer-option {

@@ -76,9 +76,8 @@ function initDetectiveGame() {
     elements = {
         progressLabel: document.getElementById('progress-label'),
         scoreLabel: document.getElementById('score-label'),
-        questionMedia: document.getElementById('question-media'),
-        questionText: document.getElementById('question-text'),
-        hintText: document.getElementById('hint-text'),
+        questionArea: document.getElementById('question-area'),
+        hintText: document.getElementById('hint-content'),
         hintBtn: document.getElementById('hint-btn'),
         soundBtn: document.getElementById('sound-btn'),
         submitBtn: document.getElementById('submit-answer-btn'),
@@ -90,9 +89,9 @@ function initDetectiveGame() {
         nextQuestionBtn: document.getElementById('next-question-btn'),
     };
 
-    elements.hintBtn.addEventListener('click', onHintClick);
-    elements.soundBtn.addEventListener('click', speakCurrentQuestion);
-    elements.nextQuestionBtn.addEventListener('click', onNextQuestion);
+    if (elements.hintBtn) elements.hintBtn.addEventListener('click', onHintClick);
+    if (elements.soundBtn) elements.soundBtn.addEventListener('click', speakCurrentQuestion);
+    if (elements.nextQuestionBtn) elements.nextQuestionBtn.addEventListener('click', onNextQuestion);
     if (elements.submitBtn) {
         elements.submitBtn.addEventListener('click', onSubmitAnswer);
     }
@@ -157,10 +156,17 @@ function loadQuestion(index) {
         elements.submitBtn.disabled = true;
     }
 
-    elements.questionMedia.innerHTML = '';
+    if (elements.questionArea) {
+        elements.questionArea.innerHTML = '';
+        const textEl = document.createElement('p');
+        textEl.className = 'question-text';
+        textEl.textContent = formatQuestionText(q.question_text);
+        elements.questionArea.appendChild(textEl);
+    }
 
-    elements.questionText.textContent = formatQuestionText(q.question_text);
-    elements.hintText.textContent = '';
+    if (elements.hintText) {
+        elements.hintText.textContent = '';
+    }
 
     elements.answers.forEach((btn, idx) => {
         const emo = EMOTION_CHOICES[idx];
@@ -177,8 +183,12 @@ function loadQuestion(index) {
         }
     });
 
-    elements.progressLabel.textContent = `Câu ${index + 1}/${questions.length}`;
-    elements.scoreLabel.textContent = `Điểm: ${score}`;
+    if (elements.progressLabel) {
+        elements.progressLabel.textContent = `Câu ${index + 1}/${questions.length}`;
+    }
+    if (elements.scoreLabel) {
+        elements.scoreLabel.textContent = `Điểm: ${score}`;
+    }
 }
 
 function normalizeEmotion(text) {
@@ -189,7 +199,9 @@ function onHintClick() {
     const q = questions[currentIndex];
     if (!q) return;
     usedHint = true;
-    elements.hintText.textContent = q.explanation || 'Hiện chưa có gợi ý cho câu này.';
+    if (elements.hintText) {
+        elements.hintText.textContent = q.explanation || 'Hiện chưa có gợi ý cho câu này.';
+    }
 }
 
 function speakCurrentQuestion() {

@@ -21,6 +21,7 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 /* Top back bar (reuse CV-style back button) */
@@ -74,10 +75,38 @@ body {
     flex-wrap: wrap;
 }
 
+.game-header {
+    align-items: flex-start;
+}
+
+.header-main {
+    max-width: 60%;
+}
+
+#game-name,
 h1 {
     color: var(--cv-deep);
     font-size: 2rem;
     font-weight: 700;
+}
+
+.subtitle {
+    color: rgba(11, 60, 125, 0.82);
+    font-size: 0.95rem;
+    margin-top: 4px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
 }
 
 .header-stats {
