@@ -262,7 +262,7 @@ body {
     gap: 12px;
     min-height: var(--answers-card-height);
     max-height: var(--answers-card-height);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .answers-title {
@@ -274,9 +274,11 @@ body {
 .answers-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 4px;
     flex: 1 1 auto;
     overflow-y: auto;
+    padding-top: 6px;
+    padding-bottom: 6px;
     padding-right: 6px;
 }
 
@@ -289,11 +291,10 @@ body {
 }
 
 .answer-option {
-    padding: 10px 14px;
-    font-size: 0.95rem;
+    padding: 5px 9px;
+    font-size: 0.8rem;
     font-weight: 600;
     line-height: 1.3;
-
     border: none;
     border-radius: 999px;
     background: linear-gradient(120deg, #e3f2fd, #bbdefb);
