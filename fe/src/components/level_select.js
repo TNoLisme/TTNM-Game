@@ -20,19 +20,54 @@ const EMOTION_OPTIONS = [
     { key: 'ghê tởm',    icon: '🤢', name: 'Ghê tởm' }
 ];
 
-// gameId trong DB của game "Thử thách cảm xúc" (game_cv_2)
-const GAME_CV_REQUEST_ID = '61f5e09e-eefa-44c1-86e1-87dfceac3b8e'.toLowerCase();
+function normalizeText(text) {
+    return (text || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd');
+}
 
-function getGameHtmlFile(gameId) {
+function resolveGameKey(gameInfo) {
+    const name = normalizeText(gameInfo?.name);
+    const type = (gameInfo?.game_type || '').toString();
+
+    // CV2: "Thử thách cảm xúc" (chọn cảm xúc thay vì chọn level)
+    if (name.includes('thu thach') && name.includes('cam xuc')) return 'game_cv_2';
+
+    // Game CV chuẩn
+    if (type === 'GameCV') return 'gameCV';
+
+    // Game Click
+    // "Cảm xúc đúng chỗ" (có thể DB đặt tên khác như "Chọn cảm xúc theo tình huống")
+    if (
+        name.includes('cam xuc dung cho') ||
+        (name.includes('cam xuc') && name.includes('dung cho')) ||
+        (name.includes('chon') && name.includes('cam xuc') && name.includes('tinh huong'))
+    ) {
+        return 'game_click_3';
+    }
+    if (name.includes('tham tu') && name.includes('cam xuc')) return 'game_click_4';
+    if (name.includes('ai la ai')) return 'game_click_3';
+
+    if (name.includes('xuong') && name.includes('cam xuc')) return 'game_click_2';
+    if (name.includes('chiec hop') && name.includes('cam xuc')) return 'recognize_emotion';
+
+    return null;
+}
+
+function getGameHtmlFileByKey(gameKey) {
     const map = {
-        '3bcb2108-721c-4a15-a585-31f3084ed000': './recognize_emotion.html', // Chiếc hộp cảm xúc
-        '33ecafaa-ec7e-40d2-9c67-ed0a29ac0051': './game_click_2.html',      // Xưởng lắp ghép cảm xúc
-        '08bbffbf-d147-4556-bccb-b7621cafbf15': './game_click_3.html',      // Cảm xúc đúng chỗ
-        'aacaf79e-e15e-42a9-a3d1-a522720d919b': './game_click_4.html',      // Thám tử cảm xúc
-        'e05909f3-3dee-42a6-9a75-fd985b1bdf47': './gameCV.html',            // Câu chuyện trên khuôn mặt
-        '61f5e09e-eefa-44c1-86e1-87dfceac3b8e': './game_cv_2.html'          // thử thách cảm xúc
+        recognize_emotion: './recognize_emotion.html',
+        game_click_2: './game_click_2.html',
+        game_click_3: './game_click_3.html',
+        game_click_4: './game_click_4.html',
+        gameCV: './gameCV.html',
+        game_cv_2: './game_cv_2.html'
     };
-    return map[gameId.toLowerCase()];
+    return map[gameKey] || null;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -41,13 +76,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const gameId = urlParams.get('gameId');
     const user = JSON.parse(localStorage.getItem('currentUser'));
 
-    const isCvRequestGame = gameId && gameId.toLowerCase() === GAME_CV_REQUEST_ID; // game_cv_2
+    let gameKey = null;
+    let isCvRequestGame = false;
 
     console.log('Level Select - gameId:', gameId, 'user:', user);
 
     if (!gameId || !user) {
-        alert('Thiếu thông tin game hoặc người dùng');
-        window.location.href = './select_game.html';
+        const goBack = () => {
+            window.location.href = './select_game.html';
+        };
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            window.egModal.alert('Thiếu thông tin game hoặc người dùng', 'Thiếu thông tin').then(goBack);
+        } else {
+            alert('Thiếu thông tin game hoặc người dùng');
+            goBack();
+        }
         return;
     }
 
@@ -64,6 +107,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!gameRes.ok) throw new Error('Không thể tải thông tin game');
         gameInfo = await gameRes.json();
 
+        gameKey = resolveGameKey(gameInfo);
+        isCvRequestGame = gameKey === 'game_cv_2';
+
+        console.log('[Level Select] gameInfo.name:', gameInfo?.name, '| game_type:', gameInfo?.game_type, '| gameKey:', gameKey);
+
         // Cập nhật tiêu đề theo tên game trong DB
         const headerTitle = document.querySelector('.header h1');
         if (headerTitle && gameInfo.name) headerTitle.textContent = `🎮 ${gameInfo.name} 🎮`;
@@ -78,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const subtitle = document.querySelector('.subtitle');
             if (subtitle) {
-                subtitle.textContent = 'Chọn một cảm xúc để luyện tập. Mức nước thể hiện điểm cao nhất con đạt được cho cảm xúc đó.';
+                subtitle.textContent = 'Chọn một cảm xúc để chơi';
             }
 
             // Game CV không dùng level, ẩn badge "Level đã mở"
@@ -106,6 +154,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 4. Render giao diện
     const levelGrid = document.getElementById('levelGrid');
     const unlockedCountElem = document.getElementById('unlockedCount');
+    const container = document.querySelector('.container');
+    const levelContainer = document.querySelector('.level-container');
+    const header = document.querySelector('.header');
 
     const startButton = document.getElementById('startButton');
     const selectedMessage = document.getElementById('selectedMessage');
@@ -116,6 +167,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Hàm tạo nút level (cho các game theo level thông thường)
     function renderLevels() {
+        if (levelGrid) {
+            levelGrid.classList.remove('emotion-grid');
+        }
         levelGrid.innerHTML = ''; // Xóa nội dung cũ
 
         levelsConfig.forEach(level => {
@@ -177,6 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Hàm tạo 6 ô cảm xúc cho game "Thử thách cảm xúc"
     function renderEmotionTiles() {
         if (!levelGrid) return;
+        levelGrid.classList.add('emotion-grid');
         levelGrid.innerHTML = '';
 
         EMOTION_OPTIONS.forEach((emotion) => {
@@ -189,15 +244,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const score = Math.max(0, Math.min(100, rawScore));
             const displayPercent = Math.round(score);
 
-            // Lớp nước đổ theo điểm cao nhất (0-100%)
-            const water = document.createElement('div');
-            water.className = 'water-fill';
-            water.style.height = `${score}%`;
+            // Dùng biến CSS để đổ màu theo % (không dùng hiệu ứng "nước")
+            button.style.setProperty('--score', `${score}%`);
             if (displayPercent >= 100) {
-                water.classList.add('full');
+                button.classList.add('is-full');
             }
-
-            button.appendChild(water);
 
             // Nội dung phía trên nước
             const content = document.createElement('div');
@@ -282,12 +333,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 5. Xử lý nút Bắt đầu Game (ĐÃ SỬA: CHỈ CHUYỂN TRANG, KHÔNG GỌI API)
     startButton.addEventListener('click', () => {
+        const gameFile = getGameHtmlFileByKey(gameKey);
+        if (!gameFile) {
+            const back = () => (window.location.href = './select_game.html');
+            if (window.egModal && typeof window.egModal.alert === 'function') {
+                window.egModal.alert('Không xác định được trang game tương ứng. Vui lòng chọn lại game.', 'Lỗi').then(back);
+            } else {
+                alert('Không xác định được trang game tương ứng. Vui lòng chọn lại game.');
+                back();
+            }
+            return;
+        }
+
         // Game "Thử thách cảm xúc": cần chọn cảm xúc
         if (isCvRequestGame) {
             if (!selectedEmotion) return;
 
             startButton.textContent = '🚀 Đang vào game...';
-            const gameFile = getGameHtmlFile(gameId);
             const emotionParam = encodeURIComponent(selectedEmotion);
 
             window.location.href = `${gameFile}?gameId=${gameId}&emotion=${emotionParam}`;
@@ -300,9 +362,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hiệu ứng bấm nút
         startButton.textContent = '🚀 Đang vào game...';
 
-        // Lấy đường dẫn file HTML tương ứng
-        const gameFile = getGameHtmlFile(gameId);
-
         // Chuyển hướng ngay lập tức kèm tham số
         // recognize_emotion.js sẽ tự lo việc gọi API start
         window.location.href = `${gameFile}?level=${selectedLevel}&gameId=${gameId}`;
@@ -310,12 +369,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 6. Xử lý Đăng xuất
     document.getElementById('logout-button')?.addEventListener('click', () => {
-        localStorage.removeItem('currentUser');
-        window.location.href = '/src/pages/login.html';
+        const doLogout = () => {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/src/pages/login.html';
+        };
+
+        if (window.egModal && typeof window.egModal.confirm === 'function') {
+            window.egModal
+                .confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
+                .then((ok) => {
+                    if (!ok) return;
+                    doLogout();
+                });
+            return;
+        }
+
+        if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
+        doLogout();
     });
 
     // Khởi chạy render lần đầu
     if (isCvRequestGame) {
+        if (container) {
+            container.classList.add('cv2-mode');
+        }
+        if (header) {
+            header.classList.add('cv2-mode');
+        }
+        if (levelContainer) {
+            levelContainer.classList.add('cv2-mode');
+        }
+
         const levelTitle = document.querySelector('.level-title');
         if (levelTitle) levelTitle.textContent = 'Chọn cảm xúc';
 
@@ -328,6 +412,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         renderEmotionTiles();
     } else {
+        if (container) {
+            container.classList.remove('cv2-mode');
+        }
+        if (header) {
+            header.classList.remove('cv2-mode');
+        }
+        if (levelContainer) {
+            levelContainer.classList.remove('cv2-mode');
+        }
         renderLevels();
     }
 });

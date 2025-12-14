@@ -4,9 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('currentUser');
-            alert('Bạn đã đăng xuất.');
-            window.location.href = '../login.html';
+            const doLogout = () => {
+                localStorage.removeItem('currentUser');
+                window.location.href = '/src/pages/login.html';
+            };
+
+            if (window.egModal && typeof window.egModal.confirm === 'function') {
+                window.egModal
+                    .confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
+                    .then((ok) => {
+                        if (!ok) return;
+                        doLogout();
+                    });
+                return;
+            }
+
+            if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
+            doLogout();
         });
     }
 

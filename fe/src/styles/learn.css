@@ -64,7 +64,7 @@ body {
   content: "";
   display: block;
   margin-top: 6px;
-  width: 96px;
+  width: 190px;
   height: 3px;
   border-radius: 999px;
   background: linear-gradient(90deg, #4facfe, #00f2fe 60%, transparent);
@@ -526,7 +526,7 @@ body {
 
 /* HAPPY */
 .emotion-pill[data-emotion="happy"] {
-  background: #fff7cc;
+  background: linear-gradient(135deg, #fffbea 0%, #fff2b3 50%, #ffe7a3 100%);
   /* vàng nhạt */
   border-color: #fde68a;
   color: #92400e;
@@ -538,7 +538,7 @@ body {
 
 /* SAD */
 .emotion-pill[data-emotion="sad"] {
-  background: #e0f2fe;
+  background: linear-gradient(135deg, #effaff 0%, #d9f1ff 55%, #c7e9ff 100%);
   /* xanh dương nhạt */
   border-color: #bae6fd;
   color: #0c4a6e;
@@ -550,7 +550,7 @@ body {
 
 /* ANGRY */
 .emotion-pill[data-emotion="angry"] {
-  background: #fee2e2;
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe1e6 55%, #ffd1d6 100%);
   /* đỏ nhạt */
   border-color: #fecaca;
   color: #7f1d1d;
@@ -562,7 +562,7 @@ body {
 
 /* FEAR */
 .emotion-pill[data-emotion="fear"] {
-  background: #ede9fe;
+  background: linear-gradient(135deg, #f5f3ff 0%, #eee9ff 55%, #e6ddff 100%);
   /* tím nhạt */
   border-color: #ddd6fe;
   color: #4c1d95;
@@ -574,7 +574,7 @@ body {
 
 /* SURPRISE */
 .emotion-pill[data-emotion="surprise"] {
-  background: #ffedd5;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 55%, #ffd9b5 100%);
   /* cam nhạt */
   border-color: #fed7aa;
   color: #7c2d12;
@@ -586,7 +586,7 @@ body {
 
 /* DISGUST */
 .emotion-pill[data-emotion="disgust"] {
-  background: #dcfce7;
+  background: linear-gradient(135deg, #ecfdf5 0%, #dcfce7 55%, #c7f9d6 100%);
   /* xanh lá nhạt */
   border-color: #bbf7d0;
   color: #14532d;

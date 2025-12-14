@@ -1,4 +1,3 @@
-
 const API_URL = "http://localhost:8000";
 
 const $ = id => document.getElementById(id);
@@ -98,14 +97,16 @@ async function saveProfile(e) {
 // ==================== REPORT FUNCTIONS ====================
 
 async function requestReport(period) {
+    const userId = getUserId();
     
     console.log("%c=== REQUEST REPORT DEBUG ===", "color: yellow; font-size: 14px;");
     console.log("Period:", period);
+    console.log("User ID:", userId);
     console.log("Current profile:", window.currentProfile);
     
-    if (!token) {
+    if (!userId) {
         showToast("Vui lòng đăng nhập để nhận báo cáo!", "error");
-        console.error("❌ No token found in localStorage");
+        console.error("❌ No user_id found");
         return;
     }
 
@@ -128,12 +129,13 @@ async function requestReport(period) {
     showToast(`Đang tạo báo cáo ${periodText}... Vui lòng đợi`, "info");
 
     try {
-        console.log(`🚀 Calling API: POST ${API_URL}/reports/request-report?period=${period}`);
+        // ✅ Gọi đúng endpoint với user_id trong query
+        const url = `${API_URL}/reports/request-report?period=${period}&user_id=${userId}`;
+        console.log(`🚀 Calling API: POST ${url}`);
         
-        const res = await fetch(`${API_URL}/reports/request-report?period=${period}`, {
+        const res = await fetch(url, {
             method: "POST",
             headers: { 
-                "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         });
@@ -145,7 +147,7 @@ async function requestReport(period) {
 
         if (!res.ok) {
             if (res.status === 401) {
-                console.error("❌ 401 Unauthorized - Token invalid/expired");
+                console.error("❌ 401 Unauthorized");
                 showToast("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!", "error");
                 setTimeout(() => {
                     localStorage.clear();
@@ -242,8 +244,8 @@ function showToast(message, type = "success") {
 // ==================== EVENT LISTENERS ====================
 
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("%c🚀 PROFILE.JS LOADED WITH DEBUG", "color: gold; font-size: 16px;");
-    console.log("Token in localStorage:", localStorage.getItem("token") ? "EXISTS" : "NULL");
+    console.log("%c🚀 PROFILE.JS LOADED", "color: gold; font-size: 16px;");
+    console.log("User ID:", getUserId() ? "EXISTS" : "NULL");
     
     loadProfile();
 

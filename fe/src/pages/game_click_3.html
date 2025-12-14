@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai là ai & đang cảm xúc gì?</title>
+    <title>EmoGarden</title>
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/game_click_3.css" />
     <link rel="stylesheet" href="../styles/chatbot_widget.css" />
@@ -21,7 +21,7 @@
         <div class="game-container">
             <!-- Header -->
             <div class="game-header">
-                <h1 class="game-title"> Ai là ai 🎭</h1>
+                <h1 class="game-title">Đang tải...</h1>
                 <div class="difficulty-badge" id="difficulty-badge"></div>
             </div>
 
@@ -41,7 +41,7 @@
 
             <!-- Kho thẻ tên -->
             <div class="names-section">
-                <h3>🎴 Kéo thẻ tên vào ô phía dưới mỗi khuôn mặt:</h3>
+                <h3>🎴 Kéo thẻ vào ô phía dưới mỗi khuôn mặt:</h3>
                 <div id="name-cards-container" class="name-cards"></div>
             </div>
 
@@ -74,24 +74,40 @@
         </div>
     </div>
 
-    <!-- Popup kết quả -->
     <div id="result-popup" class="popup-overlay hidden">
         <div class="popup-content">
+
+            <!-- Nút X -->
+            <button id="popup-close-btn" class="popup-close-btn"></button>
+
             <div id="popup-icon" class="popup-icon"></div>
             <h2 id="popup-title" class="popup-title"></h2>
             <p id="popup-message" class="popup-message"></p>
+
             <div class="popup-buttons">
-                <button class="popup-btn replay-btn" onclick="closePopupAndReplay()">
-                    🔄 Chơi lại
-                </button>
-                <button id="popup-next-btn" class="popup-btn next-btn" onclick="closePopupAndNext()">
-                    ➡️ Câu tiếp theo
+                <button class="popup-btn replay-btn" onclick="closePopupAndReplay()">🔄 Chơi lại</button>
+                <button id="popup-next-btn" class="popup-btn next-btn" onclick="closePopupAndNext()">➡️ Câu tiếp
+                    theo</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ✅ Popup thẻ học cảm xúc (giống recognize_emotion) -->
+    <div id="learning-modal" class="popup-overlay hidden">
+        <div class="popup-content learning-popup">
+            <h2 id="learning-emotion-title" class="popup-title"></h2>
+            <div id="learning-card-body" class="learning-body"></div>
+            <div class="popup-buttons">
+                <button id="learning-close-btn" class="popup-btn close-btn">
+                    Đã hiểu
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Chỉ load JS MỘT LẦN, KHÔNG dùng type="module" -->
+
     <script src="../components/game_click_3.js"></script>
     <script src="../components/chatbot_widget.js"></script>
 </body>

@@ -49,10 +49,14 @@ let gameState = {
     detectionStartTime: null,
     successThreshold: 500, // 0.5 seconds holding correct emotion (60% confidence)
     maxAttemptTime: 30000, // 30 seconds max (more time)
+    roundTimerInterval: null,
+    roundTimerEndAt: null,
     speechSynthesis: null,
     currentConfidence: 0.0, // Confidence score hiện tại từ face-api.js (0-1)
     bestConfidence: 0.0 // Confidence score cao nhất trong màn chơi này
 };
+
+const ROUND_TIMER_WARNING_MS = 5000;
 
 // Emotion mapping from face-api.js to game emotions
 const EMOTION_MAP = {
@@ -111,6 +115,80 @@ const CV_LEARNING_CARDS = {
 // Helper functions
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => document.querySelector(selector);
+
+function setCameraPlaceholderVisible(visible) {
+    const el = $('camera-placeholder');
+    if (!el) return;
+    el.style.display = visible ? 'flex' : 'none';
+}
+
+function setDetectionUIVisible(visible) {
+    const info = $('detection-info');
+    if (!info) return;
+    info.classList.toggle('is-visible', !!visible);
+}
+
+function resetDetectionUI() {
+    const icon = $('detected-emotion-icon');
+    const bar = $('detected-progress-bar');
+    const pctEl = $('detected-emotion-percent');
+    if (icon) icon.textContent = '';
+    if (bar) {
+        bar.style.width = '0%';
+        bar.classList.remove('level-low', 'level-mid', 'level-high');
+    }
+    if (pctEl) pctEl.textContent = '';
+    setDetectionUIVisible(false);
+}
+
+function setRoundTimerVisible(visible) {
+    const timerEl = $('round-timer');
+    if (!timerEl) return;
+    timerEl.classList.toggle('is-visible', !!visible);
+    if (!visible) {
+        timerEl.classList.remove('is-warning');
+        timerEl.textContent = '';
+    }
+}
+
+function stopRoundTimer() {
+    if (gameState.roundTimerInterval) {
+        clearInterval(gameState.roundTimerInterval);
+        gameState.roundTimerInterval = null;
+    }
+    gameState.roundTimerEndAt = null;
+    setRoundTimerVisible(false);
+}
+
+function formatRemainingTime(ms) {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const mm = String(minutes).padStart(2, '0');
+    const ss = String(seconds).padStart(2, '0');
+    return `${mm}:${ss}`;
+}
+
+function startRoundTimer() {
+    const timerEl = $('round-timer');
+    if (!timerEl) return;
+
+    stopRoundTimer();
+
+    const endAt = Date.now() + (gameState.maxAttemptTime || 0);
+    gameState.roundTimerEndAt = endAt;
+    setRoundTimerVisible(true);
+
+    const tick = () => {
+        if (!gameState.roundTimerEndAt) return;
+        const remainingMs = gameState.roundTimerEndAt - Date.now();
+        timerEl.textContent = `⏱ ${formatRemainingTime(remainingMs)}`;
+        timerEl.classList.toggle('is-warning', remainingMs <= ROUND_TIMER_WARNING_MS);
+    };
+
+    tick();
+    gameState.roundTimerInterval = setInterval(tick, 200);
+}
 
 function applyGameConfig() {
     const config = gameState.config || CV_GAME_CONFIG.GV1;
@@ -179,9 +257,16 @@ async function initGame() {
         
         // Wait a bit longer and show alert before redirecting
         setTimeout(() => {
-            alert('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
-            console.log('Redirecting to login after alert...');
-            window.location.href = '/src/pages/login.html';
+            if (window.egModal && typeof window.egModal.alert === 'function') {
+                window.egModal.alert('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.', 'Thông báo').then(() => {
+                    console.log('Redirecting to login after alert...');
+                    window.location.href = '/src/pages/login.html';
+                });
+            } else {
+                alert('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+                console.log('Redirecting to login after alert...');
+                window.location.href = '/src/pages/login.html';
+            }
         }, 3000);
         return;
     }
@@ -210,6 +295,10 @@ async function initGame() {
     gameState.config = CV_GAME_CONFIG[gameKey] || CV_GAME_CONFIG.GV1;
     applyGameConfig();
     console.log('Selected game:', gameKey, 'rawGameId:', rawGameId);
+
+    // Initial UI state for HCI (ẩn camera đen và 0%)
+    setCameraPlaceholderVisible(true);
+    resetDetectionUI();
 
     const selectedLevel = parseInt(urlParams.get('level')) || 1;
     const selectedEmotion = urlParams.get('emotion');
@@ -370,6 +459,8 @@ function startScenario(index) {
     gameState.currentScenario = gameState.scenarios[index];
     gameState.targetEmotion = gameState.currentScenario.target_emotion;
     gameState.isDetecting = false;
+
+    stopRoundTimer();
     gameState.currentEmotion = null;
     gameState.detectionStartTime = null;
     gameState.bestConfidence = 0.0; // Reset confidence score cao nhất cho màn chơi mới
@@ -380,6 +471,10 @@ function startScenario(index) {
 
     // Update UI
     updateScenarioUI();
+
+    // Khi sang màn mới (chưa bấm bắt đầu), giữ UI ở trạng thái chờ
+    setCameraPlaceholderVisible(true);
+    resetDetectionUI();
     
     // Read scenario description
     const introSpeech = typeof gameState.config?.introBuilder === 'function'
@@ -395,14 +490,27 @@ function startScenario(index) {
 function updateScenarioUI() {
     $('scenario-title').textContent = gameState.currentScenario.title;
     $('scenario-description').textContent = gameState.currentScenario.description;
-    $('target-emotion').textContent = `Cảm xúc: ${gameState.currentScenario.target_emotion}`;
+    const targetEmotionEl = $('target-emotion');
+    if (targetEmotionEl) {
+        if (gameState.gameId === 'GV1') {
+            // Ở chế độ Câu chuyện trên khuôn mặt, không hiển thị trước cảm xúc mục tiêu để tránh lộ đáp án
+            targetEmotionEl.style.display = 'none';
+            targetEmotionEl.textContent = '';
+        } else {
+            // Ở chế độ yêu cầu (GV2) có thể hiển thị cảm xúc đã chọn
+            targetEmotionEl.style.display = '';
+            targetEmotionEl.textContent = `Cảm xúc: ${gameState.currentScenario.target_emotion}`;
+        }
+    }
     
     // Update progress indicator (Màn X/10)
     const progressIndicator = document.getElementById('progress-indicator');
     if (progressIndicator) {
         const currentScenario = gameState.currentScenarioIndex + 1;
         const totalScenarios = gameState.scenarios.length;
-        progressIndicator.textContent = `Màn ${currentScenario}/${totalScenarios}`;
+        progressIndicator.textContent = gameState.gameId === 'GV1'
+            ? `Màn ${currentScenario}/${totalScenarios}`
+            : `Lượt ${currentScenario}/${totalScenarios}`;
     }
     
     // Hiển thị ảnh minh họa nếu có
@@ -445,7 +553,7 @@ function startCountdown() {
     let count = 5;
     const countdownEl = $('countdown');
     countdownEl.textContent = `${count}...`;
-    countdownEl.style.display = 'block';
+    countdownEl.classList.add('is-visible');
     
     const interval = setInterval(() => {
         count--;
@@ -455,7 +563,7 @@ function startCountdown() {
             countdownEl.textContent = 'Chuẩn bị nào...';
             clearInterval(interval);
             setTimeout(() => {
-                countdownEl.style.display = 'none';
+                countdownEl.classList.remove('is-visible');
             }, 1000);
         }
     }, 1000);
@@ -472,6 +580,7 @@ function showHint() {
     const hintContainer = $('hint-animation');
     const emotion = gameState.targetEmotion;
     const hintText = gameState.currentHint || `Hãy thể hiện cảm xúc ${emotion}!`;
+    speakText(hintText);
     
     // Show animation placeholder with emotion-specific animation và hint text
     hintContainer.innerHTML = `
@@ -502,27 +611,80 @@ async function startDetection() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
-                facingMode: 'user',
-                width: { ideal: 640 },
-                height: { ideal: 480 }
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'user'
             } 
         });
-        gameState.videoStream = stream;
         
         const video = $('camera-video');
+        gameState.videoStream = stream;
         video.srcObject = stream;
+
+        // Hide placeholder as soon as the video actually starts rendering frames
+        // (some browsers can behave differently with onloadedmetadata timing)
+        const hidePlaceholderOnce = () => {
+            setCameraPlaceholderVisible(false);
+            video.removeEventListener('playing', hidePlaceholderOnce);
+            video.removeEventListener('loadeddata', hidePlaceholderOnce);
+        };
+        video.addEventListener('playing', hidePlaceholderOnce);
+        video.addEventListener('loadeddata', hidePlaceholderOnce);
         
-        // Wait for video to be ready
+        // Wait for video to be ready (avoid missing event if metadata is already available)
         await new Promise((resolve, reject) => {
-            video.onloadedmetadata = () => {
-                video.play().then(resolve).catch(reject);
+            let settled = false;
+
+            const cleanup = () => {
+                video.removeEventListener('loadedmetadata', onMeta);
+                video.removeEventListener('error', onErr);
             };
-            video.onerror = reject;
-            setTimeout(() => reject(new Error('Video load timeout')), 5000);
+
+            const onMeta = () => {
+                if (settled) return;
+                video.play().then(() => {
+                    // Chắc chắn ẩn placeholder khi video đã play thành công
+                    setCameraPlaceholderVisible(false);
+                    settled = true;
+                    cleanup();
+                    resolve();
+                }).catch((e) => {
+                    settled = true;
+                    cleanup();
+                    reject(e);
+                });
+            };
+
+            const onErr = (e) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(e);
+            };
+
+            video.addEventListener('loadedmetadata', onMeta);
+            video.addEventListener('error', onErr);
+
+            if (video.readyState >= 1) {
+                onMeta();
+            }
+
+            setTimeout(() => {
+                if (!settled) {
+                    settled = true;
+                    cleanup();
+                    reject(new Error('Video load timeout'));
+                }
+            }, 5000);
         });
         
         gameState.isDetecting = true;
         gameState.detectionStartTime = Date.now();
+
+        startRoundTimer();
+
+        // Khi bắt đầu detect: hiển thị thanh tiến độ (không hiển thị 0% bằng số)
+        setDetectionUIVisible(true);
         
         // Disable start button
         $('start-btn').disabled = true;
@@ -556,6 +718,12 @@ async function startDetection() {
         }
         
         showError(errorMessage);
+
+        stopRoundTimer();
+
+        // Nếu không bật được camera, quay về trạng thái chờ
+        setCameraPlaceholderVisible(true);
+        resetDetectionUI();
         
         // Re-enable button
         $('start-btn').disabled = false;
@@ -698,15 +866,33 @@ function startEmotionDetection() {
 function updateDetectionUI(emotion, confidence) {
     gameState.currentEmotion = emotion;
     
-    const emotionIcon = $('detected-emotion-icon');
-    const emotionPercent = $('detected-emotion-percent');
-    
-    if (emotion) {
-        emotionIcon.textContent = EMOTION_ICONS[emotion] || '😐';
-        emotionPercent.textContent = `${Math.round(confidence * 100)}%`;
-    } else {
-        emotionIcon.textContent = '👤';
-        emotionPercent.textContent = '0%';
+    // Trước khi bấm bắt đầu: không hiển thị chỉ số nào để tránh cảm giác thất bại
+    if (!gameState.isDetecting) {
+        resetDetectionUI();
+        return;
+    }
+
+    const iconEl = $('detected-emotion-icon');
+    const percentEl = $('detected-emotion-percent');
+
+    // Đang detect: hiển thị thanh tiến độ
+    setDetectionUIVisible(true);
+
+    const conf = confidence || 0;
+    if (conf <= 0) {
+        if (iconEl) iconEl.textContent = '';
+        if (percentEl) percentEl.textContent = '';
+        return;
+    }
+
+    if (iconEl) {
+        // Nếu không map được emotion (vd. neutral), vẫn hiển thị icon trung tính
+        iconEl.textContent = emotion ? (EMOTION_ICONS[emotion] || '😐') : '😐';
+    }
+
+    if (percentEl) {
+        const pct = Math.max(0, Math.min(100, Math.round(conf * 100)));
+        percentEl.textContent = `${pct}%`;
     }
 }
 
@@ -842,6 +1028,8 @@ async function handleSuccess() {
     console.log('✅ Success! Saving result...');
     
     gameState.isDetecting = false;
+
+    stopRoundTimer();
     if (gameState.detectionInterval) {
         clearInterval(gameState.detectionInterval);
         gameState.detectionInterval = null;
@@ -852,6 +1040,10 @@ async function handleSuccess() {
         gameState.videoStream.getTracks().forEach(track => track.stop());
         gameState.videoStream = null;
     }
+
+    // Về trạng thái chờ (ẩn chỉ số, hiện placeholder)
+    setCameraPlaceholderVisible(true);
+    resetDetectionUI();
     
     // Re-enable start button
     $('start-btn').disabled = false;
@@ -883,6 +1075,8 @@ async function handleTimeout() {
     console.log('⏱️ Timeout! Saving result...');
     
     gameState.isDetecting = false;
+
+    stopRoundTimer();
     if (gameState.detectionInterval) {
         clearInterval(gameState.detectionInterval);
         gameState.detectionInterval = null;
@@ -893,12 +1087,20 @@ async function handleTimeout() {
         gameState.videoStream.getTracks().forEach(track => track.stop());
         gameState.videoStream = null;
     }
+
+    // Về trạng thái chờ (ẩn chỉ số, hiện placeholder)
+    setCameraPlaceholderVisible(true);
+    resetDetectionUI();
     
     // Re-enable start button
     $('start-btn').disabled = false;
     $('start-btn').textContent = '▶️ Bắt đầu';
-    
-    speakText('Chúng ta thử lại thêm lần nữa nhé! Câu sau mình sẽ làm tốt hơn!');
+
+    const nextIndex = gameState.currentScenarioIndex + 1;
+    const isLastTurn = nextIndex >= (gameState.scenarios ? gameState.scenarios.length : 0);
+    if (!(gameState.gameId !== 'GV1' && isLastTurn)) {
+        speakText('Chúng ta thử lại thêm lần nữa nhé! Lần sau mình sẽ làm tốt hơn!');
+    }
     
     // Timeout = thất bại, không lưu bestConfidence (chỉ lưu khi success)
     console.log(`💾 Saving timeout (failure) - no confidence score saved`);
@@ -912,7 +1114,6 @@ async function handleTimeout() {
     }
     
     // Nếu chưa cần học lại, chuyển sang màn tiếp theo như cũ
-    const nextIndex = gameState.currentScenarioIndex + 1;
     console.log(`Moving to next scenario: ${nextIndex} (total: ${gameState.scenarios.length})`);
     setTimeout(() => {
         startScenario(nextIndex);
@@ -1012,8 +1213,9 @@ async function endSession() {
         // Lưu kết quả cuối cùng vào localStorage để có thể xem sau
         gameState.finalScore = data.score;
         gameState.finalEmotionErrors = data.emotion_errors;
+        gameState.finalBestEmotion = null;
         
-        // Tính điểm theo thang 100 từ best_confidence của cảm xúc đã chơi
+        // Tính điểm theo thang 100 từ best_confidence
         let bestConfidenceScore = 0;
         if (data.emotion_errors) {
             try {
@@ -1021,36 +1223,52 @@ async function endSession() {
                     ? JSON.parse(data.emotion_errors) 
                     : data.emotion_errors;
                 
-                // Tìm best_confidence của cảm xúc đã chơi (có thể bị encode sai)
-                const targetEmotion = gameState.targetEmotion;
-                const targetEmotionLower = targetEmotion.toLowerCase().trim();
-                
-                // Thử tìm với nhiều cách: exact match, với encoding sai
-                let emotionKey = targetEmotion;
-                if (emotionErrors[targetEmotion] && emotionErrors[targetEmotion].best_confidence) {
-                    emotionKey = targetEmotion;
-                } else if (emotionErrors[targetEmotionLower] && emotionErrors[targetEmotionLower].best_confidence) {
-                    emotionKey = targetEmotionLower;
-                } else {
-                    // Thử tìm với encoding sai (t?c gi?n -> tức giận)
-                    const possibleKeys = Object.keys(emotionErrors);
-                    for (const key of possibleKeys) {
-                        const keyLower = key.toLowerCase().trim();
-                        // So sánh từng từ
-                        const targetWords = targetEmotionLower.split(/\s+/);
-                        const keyWords = keyLower.split(/\s+/);
-                        if (targetWords.some(word => keyWords.includes(word)) || 
-                            keyWords.some(word => targetWords.includes(word))) {
-                            emotionKey = key;
-                            break;
+                if (gameState.gameId === 'GV2') {
+                    // GV2: lấy đúng theo cảm xúc mục tiêu đang luyện
+                    const targetEmotion = gameState.targetEmotion || '';
+                    const targetEmotionLower = targetEmotion.toLowerCase().trim();
+
+                    // Thử tìm với nhiều cách: exact match, với encoding sai
+                    let emotionKey = targetEmotion;
+                    if (emotionErrors[targetEmotion] && emotionErrors[targetEmotion].best_confidence) {
+                        emotionKey = targetEmotion;
+                    } else if (emotionErrors[targetEmotionLower] && emotionErrors[targetEmotionLower].best_confidence) {
+                        emotionKey = targetEmotionLower;
+                    } else {
+                        const possibleKeys = Object.keys(emotionErrors);
+                        for (const key of possibleKeys) {
+                            const keyLower = key.toLowerCase().trim();
+                            const targetWords = targetEmotionLower.split(/\s+/);
+                            const keyWords = keyLower.split(/\s+/);
+                            if (targetWords.some(word => keyWords.includes(word)) ||
+                                keyWords.some(word => targetWords.includes(word))) {
+                                emotionKey = key;
+                                break;
+                            }
                         }
                     }
+
+                    if (emotionErrors[emotionKey] && emotionErrors[emotionKey].best_confidence) {
+                        bestConfidenceScore = Math.round(emotionErrors[emotionKey].best_confidence);
+                        gameState.finalBestEmotion = emotionKey;
+                    }
+                    console.log(`📊 Best confidence score for ${targetEmotion} (found as "${emotionKey}"): ${bestConfidenceScore}%`);
+                } else {
+                    // GV1: lấy cảm xúc có best_confidence cao nhất trong toàn session
+                    let bestKey = null;
+                    let bestVal = 0;
+                    for (const [key, value] of Object.entries(emotionErrors || {})) {
+                        if (!value || typeof value !== 'object') continue;
+                        const bc = Number(value.best_confidence || 0);
+                        if (bc > bestVal) {
+                            bestVal = bc;
+                            bestKey = key;
+                        }
+                    }
+                    bestConfidenceScore = Math.round(bestVal || 0);
+                    gameState.finalBestEmotion = bestKey;
+                    console.log(`📊 Best emotion overall: ${bestKey || 'N/A'} (${bestConfidenceScore}%)`);
                 }
-                
-                if (emotionErrors[emotionKey] && emotionErrors[emotionKey].best_confidence) {
-                    bestConfidenceScore = Math.round(emotionErrors[emotionKey].best_confidence);
-                }
-                console.log(`📊 Best confidence score for ${targetEmotion} (found as "${emotionKey}"): ${bestConfidenceScore}%`);
             } catch (e) {
                 console.warn('Error parsing emotion_errors:', e);
             }
@@ -1081,6 +1299,21 @@ async function endSession() {
 let hasVietnameseVoice = null;
 let vietnameseVoiceCache = null;
 
+let ttsRequestId = 0;
+let ttsFallbackTimer = null;
+let currentFptAudio = null;
+
+function stopFptAudio() {
+    if (!currentFptAudio) return;
+    try {
+        currentFptAudio.pause();
+        currentFptAudio.currentTime = 0;
+    } catch (e) {
+        // ignore
+    }
+    currentFptAudio = null;
+}
+
 // Check if Vietnamese voice is available
 function checkVietnameseVoice() {
     if (hasVietnameseVoice !== null) {
@@ -1110,8 +1343,11 @@ function checkVietnameseVoice() {
 }
 
 // Use FPT AI TTS API for Vietnamese text-to-speech
-async function speakWithFPTAI(text) {
+async function speakWithFPTAI(text, requestId) {
     try {
+        if (typeof requestId === 'number' && requestId !== ttsRequestId) {
+            return false;
+        }
         const response = await fetch("https://api.fpt.ai/hmi/tts/v5", {
             method: "POST",
             headers: {
@@ -1149,7 +1385,15 @@ async function speakWithFPTAI(text) {
         if (audioUrl) {
             // Always use proxy endpoint to avoid CORS issues with FPT AI
             const proxyUrl = `${API_URL}/games/cv/audio-proxy?url=${encodeURIComponent(audioUrl)}`;
+            if (typeof requestId === 'number' && requestId !== ttsRequestId) {
+                return false;
+            }
+
+            stopFptAudio();
+
             const audio = new Audio(proxyUrl);
+            currentFptAudio = audio;
+
             audio.play().catch(err => {
                 console.error('Error playing audio:', err);
             });
@@ -1189,10 +1433,19 @@ async function pollForAudioUrl(asyncUrl, maxAttempts = 10) {
 
 // Text-to-Speech with fallback to FPT AI
 async function speakText(text) {
-    // Cancel any ongoing speech
+    const requestId = ++ttsRequestId;
+
+    if (ttsFallbackTimer) {
+        clearTimeout(ttsFallbackTimer);
+        ttsFallbackTimer = null;
+    }
+
     if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = null;
         window.speechSynthesis.cancel();
     }
+
+    stopFptAudio();
     
     // First, try to use browser's speech synthesis with Vietnamese voice
     if ('speechSynthesis' in window) {
@@ -1208,8 +1461,9 @@ async function speakText(text) {
                 
                 utterance.onerror = (event) => {
                     console.error('Speech synthesis error:', event);
-                    // Fallback to FPT AI on error
-                    speakWithFPTAI(text);
+                    if (requestId === ttsRequestId) {
+                        speakWithFPTAI(text, requestId);
+                    }
                 };
                 
                 window.speechSynthesis.speak(utterance);
@@ -1222,24 +1476,37 @@ async function speakText(text) {
         const voices = window.speechSynthesis.getVoices();
         if (voices.length > 0) {
             if (getVoices()) {
+                if (ttsFallbackTimer) {
+                    clearTimeout(ttsFallbackTimer);
+                    ttsFallbackTimer = null;
+                }
+                window.speechSynthesis.onvoiceschanged = null;
                 return; // Successfully using browser voice
             } else {
                 // No Vietnamese voice found, use FPT AI
-                speakWithFPTAI(text);
+                speakWithFPTAI(text, requestId);
                 return;
             }
         } else {
             // Wait for voices to load
             window.speechSynthesis.onvoiceschanged = () => {
-                if (!getVoices()) {
-                    // No Vietnamese voice, use FPT AI
-                    speakWithFPTAI(text);
+                if (requestId !== ttsRequestId) return;
+                window.speechSynthesis.onvoiceschanged = null;
+                if (getVoices()) {
+                    if (ttsFallbackTimer) {
+                        clearTimeout(ttsFallbackTimer);
+                        ttsFallbackTimer = null;
+                    }
+                    return;
                 }
+                speakWithFPTAI(text, requestId);
             };
             // Fallback after delay
-            setTimeout(() => {
+            ttsFallbackTimer = setTimeout(() => {
+                if (requestId !== ttsRequestId) return;
+                window.speechSynthesis.onvoiceschanged = null;
                 if (!getVoices()) {
-                    speakWithFPTAI(text);
+                    speakWithFPTAI(text, requestId);
                 }
             }, 500);
             return;
@@ -1247,7 +1514,7 @@ async function speakText(text) {
     }
     
     // If speech synthesis not supported, use FPT AI TTS
-    speakWithFPTAI(text);
+    speakWithFPTAI(text, requestId);
 }
 
 // End game
@@ -1255,6 +1522,8 @@ async function endGame() {
     console.log('🎮 Ending game...');
     
     gameState.isDetecting = false;
+
+    stopRoundTimer();
     if (gameState.detectionInterval) {
         clearInterval(gameState.detectionInterval);
         gameState.detectionInterval = null;
@@ -1265,10 +1534,23 @@ async function endGame() {
         gameState.videoStream = null;
     }
 
+    // Về trạng thái chờ (ẩn chỉ số, hiện placeholder)
+    setCameraPlaceholderVisible(true);
+    resetDetectionUI();
+
     // Stop any ongoing speech
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
     }
+
+    // Invalidate any in-flight async TTS (especially FPT audio fetch) to avoid voice being "chèn"
+    ttsRequestId++;
+    if (ttsFallbackTimer) {
+        clearTimeout(ttsFallbackTimer);
+        ttsFallbackTimer = null;
+    }
+
+    stopFptAudio();
 
     // Clear saved progress since level is completed
     clearGameProgress();
@@ -1283,10 +1565,11 @@ async function endGame() {
 
 // Show summary
 function showSummary() {
+    const bestEmotion = gameState.finalBestEmotion || gameState.targetEmotion;
     const summaryText = typeof gameState.config?.summaryBuilder === 'function'
-        ? gameState.config.summaryBuilder(gameState.targetEmotion)
+        ? gameState.config.summaryBuilder(bestEmotion)
         : 'Hôm nay con đã thể hiện cảm xúc rất tốt! Cảm xúc con làm giỏi nhất là ' +
-            (gameState.targetEmotion || 'tất cả') + '. Lần sau mình luyện thêm nhé!';
+            (bestEmotion || 'tất cả') + '. Lần sau mình luyện thêm nhé!';
     speakText(summaryText);
     
     // Show modal UI thay vì alert
@@ -1305,10 +1588,20 @@ function showGameCompleteModal() {
     
     if (!modal) {
         // Fallback nếu không có modal
-        if (confirm('Game đã hoàn thành! Con muốn chơi tiếp hay nghỉ một lát?')) {
-            location.reload();
+        const handleChoice = (ok) => {
+            if (ok) {
+                location.reload();
+            } else {
+                window.location.href = '/src/pages/home.html';
+            }
+        };
+
+        if (window.egModal && typeof window.egModal.confirm === 'function') {
+            window.egModal
+                .confirm('Game đã hoàn thành! Con muốn chơi tiếp hay nghỉ một lát?', 'Hoàn thành', 'Chơi tiếp', 'Về trang chủ')
+                .then(handleChoice);
         } else {
-            window.location.href = '/src/pages/home.html';
+            handleChoice(confirm('Game đã hoàn thành! Con muốn chơi tiếp hay nghỉ một lát?'));
         }
         return;
     }
@@ -1318,16 +1611,24 @@ function showGameCompleteModal() {
         if (gameState.gameId === 'GV1') {
             completionMessage.textContent = 'Con đã hoàn thành level! Làm tốt lắm!';
         } else {
-            completionMessage.textContent = 'Con đã hoàn thành màn chơi! Làm tốt lắm!';
+            completionMessage.textContent = 'Con đã hoàn thành thử thách! Làm tốt lắm!';
         }
     }
     
-    // Set score - hiển thị điểm theo thang 100 (best_confidence)
+    // Set score - GV1: số màn pass; GV2: % tốt nhất
     if (scoreDisplay) {
-        const score = gameState.finalBestConfidenceScore || 0; // Điểm theo thang 100
-        scoreDisplay.innerHTML = `
-            <div class="score-value">Điểm: <span class="score-number">${score}</span></div>
-        `;
+        if (gameState.gameId === 'GV1') {
+            const passed = Number(gameState.finalScore || 0);
+            const total = Number((gameState.scenarios && gameState.scenarios.length) || 0);
+            scoreDisplay.innerHTML = `
+                <div class="score-value">Hoàn thành: <span class="score-number">${passed}</span>/${total} màn</div>
+            `;
+        } else {
+            const score = Number(gameState.finalBestConfidenceScore || 0);
+            scoreDisplay.innerHTML = `
+                <div class="score-value">Điểm tốt nhất trong lần này: <span class="score-number">${score}</span>%</div>
+            `;
+        }
     }
     
     // Show modal
@@ -1568,9 +1869,23 @@ function clearGameProgress() {
 
 // Logout
 function handleLogout() {
-    if (confirm('Bạn có muốn đăng xuất không?')) {
+    const doLogout = () => {
         localStorage.removeItem('currentUser');
         window.location.href = '/src/pages/login.html';
+    };
+
+    if (window.egModal && typeof window.egModal.confirm === 'function') {
+        window.egModal
+            .confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
+            .then((ok) => {
+                if (!ok) return;
+                doLogout();
+            });
+        return;
+    }
+
+    if (confirm('Bạn có muốn đăng xuất không?')) {
+        doLogout();
     }
 }
 

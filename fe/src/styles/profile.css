@@ -74,21 +74,21 @@ header {
 
 .buttons a {
     padding: 10px 24px;
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
     border: none;
     border-radius: 999px;
     text-decoration: none;
     color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.45);
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35);
     transition: all 0.3s;
 }
 
 .buttons a:hover {
-    background: linear-gradient(135deg, #1976d2, #1565c0);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(25, 118, 210, 0.5);
+    box-shadow: 0 6px 16px rgba(30, 64, 175, 0.5);
 }
 
 .profile-container {

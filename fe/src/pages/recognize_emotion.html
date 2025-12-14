@@ -18,34 +18,43 @@
                 <p class="subtitle">Nhìn hình và chọn cảm xúc phù hợp nhất</p>
             </div>
             <div class="header-actions">
-                <span id="score-display" class="score-box">Câu 1/10 | Điểm: 0</span>
-                <button id="hint-btn" class="action-btn" title="Gợi ý">💡 Gợi ý</button>
-                <button id="sound-btn" class="action-btn" title="Nghe lại câu hỏi">🔊 Nghe lại câu hỏi</button>
+                <div class="stats">
+                    <div class="stat-pill">
+                        <span id="progress-label">Câu 1/10</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span id="score-label">Điểm: 0</span>
+                    </div>
+                </div>
             </div>
         </header>
 
         <section class="game-area-grid">
-            <div id="question-area" class="question-box">
+            <div class="question-box">
+                <div id="question-area" class="question-content"></div>
+                <div class="hint-row">
+                    <button id="hint-btn" class="btn btn-secondary" type="button">💡 Gợi ý</button>
+                    <p id="hint-content" class="hint-text"></p>
+                    <button id="sound-btn" class="btn btn-ghost" type="button">🔊 Nghe lại câu hỏi</button>
+                </div>
             </div>
 
-            <div id="answer-grid" class="answer-area-grid">
-                <button class="answer-option" data-answer-id="A"></button>
-                <button class="answer-option" data-answer-id="B"></button>
-                <button class="answer-option" data-answer-id="C"></button>
-                <button class="answer-option" data-answer-id="D"></button>
-                <button class="answer-option" data-answer-id="E"></button>
-                <button class="answer-option" data-answer-id="F"></button>
+            <div class="answers-card">
+                <h2 class="answers-title">Chọn cảm xúc đúng</h2>
+                <div id="answer-grid" class="answers-grid">
+                    <button class="answer-option" data-answer-id="A"></button>
+                    <button class="answer-option" data-answer-id="B"></button>
+                    <button class="answer-option" data-answer-id="C"></button>
+                    <button class="answer-option" data-answer-id="D"></button>
+                    <button class="answer-option" data-answer-id="E"></button>
+                    <button class="answer-option" data-answer-id="F"></button>
+                </div>
+                <div class="controls-row">
+                    <button id="next-question-btn" class="btn btn-primary" disabled>Trả lời</button>
+                </div>
             </div>
         </section>
 
-        <footer class="game-footer">
-            <div class="hint-next-container">
-                <div id="hint-content-box" class="hint-box">
-                    <p id="hint-content">Hãy chọn đáp án của bạn.</p>
-                </div>
-                <button id="next-question-btn" class="next-hint-btn" disabled>Câu tiếp theo</button>
-            </div>
-        </footer>
     </main>
 
     <div id="feedback-modal" class="modal hidden">
@@ -75,6 +84,7 @@
         </div>
     </div>
 
+    <script src="../components/chatbot_widget.js"></script>
     <script src="../components/recognize_emotion.js"></script>
     <script src="../components/chatbot_widget.js"></script>
 </body>
