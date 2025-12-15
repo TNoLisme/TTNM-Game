@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - EmoGarden</title>
     <link rel="stylesheet" href="../styles/admin.css" />
+    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
+
 <body>
     <!-- Header -->
     <header class="admin-header">
@@ -19,9 +23,8 @@
         </div>
     </header>
 
-    <!-- Main Container -->
     <div class="admin-container">
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar -->
         <aside class="sidebar">
             <nav class="sidebar-nav">
                 <a href="#dashboard" class="nav-item active" data-section="dashboard">
@@ -102,23 +105,18 @@
                 </div>
             </section>
 
-            <!-- Users Management Section -->
+            <!-- Users Management Section (Giữ nguyên) -->
             <section id="users-section" class="content-section">
                 <div class="section-header">
                     <h1>👥 Quản lý Users</h1>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" id="refresh-users-btn">
-                            <span>🔄</span> Làm mới
-                        </button>
-                        <button class="btn btn-primary" id="add-user-btn">
-                            <span>➕</span> Thêm User
-                        </button>
-                    </div>
+                    <button class="btn btn-primary" id="add-user-btn">
+                        <span>➕</span> Thêm User
+                    </button>
                 </div>
-
                 <div class="filters">
-                    <input type="text" id="search-users" placeholder="🔍 Tìm kiếm user..." class="search-input" />
-                    <select id="filter-user-role" class="filter-select">
+                    <input type="text" id="search-users" placeholder="🔍 Tìm kiếm user theo tên ..." class="search-input" />
+                    
+                    <select id="filter-role" class="filter-select">
                         <option value="">Tất cả vai trò</option>
                         <option value="admin">Admin</option>
                         <option value="child">Child</option>
@@ -127,13 +125,13 @@
                         <span>🔄</span> Xóa bộ lọc
                     </button>
                 </div>
-
                 <div class="table-container">
                     <table class="data-table" id="users-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Username</th>
+                                <th>Tên hiển thị</th>
                                 <th>Email</th>
                                 <th>Vai trò</th>
                                 <th>Tuổi</th>
@@ -144,52 +142,48 @@
                         </thead>
                         <tbody id="users-tbody">
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 30px;">
-                                    Đang tải dữ liệu...
-                                </td>
+                                <td colspan="9" style="text-align: center; padding: 30px;">Đang tải dữ liệu...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- Emotions Video Management Section -->
+            <!-- Emotions Section (Giữ nguyên) -->
             <section id="emotions-section" class="content-section">
                 <div class="section-header">
                     <h1>🎬 Quản lý Video Cảm xúc</h1>
                 </div>
-
                 <div class="video-info-banner">
-                    <p>💡 <strong>Hướng dẫn:</strong> Click "🔄 Thay thế video" để upload video mới cho từng cảm xúc. 
-                    Video nên có định dạng MP4, tối đa 50MB, độ phân giải khuyến nghị 1280x720.</p>
+                    <p>💡 <strong>Hướng dẫn:</strong> Click "🔄 Thay thế video" để upload video mới.</p>
                 </div>
-
-                <div class="cards-grid" id="emotions-grid">
-                    <div class="video-card">
-                        <div class="video-skeleton"></div>
-                        <p style="text-align: center; color: #7f8c8d;">Đang tải video...</p>
-                    </div>
-                </div>
+                <div class="cards-grid" id="emotions-grid"></div>
             </section>
 
             <!-- Game Contents Management Section -->
             <section id="game-contents-section" class="content-section">
                 <div class="section-header">
                     <h1>🎮 Quản lý Nội dung Game</h1>
-                    <button class="btn btn-primary" id="add-game-content-btn">
-                        <span>➕</span> Thêm Nội dung
-                    </button>
+                    <button class="btn btn-primary" id="add-game-content-btn"><span>➕</span> Thêm Nội dung</button>
                 </div>
-
-                <div class="filters" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                    <input type="text" id="search-game-contents" placeholder="🔍 Tìm kiếm..." class="search-input" style="flex: 1; min-width: 200px;" />
-                    <select id="filter-level" class="filter-select" style="width: 180px;">
-                        <option value="">Tất cả level</option>
+                <div class="filters">
+                    <!-- 🆕 Đổi Search Game ID -> Tìm nội dung câu hỏi -->
+                    <input type="text" id="filter-question" placeholder="🔍 Tìm nội dung câu hỏi..." class="search-input" />
+                    
+                    <!-- 🆕 Đổi Input Level -> Select Level (1-8) -->
+                    <select id="filter-level" class="filter-select" style="width: 150px;">
+                        <option value="">Tất cả Level</option>
                         <option value="1">Level 1</option>
                         <option value="2">Level 2</option>
                         <option value="3">Level 3</option>
+                        <option value="4">Level 4</option>
+                        <option value="5">Level 5</option>
+                        <option value="6">Level 6</option>
+                        <option value="7">Level 7</option>
+                        <option value="8">Level 8</option>
                     </select>
-                    <select id="filter-emotion" class="filter-select" style="width: 180px;">
+
+                    <select id="filter-emotion" class="filter-select">
                         <option value="">Tất cả cảm xúc</option>
                         <option value="Vui vẻ">😊 Vui vẻ</option>
                         <option value="Buồn bã">😢 Buồn bã</option>
@@ -200,7 +194,6 @@
                     </select>
                     <button class="btn btn-secondary" id="reset-filters-btn">🔄 Xóa lọc</button>
                 </div>
-
                 <div class="table-container">
                     <table class="data-table" id="game-contents-table">
                         <thead>
@@ -215,13 +208,7 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="game-contents-tbody">
-                            <tr>
-                                <td colspan="8" style="text-align: center; padding: 30px;">
-                                    Đang tải dữ liệu...
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="game-contents-tbody"></tbody>
                     </table>
                 </div>
             </section>
@@ -230,31 +217,21 @@
             <section id="reports-section" class="content-section">
                 <div class="section-header">
                     <h1>📋 Quản lý Reports</h1>
-                    <button class="btn btn-secondary" id="refresh-reports-btn">
-                        <span>🔄</span> Làm mới
-                    </button>
+                    <button class="btn btn-secondary" id="refresh-reports-btn"><span>🔄</span> Làm mới</button>
                 </div>
-
-                <!-- Statistics Cards -->
                 <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 30px;">
                     <div class="stat-card">
                         <div class="stat-icon">📅</div>
                         <div class="stat-info">
                             <h3 id="weekly-reports-count">0</h3>
-                            <p>Báo cáo tuần</p>
-                            <small id="weekly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
-                                <span class="trend-icon">↗️</span> +0%
-                            </small>
+                            <p>Báo cáo tuần</p><small id="weekly-trend"></small>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📆</div>
                         <div class="stat-info">
                             <h3 id="monthly-reports-count">0</h3>
-                            <p>Báo cáo tháng</p>
-                            <small id="monthly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
-                                <span class="trend-icon">↗️</span> +0%
-                            </small>
+                            <p>Báo cáo tháng</p><small id="monthly-trend"></small>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -262,9 +239,6 @@
                         <div class="stat-info">
                             <h3 id="total-reports-count">0</h3>
                             <p>Tổng báo cáo</p>
-                            <small style="font-size: 12px; display: block; margin-top: 5px; color: #7f8c8d;">
-                                Tất cả thời gian
-                            </small>
                         </div>
                     </div>
                 </div>
@@ -287,22 +261,16 @@
                     <table class="data-table" id="reports-table">
                         <thead>
                             <tr>
-                                <th style="width: 100px;">Report ID</th>
-                                <th style="width: 180px;">Trẻ</th>
-                                <th style="width: 100px;">Chu kỳ</th>
-                                <th style="width: 200px;">Tóm tắt</th>
-                                <th style="width: 100px;">Thống kê</th>
-                                <th style="width: 150px;">Ngày tạo</th>
-                                <th style="width: 140px;">Thao tác</th>
+                                <th>Report ID</th>
+                                <th>Trẻ</th>
+                                <th>Chu kỳ</th>
+                                <th>Tóm tắt</th>
+                                <th>Thống kê</th>
+                                <th>Ngày tạo</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="reports-tbody">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 30px;">
-                                    <div class="loading-spinner">⏳ Đang tải dữ liệu...</div>
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="reports-tbody"></tbody>
                     </table>
                 </div>
 
@@ -316,12 +284,261 @@
         </main>
     </div>
 
+    <!-- ===== MODALS ===== -->
+    <!-- User Modal (Giữ nguyên) -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-user-modal">×</span>
+            <h2 id="user-modal-title">➕ Thêm User Mới</h2>
+            <form id="user-form">
+                <!-- (Form content as before) -->
+                <div class="form-row">
+                    <div class="form-group"><label>Username *</label><input type="text" id="user-username" required>
+                    </div>
+                    <div class="form-group"><label>Email *</label><input type="email" id="user-email" required></div>
+                    </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Mật khẩu *</label><input type="password" id="user-password" required>
+                    </div>
+                    <div class="form-group"><label>Vai trò *</label><select id="user-role" required>
+                            <option value="child">Child</option>
+                            <option value="admin">Admin</option>
+                        </select></div>
+                        </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Tên hiển thị *</label><input type="text" id="user-name" required>
+                    </div>
+                </div>
+                <div class="form-row child-fields">
+                    <div class="form-group"><label>Ngày sinh *</label><input type="date" id="user-date-of-birth"></div>
+                    <div class="form-group"><label>Giới tính *</label><select id="user-gender">
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                            <option value="other">Khác</option>
+                        </select></div>
+                        </div>
+                <div class="form-row child-fields">
+                    <div class="form-group"><label>Số điện thoại *</label><input type="tel" id="user-phone"></div>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn btn-primary">Lưu</button><button type="button"
+                            class="btn btn-secondary" id="cancel-user-btn">Hủy</button></div>
+                    </form>
+                    </div>
+                    </div>
+
+    <!-- Confirm Delete Modal (Giữ nguyên) -->
+    <div id="confirm-delete-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <span class="close" id="close-confirm-modal">×</span>
+            <div style="font-size: 48px; margin-bottom: 15px; color: #e74c3c;"><i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2 style="color: #c0392b; margin-bottom: 10px;">Xác nhận xóa?</h2>
+            <p style="color: #7f8c8d; margin-bottom: 25px;">Bạn có chắc chắn muốn xóa không? Hành động này không thể
+                hoàn tác.</p>
+            <div class="form-actions" style="justify-content: center;"><button id="confirm-delete-btn"
+                    class="btn btn-danger">🗑️ Xóa ngay</button><button id="cancel-delete-btn" class="btn btn-secondary">❌
+                    Hủy</button></div>
+        </div>
+    </div>
+
+    <!-- Video Modal (Giữ nguyên) -->
+    <div id="video-modal" class="modal">
+        <div class="modal-content large">
+            <span class="close" id="close-video-modal">×</span>
+            <h2 id="video-modal-title">Thay thế Video</h2>
+            <div class="video-current-info">
+                <h3>Video hiện tại</h3>
+                <p><strong>Cảm xúc:</strong> <span id="video-emotion-name"></span></p>
+                <p><code><span id="video-current-path"></span></code></p>
+            </div>
+            <form id="video-form">
+                <div class="form-group"><label>Chọn video mới *</label><input type="file" id="video-file-input" accept="video/*"
+                        required></div>
+                <div id="video-preview-container" style="display:none">
+                    <h3>Xem trước</h3><video id="video-preview-player" controls style="width:100%"></video>
+                </div>
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Lưu</button><button type="button"
+                        class="btn btn-secondary" id="cancel-video-btn">Hủy</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Game Content Modal (Cập nhật) -->
+    <div id="game-content-modal" class="modal">
+        <div class="modal-content large">
+            <span class="close" id="close-game-content-modal">×</span>
+            <h2 id="game-content-modal-title">➕ Thêm Nội dung Game</h2>
+            <form id="game-content-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gc-game-id">Game *</label>
+                        <!-- 🆕 Dropdown thay vì Input -->
+                        <select id="gc-game-id" required>
+                            <option value="">-- Đang tải danh sách game... --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gc-level">Level *</label>
+                        <!-- 🆕 Select 1-8 thay vì Input -->
+                        <select id="gc-level" required>
+                            <option value="1">Level 1</option>
+                            <option value="2">Level 2</option>
+                            <option value="3">Level 3</option>
+                            <option value="4">Level 4</option>
+                            <option value="5">Level 5</option>
+                            <option value="6">Level 6</option>
+                            <option value="7">Level 7</option>
+                            <option value="8">Level 8</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gc-content-type">Loại nội dung *</label>
+                        <select id="gc-content-type" required>
+                            <option value="image">🖼️ Hình ảnh</option>
+                            <option value="video">🎬 Video</option>
+                            <option value="text">📝 Text</option>
+                            <option value="audio">🔊 Audio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gc-emotion">Cảm xúc (Đáp án đúng) *</label>
+                        <select id="gc-emotion" required>
+                            <option value="">-- Chọn cảm xúc --</option>
+                            <option value="happy">😊 Vui vẻ</option>
+                            <option value="sad">😢 Buồn bã</option>
+                            <option value="angry">😠 Tức giận</option>
+                            <option value="fear">😨 Sợ hãi</option>
+                            <option value="surprise">😲 Ngạc nhiên</option>
+                            <option value="disgust">🤢 Ghê tởm</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="gc-question-text">Câu hỏi *</label>
+                    <textarea id="gc-question-text" rows="3" required></textarea>
+                </div>
+
+                <!-- ❌ Đã xóa trường gc-correct-answer -->
+                
+                <div class="form-group">
+                    <label for="gc-media-file">File media</label>
+                    <input type="file" id="gc-media-file" accept="image/*,video/*,audio/*">
+                </div>
+
+                <div class="form-group">
+                    <label for="gc-explanation">Giải thích</label>
+                    <textarea id="gc-explanation" rows="2"></textarea>
+                </div>
+                <div id="gc-media-preview" style="display: none; margin: 15px 0;">
+                    <h4>👁️ Xem trước media</h4>
+                    <div id="gc-media-preview-content"></div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-game-content-btn">❌ Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <section id="reports-section" class="content-section">
+        <div class="section-header">
+            <h1>📋 Quản lý Reports</h1>
+            <button class="btn btn-secondary" id="refresh-reports-btn">
+                <span>🔄</span> Làm mới
+            </button>
+        </div>
+    
+        <!-- Statistics Cards -->
+        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 30px;">
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h3 id="weekly-reports-count">0</h3>
+                    <p>Báo cáo tuần</p>
+                    <small id="weekly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
+                        <span class="trend-icon">↗️</span> +0%
+                    </small>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📆</div>
+                <div class="stat-info">
+                    <h3 id="monthly-reports-count">0</h3>
+                    <p>Báo cáo tháng</p>
+                    <small id="monthly-trend" style="font-size: 12px; display: block; margin-top: 5px;">
+                        <span class="trend-icon">↗️</span> +0%
+                    </small>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <h3 id="total-reports-count">0</h3>
+                    <p>Tổng báo cáo</p>
+                    <small style="font-size: 12px; display: block; margin-top: 5px; color: #7f8c8d;">
+                        Tất cả thời gian
+                    </small>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Filters -->
+        <div class="filters" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+            <input type="text" id="search-reports" placeholder="🔍 Tìm kiếm theo tên trẻ, email..." class="search-input"
+                style="flex: 1; min-width: 250px;" />
+            <select id="filter-report-period" class="filter-select" style="width: 150px;">
+                <option value="">Tất cả chu kỳ</option>
+                <option value="weekly">📅 Tuần</option>
+                <option value="monthly">📆 Tháng</option>
+            </select>
+            <button class="btn btn-secondary" id="reset-reports-filter-btn">
+                <span>🔄</span> Xóa bộ lọc
+            </button>
+        </div>
+    
+        <!-- Reports Table -->
+        <div class="table-container">
+            <table class="data-table" id="reports-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Report ID</th>
+                        <th style="width: 180px;">Trẻ</th>
+                        <th style="width: 100px;">Chu kỳ</th>
+                        <th style="width: 200px;">Tóm tắt</th>
+                        <th style="width: 100px;">Thống kê</th>
+                        <th style="width: 150px;">Ngày tạo</th>
+                        <th style="width: 140px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-tbody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px;">
+                            <div class="loading-spinner">⏳ Đang tải dữ liệu...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Pagination -->
+        <div class="pagination" id="reports-pagination" style="display: none;">
+            <button class="btn btn-secondary" id="reports-prev-page">← Trước</button>
+            <span id="reports-page-info">Trang 1 / 1</span>
+            <button class="btn btn-secondary" id="reports-next-page">Sau →</button>
+        </div>
+    </section>
+    </main>
+    </div>
+    
     <!-- Report Detail Modal -->
     <div id="report-modal" class="modal">
         <div class="modal-content large">
             <span class="close" id="close-report-modal">×</span>
             <h2>📋 Chi tiết báo cáo</h2>
-            
+        
             <div class="report-details-container">
                 <!-- Header Info -->
                 <div class="report-header" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -344,35 +561,42 @@
                         </div>
                     </div>
                 </div>
-
+        
                 <!-- Summary -->
                 <div class="report-summary" style="margin-bottom: 20px;">
                     <h3>📝 Tóm tắt</h3>
-                    <p id="report-detail-summary" style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 1.6;">
+                    <p id="report-detail-summary"
+                        style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 1.6;">
                         Đang tải...
                     </p>
                 </div>
-
+        
                 <!-- Statistics -->
                 <div class="report-stats">
                     <h3>📊 Thống kê chi tiết</h3>
                     <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                        <div class="stat-item" style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: bold; color: #1976d2;" id="report-detail-sessions">0</div>
+                        <div class="stat-item"
+                            style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #1976d2;" id="report-detail-sessions">0
+                            </div>
                             <div style="color: #666; margin-top: 5px;">Phiên chơi</div>
                         </div>
-                        <div class="stat-item" style="background: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: bold; color: #7b1fa2;" id="report-detail-playtime">0</div>
+                        <div class="stat-item"
+                            style="background: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #7b1fa2;" id="report-detail-playtime">0
+                            </div>
                             <div style="color: #666; margin-top: 5px;">Phút chơi</div>
                         </div>
-                        <div class="stat-item" style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: bold; color: #388e3c;" id="report-detail-score">0</div>
+                        <div class="stat-item"
+                            style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #388e3c;" id="report-detail-score">0
+                            </div>
                             <div style="color: #666; margin-top: 5px;">Điểm TB</div>
                         </div>
                     </div>
                 </div>
             </div>
-
+        
             <div class="form-actions" style="margin-top: 20px;">
                 <button type="button" class="btn btn-primary" id="resend-report-btn" data-report-id="">
                     🔄 Gửi lại báo cáo
@@ -384,195 +608,7 @@
         </div>
     </div>
 
-    <!-- User Modal -->
-    <div id="user-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" id="close-user-modal">×</span>
-            <h2 id="user-modal-title">➕ Thêm User Mới</h2>
-            <form id="user-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="user-username">Username *</label>
-                        <input type="text" id="user-username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="user-email">Email *</label>
-                        <input type="email" id="user-email" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="user-password">Mật khẩu *</label>
-                        <input type="password" id="user-password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="user-role">Vai trò *</label>
-                        <select id="user-role" required>
-                            <option value="child">Child</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="user-name">Tên hiển thị *</label>
-                        <input type="text" id="user-name" required>
-                    </div>
-                </div>
-
-                <div class="form-row child-fields">
-                    <div class="form-group">
-                        <label for="user-date-of-birth">Ngày sinh *</label>
-                        <input type="date" id="user-date-of-birth">
-                    </div>
-                    <div class="form-group">
-                        <label for="user-gender">Giới tính *</label>
-                        <select id="user-gender">
-                            <option value="male">Nam</option>
-                            <option value="female">Nữ</option>
-                            <option value="other">Khác</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row child-fields">
-                    <div class="form-group">
-                        <label for="user-phone">Số điện thoại *</label>
-                        <input type="tel" id="user-phone" placeholder="Nhập 10 chữ số" maxlength="10" pattern="[0-9]{10}">
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-user-btn">❌ Hủy</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Video Modal -->
-    <div id="video-modal" class="modal">
-        <div class="modal-content large">
-            <span class="close" id="close-video-modal">×</span>
-            <h2 id="video-modal-title">🔄 Thay thế Video Cảm xúc</h2>
-            
-            <div class="video-current-info">
-                <h3>📹 Video hiện tại</h3>
-                <p><strong>Cảm xúc:</strong> <span id="video-emotion-name"></span></p>
-                <p><strong>Đường dẫn:</strong> <code id="video-current-path"></code></p>
-            </div>
-
-            <form id="video-form">
-                <div class="form-group">
-                    <label for="video-file-input">Chọn video mới *</label>
-                    <input type="file" id="video-file-input" accept="video/*" required>
-                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">
-                        ⚠️ Định dạng: MP4, tối đa 50MB
-                    </small>
-                </div>
-
-                <div id="video-preview-container" class="video-preview-container" style="display: none;">
-                    <h3>👁️ Xem trước</h3>
-                    <video id="video-preview-player" controls style="width: 100%; max-height: 300px; border-radius: 8px;"></video>
-                    <p style="margin-top: 10px; font-size: 14px; color: #7f8c8d;">
-                        📁 <strong>Tên file:</strong> <span id="video-file-name"></span><br>
-                        💾 <strong>Kích thước:</strong> <span id="video-file-size"></span>
-                    </p>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">💾 Lưu video</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-video-btn">❌ Hủy</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Game Content Modal -->
-    <div id="game-content-modal" class="modal">
-        <div class="modal-content large">
-            <span class="close" id="close-game-content-modal">×</span>
-            <h2 id="game-content-modal-title">➕ Thêm Nội dung Game</h2>
-            <form id="game-content-form">
-                <!-- NEW: Game Selection Dropdown -->
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label for="gc-game-select">Chọn Game *</label>
-                    <select id="gc-game-select" required style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="">-- Chọn game --</option>
-                    </select>
-                </div>
-
-                <!-- Hidden Game ID Field (auto-filled) -->
-                <input type="hidden" id="gc-game-id" />
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="gc-level">Level (1-3) *</label>
-                        <select id="gc-level" required>
-                            <option value="">-- Chọn level --</option>
-                            <option value="1">Level 1 - Dễ</option>
-                            <option value="2">Level 2 - Trung bình</option>
-                            <option value="3">Level 3 - Khó</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="gc-content-type">Loại nội dung *</label>
-                        <select id="gc-content-type" required>
-                            <option value="image">🖼️ Hình ảnh</option>
-                            <option value="video">🎬 Video</option>
-                            <option value="text">📝 Text</option>
-                            <option value="audio">🔊 Audio</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="gc-emotion">Cảm xúc</label>
-                        <select id="gc-emotion">
-                            <option value="">-- Chọn cảm xúc --</option>
-                            <option value="Vui vẻ">😊 Vui vẻ</option>
-                            <option value="Buồn bã">😢 Buồn bã</option>
-                            <option value="Tức giận">😠 Tức giận</option>
-                            <option value="Sợ hãi">😨 Sợ hãi</option>
-                            <option value="Ngạc nhiên">😲 Ngạc nhiên</option>
-                            <option value="Ghê tởm">🤢 Ghê tởm</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="gc-question-text">Câu hỏi *</label>
-                    <textarea id="gc-question-text" rows="3" required></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="gc-media-file">File media</label>
-                        <input type="file" id="gc-media-file" accept="image/*,video/*,audio/*">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="gc-explanation">Giải thích</label>
-                    <textarea id="gc-explanation" rows="2"></textarea>
-                </div>
-
-                <div id="gc-media-preview" style="display: none; margin: 15px 0;">
-                    <h4>👁️ Xem trước media</h4>
-                    <div id="gc-media-preview-content"></div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">💾 Lưu</button>
-                    <button type="button" class="btn btn-secondary" id="cancel-game-content-btn">❌ Hủy</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script type="module" src="../components/admin.js"></script>
 </body>
+
 </html>

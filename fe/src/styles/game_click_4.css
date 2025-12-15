@@ -4,10 +4,17 @@
     box-sizing: border-box;
 }
 
+:root {
+    --cv-primary: #1976d2;
+    --cv-accent: #4facfe;
+    --cv-deep: #0b3c7d;
+    --cv-bg-gradient: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
 body {
     font-family: 'Poppins', sans-serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    background: var(--cv-bg-gradient);
     padding: 16px;
 }
 
@@ -64,14 +71,14 @@ body {
 }
 
 .title {
-    color: #ffffff;
+    color: var(--cv-deep);
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: 0.02em;
 }
 
 .subtitle {
-    color: #fefce8;
+    color: rgba(11, 60, 125, 0.82);
     font-size: 0.95rem;
     margin-top: 4px;
 }
@@ -83,12 +90,13 @@ body {
 }
 
 .stat-pill {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(25, 118, 210, 0.08);
     border-radius: 999px;
     padding: 6px 14px;
     font-size: 0.8rem;
-    color: #111827;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    color: var(--cv-deep);
+    border: 1px solid rgba(25, 118, 210, 0.22);
+    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.28);
 }
 
 .main {
@@ -100,8 +108,8 @@ body {
 .card {
     background: rgba(255, 255, 255, 0.97);
     border-radius: 18px;
-    border: 4px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(25, 118, 210, 0.18);
+    box-shadow: 0 14px 36px rgba(148, 163, 184, 0.35);
     padding: 16px 18px;
 }
 
@@ -123,9 +131,10 @@ body {
 
 .question-text {
     margin-top: 8px;
-    font-size: 1rem;
-    line-height: 1.7;
+    font-size: 1.08rem;
+    line-height: 1.8;
     color: #111827;
+    white-space: pre-line;
 }
 
 .hint-row {
@@ -149,7 +158,7 @@ body {
 .answers-title {
     font-size: 1rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--cv-deep);
 }
 
 .answers-grid {
@@ -169,16 +178,22 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    color: #111827;
-    background: linear-gradient(135deg, #e0f2fe 0%, #fef9c3 100%);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    color: var(--cv-deep);
+    background: linear-gradient(120deg, #e3f2fd, #bbdefb);
+    border: 1px solid rgba(25, 118, 210, 0.2);
+    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.28);
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .answer-option:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 12px 20px -4px rgba(0, 0, 0, 0.25);
-    background: linear-gradient(135deg, #bfdbfe 0%, #fee2e2 100%);
+    box-shadow: 0 14px 28px rgba(25, 118, 210, 0.18);
+    background: linear-gradient(120deg, rgba(227, 242, 253, 0.95), rgba(187, 222, 251, 0.95));
+}
+
+.answer-option.selected {
+    outline: 3px solid rgba(25, 118, 210, 0.5);
+    box-shadow: 0 16px 34px rgba(25, 118, 210, 0.22);
 }
 
 .answer-option:disabled {
@@ -201,6 +216,7 @@ body {
     display: flex;
     justify-content: space-between;
     gap: 8px;
+    align-items: center;
 }
 
 .btn {
@@ -214,13 +230,14 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #22c55e 100%);
+    background: linear-gradient(135deg, var(--cv-accent) 0%, var(--cv-primary) 100%);
     color: #f9fafb;
 }
 
 .btn-secondary {
-    background: #0ea5e9;
-    color: #f9fafb;
+    background: #ffffff;
+    color: var(--cv-primary);
+    border: 2px solid rgba(25, 118, 210, 0.35);
 }
 
 .btn-outline {
@@ -231,7 +248,7 @@ body {
 
 .btn-ghost {
     background: transparent;
-    color: #111827;
+    color: var(--cv-deep);
 }
 
 .btn:hover:not(:disabled) {
@@ -270,7 +287,7 @@ body {
 .modal-title {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--cv-deep);
     margin-bottom: 4px;
 }
 

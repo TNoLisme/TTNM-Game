@@ -21,7 +21,11 @@ function getGameThumbnail(game) {
 document.addEventListener('DOMContentLoaded', async () => {
     const user = JSON.parse(localStorage.getItem('currentUser'));
     if (!user) {
-        alert('Vui lòng đăng nhập!');
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            await window.egModal.alert('Vui lòng đăng nhập!', 'Thông báo');
+        } else {
+            alert('Vui lòng đăng nhập!');
+        }
         window.location.href = '/src/pages/login.html';
         return;
     }
@@ -43,7 +47,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         games = data || [];
     } catch (err) {
         console.error('Lỗi tải game:', err);
-        alert('Không thể tải danh sách game. Vui lòng thử lại.');
+        if (window.egModal && typeof window.egModal.alert === 'function') {
+            await window.egModal.alert('Không thể tải danh sách game. Vui lòng thử lại.', 'Lỗi');
+        } else {
+            alert('Không thể tải danh sách game. Vui lòng thử lại.');
+        }
         return;
     }
 
@@ -75,7 +83,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.getElementById('logout-button')?.addEventListener('click', () => {
-        localStorage.removeItem('currentUser');
-        window.location.href = '/src/pages/login.html';
+        const doLogout = () => {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/src/pages/login.html';
+        };
+
+        if (window.egModal && typeof window.egModal.confirm === 'function') {
+            window.egModal
+                .confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
+                .then((ok) => {
+                    if (!ok) return;
+                    doLogout();
+                });
+            return;
+        }
+
+        if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
+        doLogout();
     });
 });

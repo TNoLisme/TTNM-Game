@@ -18,6 +18,7 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    font-family: Arial, sans-serif;
 }
 
 /* Game Complete Modal */
@@ -192,7 +193,7 @@ body {
 
 .navbar span {
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: clamp(1.15rem, 1.6vw, 1.3rem);
     flex-grow: 1;
     text-align: center;
 }
@@ -279,10 +280,11 @@ body {
 }
 
 .scenario-title {
-    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+    font-size: 1.15rem;
     color: var(--cv-deep);
     margin-bottom: 1vh;
     font-weight: 700;
+    padding-right: 120px;
     flex-shrink: 0;
 }
 
@@ -328,14 +330,61 @@ body {
 }
 
 .countdown {
-    font-size: clamp(2rem, 5vw, 3rem);
+    font-size: clamp(1.2rem, 3.2vw, 1.9rem);
     font-weight: 800;
     color: var(--cv-primary);
     text-align: center;
-    padding: 1.5vh;
-    display: none;
+    height: 56px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
     flex-shrink: 0;
 }
+
+.countdown.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+ .round-timer {
+     position: absolute;
+     top: 16px;
+     right: 16px;
+     z-index: 2;
+     height: 34px;
+     padding: 0 12px;
+     min-width: 92px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 8px;
+     font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+     font-weight: 800;
+     color: var(--cv-deep);
+     background: rgba(255, 255, 255, 0.92);
+     border: 1px solid rgba(25, 118, 210, 0.25);
+     border-radius: 999px;
+     font-variant-numeric: tabular-nums;
+     opacity: 0;
+     visibility: hidden;
+     transition: opacity 0.18s ease, visibility 0.18s ease;
+ }
+
+ .round-timer.is-visible {
+     opacity: 1;
+     visibility: visible;
+ }
+
+ .round-timer.is-warning {
+     color: #b71c1c;
+     border-color: rgba(183, 28, 28, 0.35);
+     background: rgba(255, 235, 238, 0.9);
+ }
 
 .button-group {
     display: flex;
@@ -372,23 +421,27 @@ body {
 }
 
 .hint-btn {
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
-    color: white;
+    background: #ffffff;
+    color: var(--cv-primary);
+    border: 2px solid rgba(25, 118, 210, 0.35);
+    box-shadow: none;
 }
 
 .hint-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(79, 172, 254, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(25, 118, 210, 0.12);
 }
 
 .start-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #5b6cff, #6f42c1);
     color: white;
+    font-weight: 700;
+    box-shadow: 0 10px 22px rgba(102, 126, 234, 0.35);
 }
 
 .start-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.55);
+    box-shadow: 0 14px 28px rgba(102, 126, 234, 0.45);
 }
 
 /* Right Panel - Camera & Detection */
@@ -409,14 +462,44 @@ body {
 .camera-container {
     position: relative;
     width: 100%;
-    flex: 1;
+    flex: 1 0 auto;
     min-height: 0;
+    aspect-ratio: 16 / 9;
+    max-height: 62vh;
     background: #000;
     border-radius: 12px;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.camera-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(227, 242, 253, 0.35) 0%, rgba(187, 222, 251, 0.25) 100%);
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    padding: 20px;
+    z-index: 2;
+}
+
+.camera-placeholder-icon {
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    opacity: 0.95;
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
+}
+
+.camera-placeholder-text {
+    font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
 #camera-video {
@@ -426,27 +509,53 @@ body {
     transform: scaleX(-1); /* Mirror effect */
     min-width: 0;
     min-height: 0;
+    position: relative;
+    z-index: 1;
 }
 
 .detection-info {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1vw;
-    padding: 0.8vh 1vw;
+    gap: 12px;
+    box-sizing: border-box;
+    height: 58px;
+    padding: 0 18px;
     background: #f5f5f5;
     border-radius: 12px;
     flex-shrink: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
 }
 
 .detected-emotion-icon {
-    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-size: 2rem;
+    width: 3rem;
+    flex: 0 0 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    line-height: 1;
+}
+
+.detection-info.is-visible {
+    opacity: 1;
+    visibility: visible;
 }
 
 .detected-emotion-percent {
-    font-size: clamp(1rem, 2vw, 1.2rem);
+    font-size: 1.25rem;
     font-weight: 700;
-    color: var(--cv-primary);
+    color: var(--cv-deep);
+    min-width: 4.2rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.detected-emotion-percent:empty {
+    display: none;
 }
 
 /* Traffic Light */
@@ -455,12 +564,13 @@ body {
     justify-content: center;
     gap: 1vw;
     padding: 0.8vh;
+    margin-top: 1.2vh;
     flex-shrink: 0;
 }
 
 .traffic-light-item {
-    width: clamp(28px, 4vw, 35px);
-    height: clamp(28px, 4vw, 35px);
+    width: clamp(20px, 3vw, 26px);
+    height: clamp(20px, 3vw, 26px);
     border-radius: 50%;
     border: 2px solid #ddd;
     transition: all 0.3s;
@@ -468,8 +578,8 @@ body {
 }
 
 .traffic-light-item.active {
-    transform: scale(1.2);
-    box-shadow: 0 0 20px currentColor;
+    transform: scale(1.12);
+    box-shadow: 0 0 14px currentColor;
 }
 
 .traffic-red {
@@ -503,8 +613,12 @@ body {
     text-align: center;
     font-size: clamp(0.8rem, 1.2vw, 0.9rem);
     color: #666;
-    padding: 0.6vh;
-    min-height: 3vh;
+    padding: 0.6vh 1vw;
+    min-height: 2.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.35;
     flex-shrink: 0;
 }
 

@@ -86,6 +86,7 @@ let questionCycle = [];
 // ========================
 
 const questionNumber = document.getElementById("questionNumber");
+const questionTotal = document.getElementById("questionTotal");
 const scoreElement = document.getElementById("score");
 const situationEmoji = document.getElementById("situationEmoji");
 const situationText = document.getElementById("situationText");
@@ -217,7 +218,7 @@ function setupFaceSlices() {
     <div id="faceWrapper"
       style="
         position: relative;
-        width: 640px
+        width: 640px;
         height: 360px;
         max-width: 100%;
         margin: 0 auto;
@@ -562,7 +563,9 @@ function showExitConfirm() {
 
 function updateSituation() {
   if (!currentQuestionData) return;
-  situationEmoji.textContent = currentQuestionData.emoji || "🙂";
+  if (situationEmoji) {
+    situationEmoji.textContent = currentQuestionData.emoji || "🙂";
+  }
   situationText.textContent = currentQuestionData.question_text;
 
   ensureSituationMedia();
@@ -576,9 +579,11 @@ function updateSituation() {
       situationMediaImg.removeAttribute("src");
     }
   }
-  situationEmoji.classList.remove("fade-in");
-  void situationEmoji.offsetWidth;
-  situationEmoji.classList.add("fade-in");
+  if (situationEmoji) {
+    situationEmoji.classList.remove("fade-in");
+    void situationEmoji.offsetWidth;
+    situationEmoji.classList.add("fade-in");
+  }
 }
 
 // ========================
@@ -637,10 +642,14 @@ function updateLabels() {
 // ========================
 
 function updateStats() {
-  questionNumber.textContent = Math.min(
-    questionsAnswered + 1,
-    TARGET_QUESTIONS
+  const totalQuestions = Math.min(
+    TARGET_QUESTIONS,
+    Array.isArray(questionsPool) && questionsPool.length ? questionsPool.length : TARGET_QUESTIONS
   );
+  questionNumber.textContent = Math.min(questionsAnswered + 1, totalQuestions);
+  if (questionTotal) {
+    questionTotal.textContent = totalQuestions;
+  }
   scoreElement.textContent = sessionContext.score;
 }
 

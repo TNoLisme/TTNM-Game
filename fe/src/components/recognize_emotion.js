@@ -7,6 +7,8 @@ let currentIndex = 0;
 let score = 0;
 let answered = false;
 let usedHint = false;
+let selectedAnswer = null;
+let selectedButton = null;
 
 let elements = {};
 let user = null;
@@ -65,14 +67,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     elements = {
-        score: document.getElementById('score-display'),
+        progressLabel: document.getElementById('progress-label'),
+        scoreLabel: document.getElementById('score-label'),
         questionArea: document.getElementById('question-area'),
         hintText: document.getElementById('hint-content'),
         hintBtn: document.getElementById('hint-btn'),
         soundBtn: document.getElementById('sound-btn'),
         exitBtn: document.getElementById('exit-btn'),
         answers: document.querySelectorAll('.answer-option'),
-        nextHintBtn: document.getElementById('next-question-btn'),
+        submitBtn: document.getElementById('next-question-btn'),
         feedbackModal: document.getElementById('feedback-modal'),
         warningModal: document.getElementById('warning-modal'),
         learningModal: document.getElementById('learning-modal'),
@@ -146,6 +149,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         usedHint = false;
+        selectedAnswer = null;
+        selectedButton = null;
         const q = questions[i];
 
         elements.questionArea.innerHTML = '';
@@ -181,12 +186,73 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.className = 'answer-option';
         });
 
-        elements.hintText.textContent = 'Hãy chọn đáp án của bạn.';
-        elements.score.textContent = `Câu ${i + 1}/${questions.length} | Điểm: ${score}`;
+        if (elements.submitBtn) {
+            elements.submitBtn.disabled = true;
+        }
+
+        elements.hintText.textContent = '';
+        if (elements.progressLabel) {
+            elements.progressLabel.textContent = `Câu ${i + 1}/${questions.length}`;
+        }
+        if (elements.scoreLabel) {
+            elements.scoreLabel.textContent = `Điểm: ${score}`;
+        }
 
         answered = false;
         elements.feedbackModal.classList.add('hidden');
         elements.learningModal.classList.add('hidden');
+    }
+
+    function onSubmitAnswer() {
+        if (answered) return;
+        const q = questions[currentIndex];
+        if (!q) return;
+
+        if (!selectedAnswer || !selectedButton) {
+            alert('Hãy chọn một cảm xúc trước khi trả lời.');
+            return;
+        }
+
+        answered = true;
+
+        const chosen = selectedAnswer;
+        const correct = normalizeEmotion(chosen) === normalizeEmotion(q.correct_answer);
+        const emotion = q.correct_answer;
+        const emotionKey = normalizeEmotion(emotion);
+
+        if (correct) score += 10;
+        if (elements.scoreLabel) {
+            elements.scoreLabel.textContent = `Điểm: ${score}`;
+        }
+
+        localResults.push({
+            question_id: q.question_id,
+            answer: chosen,
+            is_correct: correct,
+            used_hint: usedHint,
+            response_time_ms: 5000
+        });
+
+        if (!correct) {
+            emotionErrors[emotionKey] = (emotionErrors[emotionKey] || 0) + 1;
+
+            if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
+                learnedEmotions.push(emotionKey);
+            }
+        }
+
+        elements.answers.forEach(b => {
+            b.classList.remove('selected');
+            if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
+            else if (b === selectedButton && !correct) b.classList.add('incorrect');
+            b.disabled = true;
+        });
+
+        if (elements.submitBtn) {
+            elements.submitBtn.disabled = true;
+        }
+
+        showFeedback(correct, q.correct_answer, emotion);
     }
 
     // Popup Sai/Đúng (Đã sửa logic hiển thị nút)
@@ -328,49 +394,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         speechSynthesis.speak(msg);
     };
 
+    if (elements.submitBtn) {
+        elements.submitBtn.onclick = onSubmitAnswer;
+    }
+
     elements.answers.forEach(btn => {
         if (!btn) return;
         btn.onclick = () => {
             if (answered) return;
-            answered = true;
-
             const q = questions[currentIndex];
-            const chosen = btn.dataset.answer;
-            const correct = normalizeEmotion(chosen) === normalizeEmotion(q.correct_answer);
-            const emotion = q.correct_answer;
-            const emotionKey = normalizeEmotion(emotion);
+            if (!q) return;
 
-            if (correct) score += 10;
+            selectedButton = btn;
+            selectedAnswer = btn.dataset.answer;
 
-            localResults.push({
-                question_id: q.question_id,
-                answer: chosen,
-                is_correct: correct,
-                used_hint: usedHint,
-                response_time_ms: 5000
-            });
-
-            if (!correct) {
-                emotionErrors[emotionKey] = (emotionErrors[emotionKey] || 0) + 1;
-
-                // --- LOGIC POPUP TỰ ĐỘNG KHI SAI NHIỀU ---
-                if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
-                    learnedEmotions.push(emotionKey);
-
-                    // KHÔNG RETURN: Sau khi push learnedEmotions, nó phải chạy xuống showFeedback
-                    // showFeedback sẽ kiểm tra và hiển thị nút "Học Lại" duy nhất.
-                }
-            }
-
-            // Disable nút sau khi chọn
             elements.answers.forEach(b => {
-                if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
-                else if (b === btn && !correct) b.classList.add('incorrect');
-                b.disabled = true;
+                b.classList.toggle('selected', b === btn);
             });
 
-            // Gọi showFeedback. Hàm này sẽ tự động kiểm tra isForcedLearning
-            showFeedback(correct, q.correct_answer, emotion);
+            if (elements.submitBtn) {
+                elements.submitBtn.disabled = !selectedAnswer;
+            }
         };
     });
 });

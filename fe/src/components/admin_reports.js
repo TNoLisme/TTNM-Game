@@ -19,22 +19,22 @@ const REPORTS_API_URL = "http://localhost:8000/reports";  // ← Không dùng /a
 export async function loadReports() {
     try {
         console.log('📊 Loading reports from:', `${REPORTS_API_URL}/statistics`);
-        
+
         // 🔥 FIX: Gọi đúng endpoint
         const response = await fetchAPI(`${REPORTS_API_URL}/statistics`);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        
+
         console.log('📦 Raw response:', data);
-        
+
         if (!data || typeof data !== 'object') {
             throw new Error('Invalid data format');
         }
-        
+
         reportsData = {
             weekly_reports: data.weekly_reports || [],
             monthly_reports: data.monthly_reports || [],
@@ -42,42 +42,42 @@ export async function loadReports() {
             monthly_trend: data.monthly_trend || 0,
             total_count: data.total_count || 0
         };
-        
+
         // Combine và deduplicate reports
         const allReports = [
             ...(reportsData.weekly_reports || []),
             ...(reportsData.monthly_reports || [])
         ];
-        
+
         allUniqueReports = Array.from(
             new Map(allReports.map(r => [r.report_id, r])).values()
         );
-        
+
         console.log('✅ Reports loaded:', {
             weekly: reportsData.weekly_reports.length,
             monthly: reportsData.monthly_reports.length,
             unique: allUniqueReports.length
         });
-        
+
         // 🔍 DEBUG: Log first report để check structure
         if (allUniqueReports.length > 0) {
             console.log('🔍 First report structure:', allUniqueReports[0]);
             console.log('🔍 Has report_type?', 'report_type' in allUniqueReports[0]);
             console.log('🔍 report_type value:', allUniqueReports[0].report_type);
         }
-        
+
         renderReportsStatistics(reportsData);
-        
+
         // Áp dụng filters hiện tại (nếu có) hoặc hiển thị tất cả
         const searchTerm = $('search-reports')?.value?.trim() || '';
         const periodFilter = $('filter-report-period')?.value || '';
-        
+
         if (searchTerm || periodFilter) {
             applyCurrentFilters();
         } else {
             renderReportsTable(allUniqueReports);
         }
-        
+
     } catch (error) {
         console.error('❌ Error loading reports:', error);
         showNotification('Không thể tải dữ liệu báo cáo: ' + error.message, 'error');
@@ -96,9 +96,9 @@ function renderEmptyState() {
         monthly_trend: 0,
         total_count: 0
     };
-    
+
     allUniqueReports = [];
-    
+
     renderReportsStatistics(stats);
     renderReportsTable([]);
 }
@@ -110,20 +110,20 @@ function renderReportsStatistics(data) {
     const weeklyCount = data.weekly_reports?.length || 0;
     const monthlyCount = data.monthly_reports?.length || 0;
     const totalCount = data.total_count || allUniqueReports.length;
-    
+
     const totalReportsEl = $('total-reports');
     if (totalReportsEl) {
         totalReportsEl.textContent = totalCount;
     }
-    
+
     const weeklyEl = $('weekly-reports-count');
     const monthlyEl = $('monthly-reports-count');
     const totalEl = $('total-reports-count');
-    
+
     if (weeklyEl) weeklyEl.textContent = weeklyCount;
     if (monthlyEl) monthlyEl.textContent = monthlyCount;
     if (totalEl) totalEl.textContent = totalCount;
-    
+
     updateTrendIndicator('weekly-trend', data.weekly_trend || 0);
     updateTrendIndicator('monthly-trend', data.monthly_trend || 0);
 }
@@ -131,9 +131,9 @@ function renderReportsStatistics(data) {
 function updateTrendIndicator(elementId, trend) {
     const el = $(elementId);
     if (!el) return;
-    
+
     const trendValue = parseFloat(trend) || 0;
-    
+
     if (trendValue > 0) {
         el.innerHTML = '<span class="trend-icon">↗️</span> +' + trendValue.toFixed(1) + '%';
         el.style.color = '#2ecc71';
@@ -155,9 +155,9 @@ function renderReportsTable(reports) {
         console.error('❌ Element #reports-tbody not found!');
         return;
     }
-    
+
     console.log(`📋 Rendering ${reports?.length || 0} reports`);
-    
+
     if (!reports || reports.length === 0) {
         tbody.innerHTML = `
             <tr class="no-data">
@@ -169,19 +169,19 @@ function renderReportsTable(reports) {
         `;
         return;
     }
-    
+
     // Sort by generated_at desc
     const sortedReports = [...reports].sort((a, b) => {
         const dateA = new Date(a.generated_at || 0);
         const dateB = new Date(b.generated_at || 0);
         return dateB - dateA;
     });
-    
+
     tbody.innerHTML = sortedReports.map(report => {
         const childInitial = report.child_name ? report.child_name.charAt(0).toUpperCase() : '?';
         const reportType = report.report_type || 'weekly';
         const periodBadge = reportType === 'weekly' ? '📅 Tuần' : '📆 Tháng';
-        
+
         return `
         <tr>
             <td>
@@ -251,7 +251,7 @@ export function setupReportEvents() {
             }, 300); // Debounce 300ms
         });
     }
-    
+
     // Period filter
     const periodFilter = $('filter-report-period');
     if (periodFilter) {
@@ -259,7 +259,7 @@ export function setupReportEvents() {
             applyCurrentFilters();
         });
     }
-    
+
     // Reset filters button
     const resetFiltersBtn = $('reset-reports-filter-btn');
     if (resetFiltersBtn) {
@@ -267,7 +267,7 @@ export function setupReportEvents() {
             resetFilters();
         });
     }
-    
+
     // Refresh button
     const refreshBtn = $('refresh-reports-btn');
     if (refreshBtn) {
@@ -277,29 +277,29 @@ export function setupReportEvents() {
             const periodFilter = $('filter-report-period');
             if (searchInput) searchInput.value = '';
             if (periodFilter) periodFilter.value = '';
-            
+
             await loadReports();
             showNotification('Đã làm mới dữ liệu báo cáo', 'success');
         });
     }
-    
+
     // Modal close buttons
     const closeModalBtn = $('close-report-modal');
     const closeDetailBtn = $('close-report-detail-btn');
     const modal = $('report-modal');
-    
+
     if (closeModalBtn) {
         closeModalBtn.addEventListener('click', () => {
             if (modal) modal.style.display = 'none';
         });
     }
-    
+
     if (closeDetailBtn) {
         closeDetailBtn.addEventListener('click', () => {
             if (modal) modal.style.display = 'none';
         });
     }
-    
+
     // Click outside modal to close
     if (modal) {
         modal.addEventListener('click', (e) => {
@@ -308,7 +308,7 @@ export function setupReportEvents() {
             }
         });
     }
-    
+
     // Resend button trong modal
     const resendBtn = $('resend-report-btn');
     if (resendBtn) {
@@ -329,14 +329,14 @@ function applyCurrentFilters() {
         renderReportsTable([]);
         return;
     }
-    
+
     const searchTerm = $('search-reports')?.value?.trim() || '';
     const periodFilter = $('filter-report-period')?.value || '';
-    
+
     console.log('🔍 Applying filters:', { searchTerm, periodFilter });
-    
+
     let filtered = [...allUniqueReports];
-    
+
     // Apply search
     if (searchTerm) {
         const term = searchTerm.toLowerCase();
@@ -349,12 +349,12 @@ function applyCurrentFilters() {
             );
         });
     }
-    
+
     // Apply period filter
     if (periodFilter) {
         filtered = filtered.filter(report => report.report_type === periodFilter);
     }
-    
+
     renderReportsTable(filtered);
 }
 
@@ -362,11 +362,11 @@ function resetFilters() {
     // Clear search input
     const searchInput = $('search-reports');
     if (searchInput) searchInput.value = '';
-    
+
     // Clear period filter
     const periodFilter = $('filter-report-period');
     if (periodFilter) periodFilter.value = '';
-    
+
     // Safety check trước khi render
     if (allUniqueReports && allUniqueReports.length > 0) {
         renderReportsTable(allUniqueReports);
@@ -382,11 +382,11 @@ function resetFilters() {
 // ==========================================
 function formatDateTime(dateString) {
     if (!dateString) return 'N/A';
-    
+
     try {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return 'N/A';
-        
+
         return date.toLocaleString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
@@ -409,27 +409,27 @@ function escapeHtml(text) {
 // ==========================================
 // GLOBAL ACTIONS
 // ==========================================
-window.viewReportDetails = async function(reportId) {
+window.viewReportDetails = async function (reportId) {
     if (!reportId) {
         showNotification('Report ID không hợp lệ', 'error');
         return;
     }
-    
+
     try {
         console.log('👁️ Viewing report:', reportId);
-        
+
         // 🔥 FIX: Đúng endpoint
         const response = await fetchAPI(`${REPORTS_API_URL}/${reportId}`);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const data = await response.json();
         const report = data.status === 'success' ? data : data;
-        
+
         console.log('📦 Report detail:', report);
-        
+
         // Parse data field
         let parsedData = {};
         try {
@@ -437,87 +437,87 @@ window.viewReportDetails = async function(reportId) {
         } catch (e) {
             console.warn('Cannot parse data:', e);
         }
-        
+
         // Populate modal
         const modal = $('report-modal');
-        
+
         if ($('report-detail-child-name')) {
             $('report-detail-child-name').textContent = report.child_name || 'N/A';
         }
-        
+
         if ($('report-detail-child-email')) {
             $('report-detail-child-email').textContent = report.child_email || 'N/A';
         }
-        
+
         if ($('report-detail-period')) {
             const periodText = report.report_type === 'weekly' ? '📅 Báo cáo tuần' : '📆 Báo cáo tháng';
             $('report-detail-period').textContent = periodText;
         }
-        
+
         if ($('report-detail-sent-at')) {
             $('report-detail-sent-at').textContent = formatDateTime(report.generated_at);
         }
-        
+
         if ($('report-detail-summary')) {
             $('report-detail-summary').textContent = report.summary || 'Chưa có tóm tắt';
         }
-        
+
         if ($('report-detail-sessions')) {
             $('report-detail-sessions').textContent = parsedData.total_sessions || 0;
         }
-        
+
         if ($('report-detail-playtime')) {
             $('report-detail-playtime').textContent = parsedData.total_playtime || 0;
         }
-        
+
         if ($('report-detail-score')) {
             $('report-detail-score').textContent = parsedData.avg_score || 0;
         }
-        
+
         // Set report_id cho resend button
         const resendBtn = $('resend-report-btn');
         if (resendBtn) {
             resendBtn.setAttribute('data-report-id', report.report_id);
         }
-        
+
         // Show modal
         if (modal) {
             modal.style.display = 'block';
         }
-        
+
     } catch (error) {
         console.error('❌ Error viewing report:', error);
         showNotification('Không thể tải chi tiết báo cáo: ' + error.message, 'error');
     }
 };
 
-window.resendReport = async function(reportId) {
+window.resendReport = async function (reportId) {
     if (!reportId) {
         showNotification('Report ID không hợp lệ', 'error');
         return;
     }
-    
+
     if (!confirm('Bạn có chắc muốn gửi lại báo cáo này?')) {
         return;
     }
-    
+
     try {
         console.log('🔄 Resending report:', reportId);
-        
+
         // 🔥 FIX: Đúng endpoint
         const response = await fetchAPI(`${REPORTS_API_URL}/${reportId}/resend`, {
             method: 'POST'
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         showNotification(result.message || 'Đã gửi lại báo cáo thành công', 'success');
         await loadReports();
-        
+
     } catch (error) {
         console.error('❌ Error resending report:', error);
         showNotification('Không thể gửi lại báo cáo: ' + error.message, 'error');
