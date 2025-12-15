@@ -512,6 +512,29 @@ function updateScenarioUI() {
             ? `Màn ${currentScenario}/${totalScenarios}`
             : `Lượt ${currentScenario}/${totalScenarios}`;
     }
+
+    // Update progress bar
+    const progressBarFill = document.getElementById('cv-level-progress-fill');
+    if (progressBarFill) {
+        const currentScenario = gameState.currentScenarioIndex + 1;
+        const totalScenarios = gameState.scenarios.length;
+        const percentage = (currentScenario / totalScenarios) * 100;
+        
+        progressBarFill.style.width = `${percentage}%`;
+        
+        // Change color based on percentage
+        let hue;
+        if (percentage < 33) {
+            hue = 0; // Red
+        } else if (percentage < 66) {
+            hue = 60; // Yellow
+        } else {
+            hue = 120; // Green
+        }
+        
+        progressBarFill.style.backgroundColor = `hsl(${hue}, 70%, 50%)`;
+        progressBarFill.style.boxShadow = `0 6px 14px hsla(${hue}, 70%, 50%, 0.25)`;
+    }
     
     // Hiển thị ảnh minh họa nếu có
     const scenarioImage = $('scenario-image');

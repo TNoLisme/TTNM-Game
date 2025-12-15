@@ -214,6 +214,26 @@ body {
     color: var(--cv-deep);
 }
 
+/* Progress bar for level completion */
+.cv-level-progress {
+    width: min(320px, 32vw);
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(25, 118, 210, 0.12);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.cv-level-progress-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: #22c55e;
+    transition: width 220ms ease, background-color 220ms ease;
+    box-shadow: 0 6px 14px rgba(34, 197, 94, 0.25);
+}
+
 .back-btn, .logout-btn {
     border: none;
     padding: 10px 20px;
