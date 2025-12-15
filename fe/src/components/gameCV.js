@@ -58,6 +58,8 @@ let gameState = {
 
 const ROUND_TIMER_WARNING_MS = 5000;
 
+const CV_MAX_SCENARIOS_PER_LEVEL = 5;
+
 // Emotion mapping from face-api.js to game emotions
 const EMOTION_MAP = {
     'happy': 'vui',
@@ -198,7 +200,7 @@ function applyGameConfig() {
         console.warn("Unable to set document title:", error);
     }
 
-    const navTitleEl = $$(".navbar span");
+    const navTitleEl = $$(".navbar-title");
     if (navTitleEl) {
         navTitleEl.textContent = config.navTitle;
     }
@@ -339,6 +341,11 @@ async function initGame() {
     }
     // For GV1, scenarios are already filtered and randomized by backend, no need to filter again
 
+    if (gameState.scenarios.length > CV_MAX_SCENARIOS_PER_LEVEL) {
+        gameState.scenarios = gameState.scenarios.slice(0, CV_MAX_SCENARIOS_PER_LEVEL);
+        console.log(`Limited scenarios to ${CV_MAX_SCENARIOS_PER_LEVEL} per level`);
+    }
+
     if (gameState.scenarios.length === 0) {
         let emptyMessage = `Không có màn nào ở level ${gameState.selectedLevel}. Vui lòng chọn level khác.`;
         if (gameState.config?.requiresEmotion && gameState.selectedEmotion) {
@@ -373,6 +380,9 @@ async function initGame() {
     // Start first scenario (or continue from saved progress)
     // At this point, currentScenarioIndex and sessionId are already set
     if (gameState.scenarios.length > 0) {
+        if (gameState.currentScenarioIndex >= gameState.scenarios.length) {
+            gameState.currentScenarioIndex = 0;
+        }
         const savedIndex = gameState.currentScenarioIndex || 0;
         startScenario(savedIndex);
     }
@@ -521,19 +531,6 @@ function updateScenarioUI() {
         const percentage = (currentScenario / totalScenarios) * 100;
         
         progressBarFill.style.width = `${percentage}%`;
-        
-        // Change color based on percentage
-        let hue;
-        if (percentage < 33) {
-            hue = 0; // Red
-        } else if (percentage < 66) {
-            hue = 60; // Yellow
-        } else {
-            hue = 120; // Green
-        }
-        
-        progressBarFill.style.backgroundColor = `hsl(${hue}, 70%, 50%)`;
-        progressBarFill.style.boxShadow = `0 6px 14px hsla(${hue}, 70%, 50%, 0.25)`;
     }
     
     // Hiển thị ảnh minh họa nếu có
@@ -1715,60 +1712,23 @@ function showContinueGameModal(progress, progressKey) {
     return new Promise((resolve) => {
         const modal = document.createElement('div');
         modal.id = 'continue-game-modal';
-        modal.style.cssText = `
-            display: flex;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        `;
+        modal.className = 'game-complete-modal';
+        modal.style.display = 'flex';
 
         modal.innerHTML = `
-            <div style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 25px;
-                padding: 32px 24px;
-                max-width: 480px;
-                width: 90%;
-                box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
-                text-align: center;
-                animation: slideUp 0.4s ease-out;
-            ">
-                <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700;">
-                    🎮 Tiếp tục chơi?
-                </h2>
-                <p style="margin: 8px 0 20px; font-size: 15px; line-height: 1.5;">
-                    Bạn đang chơi dở level <strong style=\"color:#ffd700;\">${gameState.selectedLevel}</strong>.<br>
-                    Tiếp tục từ màn <strong style=\"color:#ffd700;\">${progress.currentScenarioIndex + 1}</strong> nhé?
-                </p>
-                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
-                    <button id="continue-yes-btn" style="
-                        padding: 10px 20px;
-                        border-radius: 10px;
-                        border: none;
-                        cursor: pointer;
-                        font-weight: 600;
-                        background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
-                        color: white;
-                        min-width: 160px;
-                    ">
-                        ✅ Tiếp tục
-                    </button>
-                    <button id="continue-no-btn" style="
-                        padding: 10px 20px;
-                        border-radius: 10px;
-                        border: none;
-                        cursor: pointer;
-                        font-weight: 600;
-                        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                        color: white;
-                        min-width: 160px;
-                    ">
-                        🔄 Chơi lại từ đầu
-                    </button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🎮 Tiếp tục chơi?</h2>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Bạn đang chơi dở level <strong class="cv-modal-highlight">${gameState.selectedLevel}</strong>.<br>
+                        Tiếp tục từ màn <strong class="cv-modal-highlight">${progress.currentScenarioIndex + 1}</strong> nhé?
+                    </p>
+                </div>
+                <div class="modal-actions">
+                    <button id="continue-yes-btn" class="modal-btn play-again-btn">✅ Tiếp tục</button>
+                    <button id="continue-no-btn" class="modal-btn exit-btn">🔄 Chơi lại từ đầu</button>
                 </div>
             </div>
         `;

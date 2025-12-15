@@ -198,6 +198,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.scoreLabel.textContent = `Điểm: ${score}`;
         }
 
+        const progressFill = document.getElementById('click-progress-fill');
+        if (progressFill) {
+            const percentage = ((i + 1) / questions.length) * 100;
+            progressFill.style.width = `${percentage}%`;
+        }
+
         answered = false;
         elements.feedbackModal.classList.add('hidden');
         elements.learningModal.classList.add('hidden');
