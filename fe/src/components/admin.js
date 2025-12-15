@@ -81,12 +81,12 @@ function calculateAge(dateOfBirth) {
 
 function getEmotionEmoji(emotion) {
     const emojis = {
-        'Vui vẻ': '😊',
-        'Buồn bã': '😢',
-        'Tức giận': '😠',
-        'Sợ hãi': '😨',
-        'Ngạc nhiên': '😲',
-        'Ghê tởm': '🤢'
+        'vui vẻ': '😊',
+        'buồn bã': '😢',
+        'tức giận': '😠',
+        'sợ hãi': '😨',
+        'ngạc nhiên': '😲',
+        'ghê tởm': '🤢'
     };
     return emojis[emotion] || '❓';
 }

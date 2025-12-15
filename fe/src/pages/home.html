@@ -4,7 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TTNM Game - Trang Chủ</title>
+  <title>TTNM Game - Trang Chủ</title>  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="/src/styles/home.css">
   <link rel="stylesheet" href="/src/styles/navigation.css">
   <link rel="stylesheet" href="../styles/chatbot_widget.css">
@@ -31,53 +34,28 @@
 
   <main class="main-content">
 
-    <div class="emotion-section">
-      <div class="banner-text">Cảm xúc cần rèn luyện nhiều hơn</div>
-
-      <div class="banner-container">
-        <button class="arrow left">&#10094;</button>
-
-        <div class="banner">
-          <div class="slides">
-            <img src="/fe/assets/images/...1" alt="Game 1">
-            <img src="/fe/assets/images/...2" alt="Game 2">
-            <img src="/fe/assets/images/...3" alt="Game 3">
-          </div>
-        </div>
-
-        <button class="arrow right">&#10095;</button>
+    <!-- Emotion Error Cards Section -->
+    <section class="emotion-section">
+      <div class="emotion-banner-header">
+        <h2 class="emotion-banner-title">Tỉ lệ sai của các cảm xúc</h2>
       </div>
 
-      <div class="dots">
-        <span class="dot active"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
+      <div class="emotion-cards-container" id="emotionCardsContainer">
+        <div class="loading-indicator">Đang tải dữ liệu cảm xúc...</div>
       </div>
-    </div>
+    </section>
 
+    <!-- Recent Games Section -->
     <section class="recent-games-section">
       <h2 class="section-title">Trò chơi đã chơi gần đây</h2>
 
       <div class="game-list">
-        <div class="game-card">
-          <img src="/fe/assets/images/...1" alt="Game 1">
-          <p class="game-name">Tên trò chơi 1</p>
-        </div>
-        <div class="game-card">
-          <img src="/fe/assets/images/...2" alt="Game 2">
-          <p class="game-name">Tên trò chơi 2</p>
-        </div>
-        <div class="game-card">
-          <img src="/fe/assets/images/...3" alt="Game 3">
-          <p class="game-name">Tên trò chơi 3</p>
-        </div>
-        <div class="game-card">
-          <img src="/fe/assets/images/...4" alt="Game 4">
-          <p class="game-name">Tên trò chơi 4</p>
-        </div>
+        <!-- Games will be loaded dynamically via JavaScript -->
+        <div class="loading-indicator">Đang tải...</div>
       </div>
     </section>
 
+    <!-- Learning Cards Section -->
     <section class="emotion-learning-section">
       <h2 class="section-title">Khám phá cảm xúc cùng bạn nhỏ</h2>
 
@@ -86,15 +64,13 @@
         <div class="learning-card">
           <div class="card-icon">😊</div>
           <h3 class="card-title">Học 6 cảm xúc cơ bản</h3>
-          <p class="card-desc">Nhận biết và hiểu các cảm xúc vui, buồn, sợ, tức giận, ngạc nhiên và ghê tởm qua hình ảnh
-            sinh
-            động.</p>
+          <p class="card-desc">Nhận biết và hiểu các cảm xúc vui, buồn, sợ, tức giận, ngạc nhiên và ghê tởm qua hình ảnh sinh động.</p>
           <button class="card-btn"><a href="./learn.html">Bắt đầu học</a></button>
         </div>
 
         <div class="learning-card">
           <div class="card-icon">🎮</div>
-          <h3 class="card-title">Chơi 4 trò chơi cảm xúc</h3>
+          <h3 class="card-title">Chơi 6 trò chơi cảm xúc</h3>
           <p class="card-desc">Rèn luyện khả năng cảm xúc qua các trò chơi tương tác vui nhộn.</p>
           <button class="card-btn" id="go-to-game-select">Vào chơi</button>
         </div>
@@ -102,7 +78,7 @@
       </div>
     </section>
 
-
+    <!-- Statistics Charts Section -->
     <section class="emotion-stats-section">
       <h2 class="section-title">Hành trình cảm xúc của bạn nhỏ</h2>
 
@@ -121,14 +97,14 @@
 
         <div class="chart-card">
           <div class="chart-icon">🎮</div>
-          <h3 class="chart-title">Tỉ lệ chơi của 4 trò chơi</h3>
+          <h3 class="chart-title">Tỉ lệ chơi của 6 trò chơi</h3>
           <canvas id="gameChart"></canvas>
         </div>
       </div>
     </section>
   </main>
 
-
+  <!-- Scripts -->
   <script type="module" src="/src/components/home.js"></script>
   <script src="../components/chatbot_widget.js"></script>
 
