@@ -200,7 +200,7 @@ body {
 .game-name {
   font-size: 16px;
   font-weight: 600;
-  color: #000;
+  color: #0b3c7d;
   text-align: center;
   padding: 10px;
 }
@@ -450,7 +450,7 @@ body {
   }
 
   .chart-card canvas {
-    max-width: 220px !important;
+    max-width: 250px !important;
     height: 220px !important;
     max-height: 220px !important;
   }
@@ -458,12 +458,12 @@ body {
 
 /* Banner Emotion Cards Styles */
     .emotion-section {
-      margin-bottom: 40px;
+      margin-bottom: 30px;
     }
 
     .emotion-banner-header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
     .emotion-banner-title {
@@ -530,15 +530,15 @@ body {
     }
 
     .emotion-card.low-error {
-      background: linear-gradient(135deg, #1caed3 0%, #5cd1ff 100%);
+      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
     }
 
     .emotion-card.medium-error {
-      background: linear-gradient(135deg, #1caed3 0%, #5cd1ff 100%);
+      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
     }
 
     .emotion-card.high-error {
-      background: linear-gradient(135deg, #1caed3 0%, #5cd1ff 100%);
+      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
     }
 
     .emotion-icon {

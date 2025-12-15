@@ -85,7 +85,7 @@
     align-items: stretch;
     text-align: center;
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-    height: 260px; /* Chiều cao cố định cho tất cả card game */
+    height: 300px; /* Chiều cao cố định cho tất cả card game */
 }
 
 /* * CẬP NHẬT: Hiệu ứng hover dùng màu xanh */

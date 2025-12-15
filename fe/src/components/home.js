@@ -290,7 +290,7 @@ function renderRecentGames(games) {
         gameCard.style.animationDelay = `${index * 0.1}s`;
         
         let gameUrl = '/src/pages/select_game.html';
-        let gameImagePath = '/fe/assets/images/default-game.jpg';
+        let gameImagePath = '../../assets/images/default-game.jpg';
         let gameType = null;
         
         // Try to get game type from game.game_type first
@@ -302,7 +302,7 @@ function renderRecentGames(games) {
         
         if (gameType && GAME_TYPE_MAP[gameType]) {
             gameUrl = GAME_TYPE_MAP[gameType].url;
-            gameImagePath = `/fe/assets/images/${gameType}.png`;
+            gameImagePath = `../../assets/images/${gameType}.png`;
             console.log(`  📸 Image path: "${gameImagePath}"`);
             console.log(`  🔗 Game URL: "${gameUrl}"`);
         } else {
