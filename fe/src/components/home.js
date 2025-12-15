@@ -5,8 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const goToGameSelectBtn = document.querySelector('#go-to-game-select'); // Nút Vào chơi mới
 
     logoutBtn?.addEventListener('click', () => {
-        localStorage.removeItem('currentUser');
-        window.location.href = '/src/pages/login.html';
+        const doLogout = () => {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/src/pages/login.html';
+        };
+
+        if (window.egModal && typeof window.egModal.confirm === 'function') {
+            window.egModal
+                .confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
+                .then((ok) => {
+                    if (!ok) return;
+                    doLogout();
+                });
+            return;
+        }
+
+        if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
+        doLogout();
     });
 
     // Xử lý chuyển hướng cho nút 'Vào chơi'

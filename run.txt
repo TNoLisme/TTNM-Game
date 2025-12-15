@@ -1,6 +1,6 @@
 run fe: cd đến fe và npm run dev
 sau đó truy cập link nó cung cấp
-<<<<<<< HEAD
+<<<<<<< HEADt
 nhận diện cảm xúc -> chiếc hộp cảm xúc
 xưởng lắp ghép cảm xúc
 ai đang biểu hiện cảm xúc gì -> thám tử cảm xúc

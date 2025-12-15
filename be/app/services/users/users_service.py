@@ -43,7 +43,7 @@ class UsersService:
             name=data.get("name")
         )
 
-        self.user_repo.save_user(user)
+        self.user_repo.save(user)
         return {"status": "success", "message": f"User {user.username} created", "user_id": str(user.user_id)}
 
     def create_child(self, data: dict) -> dict:
@@ -66,7 +66,7 @@ class UsersService:
             role=RoleEnum.child,
             name=data.get("name")
         )
-        self.user_repo.save_user(user)  # ĐÃ OK
+        self.user_repo.save(user)  # ĐÃ OK
 
         child = Child(
             user_id=str(user_id),  # PHẢI LÀ STR!

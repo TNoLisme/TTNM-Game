@@ -159,8 +159,9 @@ body {
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
 }
-    .nav-logout-btn {
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
+
+    .main-nav .nav-logout-btn {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
       color: white;
       border: none;
       padding: 10px 24px;
@@ -169,15 +170,16 @@ body {
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(79, 172, 254, 0.35);
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.35) !important;
     }
     
-    .nav-logout-btn:hover {
-      background: linear-gradient(135deg, #1976d2, #1565c0);
+    .main-nav .nav-logout-btn:hover {
+      background: linear-gradient(135deg, #2563eb, #1e40af) !important;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.5);
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.5) !important;
     }
-    .nav-logout-btn:active {
+    
+    .main-nav .nav-logout-btn:active {
       transform: translateY(0);
     }
     /* End Nav Bar Styles */
