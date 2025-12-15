@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Email - EmoGarden</title>
+    <link rel="stylesheet" href="../styles/chatbot_widget.css">
     <style>
         * {
             margin: 0;
@@ -297,6 +298,7 @@
         <a href="profile.html" class="back-link">← Quay lại Profile</a>
     </div>
 
+    <script src="../components/chatbot_widget.js"></script>
     <script>
         const API_URL = "http://localhost:8000";
         const logEl = document.getElementById('log');
@@ -322,7 +324,11 @@
             const email = document.getElementById('test-email').value.trim();
             
             if (!email) {
-                alert('Vui lòng nhập email!');
+                if (window.egModal && typeof window.egModal.alert === 'function') {
+                    await window.egModal.alert('Vui lòng nhập email!', 'Thông báo');
+                } else {
+                    alert('Vui lòng nhập email!');
+                }
                 return;
             }
 
@@ -358,7 +364,11 @@
             const childId = document.getElementById('child-id-weekly').value.trim();
             
             if (!childId) {
-                alert('Vui lòng nhập Child User ID!');
+                if (window.egModal && typeof window.egModal.alert === 'function') {
+                    await window.egModal.alert('Vui lòng nhập Child User ID!', 'Thông báo');
+                } else {
+                    alert('Vui lòng nhập Child User ID!');
+                }
                 return;
             }
 
@@ -396,7 +406,11 @@
             const childId = document.getElementById('child-id-monthly').value.trim();
             
             if (!childId) {
-                alert('Vui lòng nhập Child User ID!');
+                if (window.egModal && typeof window.egModal.alert === 'function') {
+                    await window.egModal.alert('Vui lòng nhập Child User ID!', 'Thông báo');
+                } else {
+                    alert('Vui lòng nhập Child User ID!');
+                }
                 return;
             }
 
@@ -449,5 +463,6 @@
             }
         });
     </script>
+    <script src="../components/chatbot_widget.js"></script>
 </body>
 </html>

@@ -6,8 +6,12 @@ python-dotenv
 pydantic
 pyodbc
 <<<<<<< HEAD
+reportlab==4.0.7
+Pillow==10.1.0
+httpx
+google-generativeai
+=======
 reportlab==4.0.7 
 Pillow==10.1.0
-=======
 httpx
->>>>>>> origin/main
+>>>>>>> f718dc1 (update lại admin)

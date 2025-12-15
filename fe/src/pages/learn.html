@@ -5,8 +5,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>EmoGarden • Học cảm xúc</title>
+  <link rel="stylesheet" href="../styles/navigation.css" />
   <link rel="stylesheet" href="../styles/learn.css" />
-  <link rel="stylesheet" href="../styles/navigation.css">
+  <link rel="stylesheet" href="../styles/chatbot_widget.css" />
   <script type="module" src="../components/learn.js"></script>
 </head>
 
@@ -15,23 +16,24 @@
     <div class="nav-brand">
       <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
     </div>
-
     <div class="nav-links">
       <a href="./home.html" class="nav-item">Trang chủ</a>
       <a href="./learn.html" class="nav-item active">Học</a>
-      <a href="./select_game.html" class="nav-item">Chơi game</a>
+      <a href="./select_game.html" class="nav-item" id="game-nav-link">Chơi game</a>
     </div>
-
     <div class="nav-user-actions">
-      <a href="./profile.html" class="nav-profile-link" id="profile-button">
+      <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
         <div class="profile-icon"></div>
       </a>
       <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
     </div>
   </nav>
+
   <!-- MAIN CONTENT -->
   <main class="learn" id="main-content">
-
+    <header class="learn__header">
+      <h1 class="learn__title">HỌC CẢM XÚC</h1>
+    </header>
 
     <section class="learn__body" aria-label="Khu vực học video">
       <!-- CỘT TRÁI: DANH SÁCH CẢM XÚC -->
@@ -84,6 +86,9 @@
         <div class="media-carousel__dots" role="tablist" aria-label="Chọn bài">
           <!-- JS sẽ render các chấm/bước -->
         </div>
+        <button class="media-carousel__nav media-carousel__nav--next" aria-label="Bài tiếp theo" data-action="next">
+          ›
+        </button>
 
         <!-- 🔊 KHUNG TÌNH HUỐNG SAU VIDEO -->
         <div class="situation-panel" id="situation-panel" aria-label="Tình huống minh họa cảm xúc">
@@ -99,9 +104,33 @@
       </section>
     </section>
   </main>
+  <!-- 🔊 KHUNG TÌNH HUỐNG SAU VIDEO -->
+  <div class="situation-panel" id="situation-panel" aria-label="Tình huống minh họa cảm xúc">
+    <div class="situation-panel__text-wrap">
+      <p id="situation-text">
+        Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.
+      </p>
+      <button type="button" class="situation-panel__audio-btn" id="situation-audio-btn" aria-label="Nghe câu đọc">
+        🔊
+      </button>
+    </div>
+  </div>
+
+  <!-- Thanh chỉ mục/tiến độ -->
+  <div class="media-carousel__dots" role="tablist" aria-label="Chọn bài">
+    <!-- JS sẽ render các chấm/bước -->
+  </div>
+  </section>
+  </section>
+  </main>
 
   <!-- GỢI Ý: JS sẽ gắn sau -->
   <script type="module" src="/src/components/learn.js"></script>
+</body>
+
+<!-- GỢI Ý: JS sẽ gắn sau -->
+<script type="module" src="/src/components/learn.js"></script>
+<script src="../components/chatbot_widget.js"></script>
 </body>
 
 </html>

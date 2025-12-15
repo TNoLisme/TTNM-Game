@@ -18,6 +18,11 @@ class UserRequest(BaseModel):
             raise ValueError("password must contain at least one special character")
         return v
 
+
+class VerifyOtpRequest(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+
     class Config:
         use_enum_values = True
 
@@ -124,6 +129,7 @@ UserSchema = type('UserSchema', (), {
     'AdminResponse': AdminResponse,
     'ForgotPasswordRequest': ForgotPasswordRequest,
     'ResetPasswordRequest': ResetPasswordRequest,
+    'VerifyOtpRequest': VerifyOtpRequest,
     'ProfileResponse': ProfileResponse,
     'UserProfileUpdate': UserProfileUpdate,
     'ChildProfileUpdate': ChildProfileUpdate,

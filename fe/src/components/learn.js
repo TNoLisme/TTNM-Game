@@ -168,40 +168,53 @@ function renderDots() {
     b.addEventListener("click", () => {
       current = idx;
       updateCarousel();
+      maybeSpeakSituationFromUserAction();
     });
     dotsWrap.appendChild(b);
   });
 }
 
 function renderSituationPanel() {
-    if (!situationPanel || !situationText) return;
+  if (!situationPanel || !situationText) return;
 
-    //  Chưa chọn cảm xúc → ẩn panel, không text, không loa
-    if (!currentEmotion) {
-        situationPanel.style.display = "none";
-        situationText.textContent =
-            "Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.";
-        return;
-    }
+  //  Chưa chọn cảm xúc → ẩn panel, không text, không loa
+  if (!currentEmotion) {
+    situationPanel.style.display = "none";
+    situationText.textContent =
+      "Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.";
+    return;
+  }
 
-    const key = currentEmotion.toLowerCase();
-    const info = SITUATIONS[key];
+  const key = currentEmotion.toLowerCase();
+  const info = SITUATIONS[key];
 
-    if (!info) {
-        situationPanel.style.display = "none";
-        situationText.textContent = "";
-        return;
-    }
+  if (!info) {
+    situationPanel.style.display = "none";
+    situationText.textContent = "";
+    return;
+  }
 
-    if (current === 0) {
-        // 👉 Trang 1: VIDEO → chỉ có video, ẩn panel (không text, không loa)
-        situationPanel.style.display = "none";
-        situationText.textContent = "";
-    } else {
-        // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text + loa
-        situationPanel.style.display = "flex"; // hoặc "" nếu CSS set sẵn display:flex
-        situationText.textContent = info.text; // An đánh rơi kem rồi, nên An buồn và khóc.
-    }
+  if (current === 0) {
+    // 👉 Trang 1: VIDEO → chỉ có video, ẩn panel (không text, không loa)
+    situationPanel.style.display = "none";
+    situationText.textContent = "";
+  } else {
+    // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text + loa
+    situationPanel.style.display = "flex"; // hoặc "" nếu CSS set sẵn display:flex
+    situationText.textContent = info.text; // An đánh rơi kem rồi, nên An buồn và khóc.
+  }
+}
+
+// Chỉ tự đọc khi người dùng thật sự thao tác (next/prev/chọn chấm)
+function maybeSpeakSituationFromUserAction() {
+  if (!situationPanel || !situationText) return;
+  if (!currentEmotion) return;
+  if (current === 0) return; // đang ở trang video thì không đọc
+
+  const text = situationText.textContent.trim();
+  if (!text) return;
+
+  speakVietnamese(text);
 }
 
 function updateCarousel() {
@@ -222,11 +235,13 @@ function updateCarousel() {
 function goPrev() {
   current--;
   updateCarousel();
+  maybeSpeakSituationFromUserAction();
 }
 
 function goNext() {
   current++;
   updateCarousel();
+  maybeSpeakSituationFromUserAction();
 }
 
 // ================ LỌC THEO CẢM XÚC ================
@@ -299,39 +314,106 @@ function initEmotionFilters() {
     applyFilter(emotion);
   });
 }
+function normalizeEmotion(raw) {
+  if (!raw) return "neutral";
+
+  const normalized = raw.trim().toLowerCase();
+
+  const mapping = {
+    vui: "happy",
+    "vui vẻ": "happy",
+    "vui ve": "happy",
+    happy: "happy",
+    buồn: "sad",
+    "buồn bã": "sad",
+    buon: "sad",
+    "buon ba": "sad",
+    sad: "sad",
+    "tức giận": "angry",
+    "tuc gian": "angry",
+    angry: "angry",
+    sợ: "fear",
+    "sợ hãi": "fear",
+    so: "fear",
+    "so hai": "fear",
+    fear: "fear",
+    "ngạc nhiên": "surprise",
+    "ngac nhien": "surprise",
+    surprise: "surprise",
+    "ghê tởm": "disgust",
+    "ghe tom": "disgust",
+    disgust: "disgust",
+    "trung tính": "neutral",
+    "trung tinh": "neutral",
+    neutral: "neutral",
+  };
+
+  return mapping[normalized] || normalized;
+}
+
+function buildMediaUrl(path) {
+  if (!path) return "";
+
+  // Nếu path đã là absolute URL thì giữ nguyên
+  if (/^https?:\/\//i.test(path)) return path;
+
+  // Chuẩn hóa các đường dẫn trong DB đang lưu dạng "/fe/assets/..."
+  if (/^\/fe\/assets\//i.test(path)) {
+    return path.replace(/^\/fe\/assets\//i, "../../assets/");
+  }
+
+  // Nếu path bắt đầu bằng '/' hoặc '../' thì để nguyên để FE tự resolve
+  if (/^(\.\.\/|\/)/.test(path)) return path;
+
+  // Mặc định gắn với API base (dùng cho trường hợp backend trả relative)
+  return `${apiBase}/${path}`;
+}
+
+function mapConceptsToMedia(concepts = []) {
+  const items = [];
+
+  for (const c of concepts) {
+    const emotion = normalizeEmotion(c.emotion);
+    const title = c.title || "";
+
+    if (c.video_path) {
+      items.push({
+        id: `v-${c.concept_id || c.title || Math.random()}`,
+        type: "video",
+        src: buildMediaUrl(c.video_path),
+        caption: title,
+        emotion,
+      });
+    }
+
+    if (c.image_path) {
+      items.push({
+        id: `i-${c.concept_id || c.title || Math.random()}`,
+        type: "image",
+        src: buildMediaUrl(c.image_path),
+        caption: title,
+        emotion,
+      });
+    }
+  }
+
+  return items;
+}
 
 // ================ TẢI DỮ LIỆU MEDIA ================
 async function fetchLessonsOrFallback() {
   try {
-    const res = await fetch(`${apiBase}/lessons/`, {
+    const res = await fetch(`${apiBase}/emotions/concepts/`, {
       method: "GET",
     });
-    if (!res.ok) throw new Error("API /lessons trả lỗi");
+    if (!res.ok) throw new Error("API emo/concepts trả lỗi");
     const data = await res.json();
+    const concepts = data?.data?.concepts || [];
+    const items = mapConceptsToMedia(concepts);
 
-    const items = [];
-    for (const x of data) {
-      if (x.video_url) {
-        items.push({
-          id: `v-${x.lesson_id}`,
-          type: "video",
-          src: x.video_url,
-          caption: x.title || "",
-          emotion: x.emotion || "neutral",
-        });
-      }
-      if (x.image_url) {
-        items.push({
-          id: `i-${x.lesson_id}`,
-          type: "image",
-          src: x.image_url,
-          caption: x.title || "",
-          emotion: x.emotion || "neutral",
-        });
-      }
-    }
     return items.length ? items : FALLBACK_MEDIA;
   } catch (e) {
+    console.error("❌ Không lấy được dữ liệu học từ DB, dùng fallback:", e);
     return FALLBACK_MEDIA;
   }
 }
@@ -341,9 +423,12 @@ async function init() {
   initEmotionFilters();
 
   allItems = await fetchLessonsOrFallback();
-  // Khi mới vào: mặc định cảm xúc "happy"
-  currentEmotion = "happy";
-  applyFilter("happy");
+
+  // Cho phép mở trực tiếp theo emotion từ query param (vd: ?emotion=happy)
+  const params = new URLSearchParams(window.location.search);
+  const initialEmotion = (params.get("emotion") || "happy").toLowerCase();
+  currentEmotion = initialEmotion;
+  applyFilter(initialEmotion);
 
   // ban đầu: chưa chọn cảm xúc → ẩn panel
   if (situationPanel) {

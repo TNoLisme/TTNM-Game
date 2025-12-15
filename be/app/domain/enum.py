@@ -21,3 +21,4 @@ class RoleEnum(str, Enum):
 class GenderEnum(str, Enum):
     male = "male"
     female = "female"
+    other = "other"

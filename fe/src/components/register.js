@@ -10,6 +10,27 @@ const showError = (msg) => {
     }
 };
 
+const showToast = (message, type = 'success') => {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
+        <div class="toast-message">${message}</div>
+    `;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+};
+
 const collectFormData = () => {
     const phoneInput = document.querySelector('#phone');
     const rawPhoneValue = phoneInput?.value;
@@ -70,8 +91,10 @@ const handleRegister = async () => {
         const data = await res.json();
         console.log('Response from server:', data); // Log phản hồi từ server
         if (res.ok && data.status === 'success') {
-            alert('Đăng ký thành công! Vui lòng đăng nhập.');
-            window.location.href = '/src/pages/login.html';
+            showToast('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+            setTimeout(() => {
+                window.location.href = '/src/pages/login.html';
+            }, 1200);
         } else {
             showError(data.message || 'Đăng ký thất bại. Vui lòng thử lại.');
         }

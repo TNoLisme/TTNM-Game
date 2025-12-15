@@ -6,17 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game CV - Biểu cảm theo yêu cầu</title>
     <link rel="stylesheet" href="/src/styles/gameCV.css">
+    <link rel="stylesheet" href="../styles/chatbot_widget.css">
     <!-- face-api.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@latest/dist/face-api.min.js"></script>
 </head>
 
 <body>
     <div class="navbar">
-        <button id="back-button" class="back-btn">&#x2190; Quay lại</button>
+        <button id="back-button" class="back-btn global-back-btn">&#x2190; Quay lại</button>
         <span>Game CV - Biểu cảm theo yêu cầu</span>
         <div class="navbar-right">
             <span id="progress-indicator" class="progress-indicator">Màn 0/1</span>
-            <button id="logout-button" class="logout-btn">Đăng xuất</button>
         </div>
     </div>
 
@@ -32,6 +32,7 @@
             <p class="scenario-description" id="scenario-description"></p>
             <div class="target-emotion" id="target-emotion"></div>
             <div class="countdown" id="countdown"></div>
+            <div class="round-timer" id="round-timer" aria-label="Thời gian còn lại"></div>
             
             <div class="button-group">
                 <button id="hint-btn" class="game-btn hint-btn">💡 Gợi ý</button>
@@ -48,12 +49,16 @@
         <!-- Right Panel: Camera & Detection -->
         <div class="right-panel">
             <div class="camera-container">
+                <div class="camera-placeholder" id="camera-placeholder">
+                    <div class="camera-placeholder-icon">📷</div>
+                    <div class="camera-placeholder-text">Nhấn Bắt đầu để bật camera</div>
+                </div>
                 <video id="camera-video" autoplay playsinline></video>
             </div>
             
-            <div class="detection-info">
-                <div class="detected-emotion-icon" id="detected-emotion-icon">👤</div>
-                <div class="detected-emotion-percent" id="detected-emotion-percent">0%</div>
+            <div class="detection-info" id="detection-info">
+                <div class="detected-emotion-icon" id="detected-emotion-icon" aria-hidden="true"></div>
+                <div class="detected-emotion-percent" id="detected-emotion-percent" aria-label="Độ khớp phần trăm"></div>
             </div>
 
             <div class="traffic-light">
@@ -90,7 +95,26 @@
         </div>
     </div>
 
+    <!-- Learning Modal: hiện khi bé sai 1 cảm xúc quá nhiều lần -->
+    <div id="cv-learning-modal" class="game-complete-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📚 Góc học cảm xúc</h2>
+            </div>
+            <div class="modal-body">
+                <p id="cv-learning-emotion-title" class="cv-learning-title"></p>
+                <p id="cv-learning-description" class="cv-learning-description"></p>
+            </div>
+            <div class="modal-actions">
+                <button id="cv-learning-open-learn" class="modal-btn play-again-btn">🔍 Xem video học chi tiết</button>
+                <button id="cv-learning-close-btn" class="modal-btn exit-btn">✅ Đã hiểu, tiếp tục chơi</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../components/chatbot_widget.js"></script>
     <script src="/src/components/gameCV.js"></script>
+    <script src="../components/chatbot_widget.js"></script>
 </body>
 
 </html>

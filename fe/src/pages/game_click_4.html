@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thám tử cảm xúc</title>
+    <link rel="stylesheet" href="../styles/recognize_emotion.css" />
+    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
+</head>
+<body>
+    <main class="game-main-content">
+        <header class="game-header">
+            <div class="header-main">
+                <button id="back-button" class="back-btn global-back-btn" type="button" onclick="window.history.back()">&#x2190; Quay lại</button>
+                <h1 id="game-name">Thám tử cảm xúc</h1>
+                <p class="subtitle">Đọc tình huống và chọn cảm xúc phù hợp nhất</p>
+            </div>
+            <div class="header-actions">
+                <div class="stats">
+                    <div class="stat-pill">
+                        <span id="progress-label">Câu 1/1</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span id="score-label">Điểm: 0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="game-area-grid">
+            <div class="question-box">
+                <div id="question-area" class="question-content"></div>
+                <div class="hint-row">
+                    <button id="hint-btn" class="btn btn-secondary" type="button">💡 Gợi ý</button>
+                    <p id="hint-content" class="hint-text"></p>
+                    <button id="sound-btn" class="btn btn-ghost" type="button">🔊 Nghe lại câu hỏi</button>
+                </div>
+            </div>
+
+            <div class="answers-card">
+                <h2 class="answers-title">Chọn cảm xúc đúng</h2>
+                <div id="answer-grid" class="answers-grid">
+                    <button class="answer-option" data-index="0"></button>
+                    <button class="answer-option" data-index="1"></button>
+                    <button class="answer-option" data-index="2"></button>
+                    <button class="answer-option" data-index="3"></button>
+                    <button class="answer-option" data-index="4"></button>
+                    <button class="answer-option" data-index="5"></button>
+                </div>
+                <div class="controls-row">
+                    <button id="submit-answer-btn" class="btn btn-primary" disabled>Trả lời</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <div id="modal-icon" class="modal-icon"></div>
+            <h2 id="modal-title" class="modal-title"></h2>
+            <p id="modal-message" class="modal-message"></p>
+            <button id="next-question-btn" class="btn btn-primary modal-btn">Tiếp tục</button>
+        </div>
+    </div>
+
+    <div id="system-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="system-modal-title" class="modal-title"></h2>
+            <p id="system-modal-message" class="modal-message"></p>
+            <button id="system-modal-btn" class="btn btn-primary modal-btn">OK</button>
+        </div>
+    </div>
+
+    <script src="../components/chatbot_widget.js"></script>
+    <script src="../components/game_click_4.js"></script>
+    <script src="../components/chatbot_widget.js"></script>
+</body>
+</html>

@@ -3,8 +3,10 @@ from app.controllers.users import user_router
 from app.controllers.games.game_controller import router as game_router
 from app.controllers.users.admin_controller import router as admin_router
 from app.controllers.games.cv_controller import router as cv_router
+from app.controllers.assistant_controller import router as assistant_router
+from app.controllers.analytics.report_controller import router as reports_router
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.controllers.sessions import emotion_concepts_router
 app = FastAPI(
     title="EmoGarden API",
     description="API cho game giáo dục cảm xúc",
@@ -43,8 +45,8 @@ app.include_router(user_router)
 app.include_router(game_router)
 app.include_router(cv_router)
 app.include_router(admin_router)
-
-
+app.include_router(reports_router)
+app.include_router(emotion_concepts_router)
 # CHẠY SERVER (BỎ COMMENT)
 if __name__ == "__main__":
     import uvicorn

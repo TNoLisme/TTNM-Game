@@ -43,7 +43,7 @@ class UsersService:
             name=data.get("name")
         )
 
-        self.user_repo.save_user(user)
+        self.user_repo.save(user)
         return {"status": "success", "message": f"User {user.username} created", "user_id": str(user.user_id)}
 
     def create_child(self, data: dict) -> dict:
@@ -66,7 +66,7 @@ class UsersService:
             role=RoleEnum.child,
             name=data.get("name")
         )
-        self.user_repo.save_user(user)  # ĐÃ OK
+        self.user_repo.save(user)  # ĐÃ OK
 
         child = Child(
             user_id=str(user_id),  # PHẢI LÀ STR!
@@ -138,7 +138,7 @@ class UsersService:
         email = data.get("email")
         user = self.user_repo.get_by_email(email)
         if not user:
-            return {"status": "failed", "message": "Email not found"}
+            return {"status": "failed", "message": "Không tìm thấy email này. Vui lòng kiểm tra lại."}
 
         # Tạo OTP random 6 chữ số
         otp = ''.join(random.choices(string.digits, k=6))
@@ -162,9 +162,28 @@ class UsersService:
             print(f"[EMAIL] OTP sent to {email} successfully")  # Log thành công
         except Exception as e:
             print(f"[EMAIL ERROR] Failed to send OTP to {email}: {e}")
-            return {"status": "failed", "message": "Gửi OTP thất bại, thử lại sau"}
+            return {"status": "failed", "message": "Gửi OTP thất bại, vui lòng thử lại sau."}
 
         return {"status": "success", "message": "OTP đã gửi đến email của bạn"}
+
+    def verify_otp(self, data: dict) -> dict:
+        email = data.get("email")
+        otp = data.get("otp")
+
+        stored = otp_storage.get(email)
+        if not stored:
+            return {"status": "failed", "message": "Không tìm thấy mã OTP cho email này. Vui lòng yêu cầu mã mới."}
+
+        # Check expiry
+        if time.time() > stored["expiry"]:
+            del otp_storage[email]
+            return {"status": "failed", "message": "OTP không hợp lệ hoặc đã hết hạn."}
+
+        if stored["otp"] != otp:
+            return {"status": "failed", "message": "OTP không hợp lệ hoặc đã hết hạn."}
+
+        # OTP đúng, giữ lại để bước đổi mật khẩu sử dụng
+        return {"status": "success", "message": "Xác thực OTP thành công."}
 
     def reset_password(self, data: dict) -> dict:
         email = data.get("email")
@@ -174,12 +193,12 @@ class UsersService:
         # Lấy OTP từ global dict
         stored = otp_storage.get(email)
         if not stored:
-            return {"status": "failed", "message": "No OTP found for this email. Request new one."}
+            return {"status": "failed", "message": "Không tìm thấy mã OTP cho email này. Vui lòng yêu cầu mã mới."}
 
         # Verify OTP và expiry
         if stored['otp'] != otp or time.time() > stored['expiry']:
-            del otp_storage[email]  # Xóa nếu sai
-            return {"status": "failed", "message": "Invalid or expired OTP"}
+            del otp_storage[email]  # Xóa nếu sai hoặc hết hạn
+            return {"status": "failed", "message": "OTP không hợp lệ hoặc đã hết hạn."}
 
         # Cập nhật password (plain text, dùng repo update)
         user = self.user_repo.get_by_email(email)
@@ -187,10 +206,8 @@ class UsersService:
             user.password = new_password  # Plain text
             self.user_repo.update_user(user)  # Gọi update_user hiện có
             del otp_storage[email]  # Xóa OTP sau khi thành công
-            return {"status": "success", "message": "Password reset successfully"}
-        return {"status": "failed", "message": "User not found"}
-    
-
+            return {"status": "success", "message": "Đổi mật khẩu thành công."}
+        return {"status": "failed", "message": "Không tìm thấy người dùng."}
 
     def get_current_user_info(self, user_id: UUID) -> dict:
         user = self.user_repo.get_user_by_id(user_id)

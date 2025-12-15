@@ -7,35 +7,44 @@
     <title>Xưởng Cảm Xúc</title>
 
     <link rel="stylesheet" href="../styles/game_click_2.css" />
+    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
 
     <!-- THÊM defer Ở ĐÂY -->
     <script type="module" src="../components/game_click_2.js" defer></script>
 </head>
 
 <body>
+    <!-- Top back button bar -->
+    <div class="top-back-bar">
+        <button id="back-button" class="back-btn global-back-btn" type="button" onclick="window.history.back()">&#x2190; Quay lại</button>
+    </div>
+
     <div class="container">
         <!-- Header -->
-        <div class="header">
-            <h1>Xưởng Cảm Xúc</h1>
-            <div class="header-stats">
-                <div class="stat-badge">
-                    <span class="stat-text">
-                        Câu hỏi <span id="questionNumber">1</span>
-                    </span>
-                </div>
-                <div class="stat-badge">
-                    <span class="star-icon">⭐</span>
-                    <span class="stat-text"> <span id="score">0</span> Stars </span>
+        <header class="header game-header">
+            <div class="header-main">
+                <h1 id="game-name">Xưởng Cảm Xúc</h1>
+                <p class="subtitle">Xây dựng khuôn mặt theo biểu cảm phù hợp</p>
+            </div>
+            <div class="header-actions">
+                <div class="header-stats stats">
+                    <div class="stat-badge stat-pill">
+                        <span class="stat-text">
+                            Câu <span id="questionNumber">1</span>/<span id="questionTotal">1</span>
+                        </span>
+                    </div>
+                    <div class="stat-badge stat-pill">
+                        <span class="stat-text">Điểm: <span id="score">0</span></span>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- Main Grid -->
         <div class="game-grid">
             <!-- Situation Card -->
             <div class="card situation-card">
                 <div class="situation-content">
-                    <div class="situation-emoji" id="situationEmoji">🎉</div>
                     <div class="situation-box">
                         <p class="situation-text" id="situationText">Loading...</p>
                     </div>
@@ -113,6 +122,8 @@
             </div>
         </div>
     </div>
+
+    <script src="../components/chatbot_widget.js"></script>
 </body>
 
 </html>

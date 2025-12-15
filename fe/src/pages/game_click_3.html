@@ -4,37 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai là ai & đang cảm xúc gì?</title>
+    <title>EmoGarden</title>
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/game_click_3.css" />
-    <link rel="stylesheet" href="../styles/navigation.css">
+    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
 </head>
 
 <body>
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
-        </div>
+    <!-- Top back button bar -->
+    <div class="top-back-bar">
+        <button id="back-button" class="back-btn global-back-btn" type="button" onclick="window.history.back()">&#x2190;
+            Quay lại</button>
+    </div>
 
-        <div class="nav-links">
-            <a href="./home.html" class="nav-item">Trang chủ</a>
-            <a href="./learn.html" class="nav-item active">Học</a>
-            <a href="./select_game.html" class="nav-item">Chơi game</a>
-        </div>
-
-        <div class="nav-user-actions">
-            <a href="./profile.html" class="nav-profile-link" id="profile-button">
-                <div class="profile-icon"></div>
-            </a>
-            <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
-        </div>
-    </nav>
     <!-- Màn hình chơi game -->
     <div id="game-screen" class="screen">
         <div class="game-container">
             <!-- Header -->
             <div class="game-header">
-                <h1 class="game-title"> Ai là ai 🎭</h1>
+                <h1 class="game-title">Đang tải...</h1>
                 <div class="difficulty-badge" id="difficulty-badge"></div>
             </div>
 
@@ -54,7 +42,7 @@
 
             <!-- Kho thẻ tên -->
             <div class="names-section">
-                <h3>🎴 Kéo thẻ tên vào ô phía dưới mỗi khuôn mặt:</h3>
+                <h3>🎴 Kéo thẻ vào ô phía dưới mỗi khuôn mặt:</h3>
                 <div id="name-cards-container" class="name-cards"></div>
             </div>
 
@@ -122,6 +110,7 @@
 
 
     <script src="../components/game_click_3.js"></script>
+    <script src="../components/chatbot_widget.js"></script>
 </body>
 
 </html>
