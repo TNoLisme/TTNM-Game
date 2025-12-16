@@ -512,6 +512,7 @@ function initNavigation() {
     const profilebutton = document.querySelector('#profile-button');
     const goToGameSelectBtn = document.querySelector('#go-to-game-select'); // Nút Vào chơi mới
     const gameNavLink = document.querySelector('#game-nav-link');
+
     if (!window.egInlineConfirm) {
         window.egEnsureInlineConfirmModal = function () {
             if (document.getElementById('eg-confirm-overlay')) return;
@@ -604,13 +605,12 @@ function initNavigation() {
         if (window.egModal && typeof window.egModal.confirm === 'function') {
             window.egModal
                 .confirm('Bạn có chắc chắn muốn đăng xuất không?', 'Xác nhận đăng xuất', 'Đăng xuất', 'Hủy')
-                .then((ok) => { if (ok) doLogout(); });
-        } else {
-            if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
-                doLogout();
-            }
+                .then((ok) => {
+                    if (!ok) return;
+                    doLogout();
+                });
+            return;
         }
-    });
 
         const ok = await window.egInlineConfirm(
             'Bạn có chắc chắn muốn đăng xuất không?',
@@ -641,7 +641,7 @@ async function initializePage() {
     const userId = getCurrentUserId();
     
     if (!userId) {
-        console.error('❌ [initializePage] No userId');
+        console.errologour('❌ [initializePage] No userId');
         showError('Vui lòng đăng nhập để tiếp tục');
         window.location.href = '/src/pages/login.html';
         return;

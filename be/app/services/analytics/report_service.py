@@ -67,7 +67,7 @@ class ReportService:
                 }
             
             print(f"✅ Child info loaded: {child_data['name']} ({child_data['email']})")
-            
+
             # 2. Lấy dữ liệu tiến độ từ DATABASE
             progress_data = self._get_progress_data_from_db(child_user_id, period)
             print(f"✅ Progress data loaded: {progress_data['total_sessions']} sessions")
@@ -127,6 +127,69 @@ class ReportService:
                 "message": f"Lỗi: {str(e)}"
             }
     
+    def _get_daily_sessions(self, user_id: UUID, start_date: datetime, end_date: datetime, db) -> Dict[str, int]:
+        """
+        ✅ NEW: Query số phiên học theo từng ngày trong tuần
+        Returns: {"T2": 5, "T3": 3, "T4": 7, ...}
+        """
+        try:
+            # Query sessions grouped by date
+            daily_query = text("""
+                SELECT 
+                    CONVERT(VARCHAR(10), s.start_time, 23) as session_date,
+                    COUNT(DISTINCT s.session_id) as session_count
+                FROM sessions s
+                WHERE s.user_id = :user_id
+                AND s.start_time >= :start_date
+                AND s.start_time < :end_date
+                AND s.end_time IS NOT NULL
+                GROUP BY CONVERT(VARCHAR(10), s.start_time, 23)
+                ORDER BY session_date
+            """)
+            
+            results = db.execute(
+                daily_query,
+                {
+                    "user_id": str(user_id), 
+                    "start_date": start_date,
+                    "end_date": end_date
+                }
+            ).fetchall()
+            
+            # Convert to dict với tên ngày tiếng Việt
+            day_names_vn = {
+                0: 'T2',  # Monday
+                1: 'T3',
+                2: 'T4',
+                3: 'T5',
+                4: 'T6',
+                5: 'T7',
+                6: 'CN'   # Sunday
+            }
+            
+            # Initialize all days with 0
+            daily_sessions = {}
+            current_date = start_date
+            while current_date < end_date:
+                day_name = day_names_vn[current_date.weekday()]
+                date_key = current_date.strftime('%d/%m')
+                daily_sessions[f"{day_name}\n{date_key}"] = 0
+                current_date += timedelta(days=1)
+            
+            # Fill in actual data
+            for row in results:
+                session_date = datetime.strptime(row.session_date, '%Y-%m-%d')
+                day_name = day_names_vn[session_date.weekday()]
+                date_key = session_date.strftime('%d/%m')
+                daily_sessions[f"{day_name}\n{date_key}"] = row.session_count
+            
+            print(f"✅ Daily sessions: {daily_sessions}")
+            return daily_sessions
+            
+        except Exception as e:
+            print(f"❌ Error querying daily sessions: {e}")
+            return {}
+    
     def _get_progress_data_from_db(self, user_id: UUID, period: str) -> Dict:
         try:
             db = next(get_db())
@@ -143,6 +206,7 @@ class ReportService:
             print(f"\n📅 Date Range: {start_date.strftime('%Y-%m-%d')} → {end_date.strftime('%Y-%m-%d')}")
             print(f"🔍 Querying for user_id: {str(user_id)}")
             
+            # ==================== QUERY 1: TỔNG QUAN ====================
             overview_query = text("""
                 SELECT 
                     COUNT(DISTINCT s.session_id) as total_sessions,
@@ -165,6 +229,10 @@ class ReportService:
             print(f"   Total playtime: {overview_result.total_playtime:.1f} mins")
             print(f"   Avg score: {overview_result.avg_score:.2f}")
             
+            # ==================== QUERY 2: DAILY SESSIONS ====================
+            daily_sessions = self._get_daily_sessions(user_id, start_date, end_date, db)
+            
+            # ==================== QUERY 3: GAMES STATS ====================
             games_query = text("""
                 SELECT 
                     g.name as game_name,
@@ -203,6 +271,7 @@ class ReportService:
             if games_stats:
                 print(f"   Top game: {games_stats[0]['game_name']} ({games_stats[0]['sessions']} sessions)")
             
+            # ==================== QUERY 4: EMOTION STATS ====================
             emotion_query = text("""
                 SELECT 
                     gc.emotion,
@@ -234,7 +303,9 @@ class ReportService:
                 }
             
             print(f"✅ Emotions query executed: {len(emotion_stats)} emotions tracked")
+            print(f"✅ Emotions query executed: {emotion_stats}")
             
+            # ==================== QUERY 5: ACHIEVEMENTS ====================
             achievements = []
             
             if overview_result.total_sessions >= 20:
@@ -289,6 +360,7 @@ class ReportService:
                 'total_playtime': int(overview_result.total_playtime or 0),
                 'avg_score': round(float(overview_result.avg_score or 0), 2),
                 'total_games': overview_result.total_games or 0,
+                'daily_sessions': daily_sessions,  # ✅ NEW
                 'games_stats': games_stats,
                 'emotion_stats': emotion_stats,
                 'achievements': achievements
@@ -313,6 +385,7 @@ class ReportService:
                 'total_playtime': 0,
                 'avg_score': 0,
                 'total_games': 0,
+                'daily_sessions': {},
                 'games_stats': [],
                 'emotion_stats': {},
                 'achievements': ["Chưa có dữ liệu cho kỳ báo cáo này"]
@@ -402,7 +475,7 @@ Xin chào Quý Phụ huynh,
 
 Chúng tôi rất vui được gửi đến Quý vị báo cáo tiến độ học tập {period} của bé {child_name}.
 
-Báo cáo này được tạo tự động bởi với thiết kế đẹp mắt và phân tích chi tiết.
+Báo cáo này được tạo tự động với thiết kế đẹp mắt và phân tích chi tiết.
 
 Vui lòng xem file PDF đính kèm.
 
@@ -467,14 +540,14 @@ Trân trọng,
                     padding: 20px;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
                     color: white;
                     padding: 30px;
                     border-radius: 10px 10px 0 0;
                     text-align: center;
                 }}
                 .content {{
-                    background: #f9f9f9;
+                    background: #f9fafb;
                     padding: 30px;
                     border-radius: 0 0 10px 10px;
                 }}
@@ -489,7 +562,7 @@ Trân trọng,
                 .highlight {{
                     background: white;
                     padding: 15px;
-                    border-left: 4px solid #667eea;
+                    border-left: 4px solid #3b82f6;
                     margin: 20px 0;
                     border-radius: 5px;
                 }}
@@ -505,12 +578,12 @@ Trân trọng,
                 <p>Kính gửi Quý Phụ huynh,</p>
                 <p>Chúng tôi rất vui được gửi đến Quý vị báo cáo tiến độ học tập {period} của bé <strong>{child_name}</strong>.</p>
                 <div class="highlight">
-                    <p>🤖 Báo cáo này được tạo tự động bởi <strong>AI</strong> với:</p>
+                    <p>📊 Báo cáo này bao gồm:</p>
                     <ul>
-                        <li>✅ Thiết kế chuyên nghiệp</li>
-                        <li>📊 Biểu đồ trực quan</li>
-                        <li>📈 Phân tích chi tiết</li>
-                        <li>💡 Khuyến nghị cá nhân hóa</li>
+                        <li>✅ Thống kê tổng quan</li>
+                        <li>📈 Biểu đồ phân tích</li>
+                        <li>🎯 Đánh giá chi tiết</li>
+                        <li>💡 Khuyến nghị phát triển</li>
                     </ul>
                 </div>
                 <p>📎 Vui lòng xem file PDF đính kèm để biết chi tiết.</p>

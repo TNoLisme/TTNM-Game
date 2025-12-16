@@ -108,12 +108,12 @@ if (!window.egInlineConfirm) {
 
 function getGameHtmlFile(gameId) {
     const map = {
-        '3bcb2108-721c-4a15-a585-31f3084ed000': './recognize_emotion.html',
-        '33ecafaa-ec7e-40d2-9c67-ed0a29ac0051': './game_click_2.html',
-        '08bbffbf-d147-4556-bccb-b7621cafbf15': './game_click_3.html',
-        'aacaf79e-e15e-42a9-a3d1-a522720d919b': './game_click_4.html',
-        'e05909f3-3dee-42a6-9a75-fd985b1bdf47': './gameCV.html',
-        '61f5e09e-eefa-44c1-86e1-87dfceac3b8e': './game_cv_2.html'
+        'ea2b5c7e-aec8-4f6e-a8bf-99d7b6a05dd8': './recognize_emotion.html',
+        'ecefa8d8-b9f5-4d41-abf9-316e6b6cf25b': './game_click_2.html',
+        'e7b4826b-57ba-4569-953e-723da913d47c': './game_click_3.html',
+        '8573ebd6-23be-4ad9-bd4c-3794b1c4a4fa': './game_click_4.html',
+        '9b56e632-dd86-4868-9d74-e0c93125430a': './gameCV.html',
+        'bbd1597f-02b1-4e20-b39b-31d27335d385': './game_cv_2.html'
     };
     if (!gameId) return null;
     return map[gameId.toLowerCase()] || null;
