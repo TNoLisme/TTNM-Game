@@ -1,390 +1,637 @@
 :root {
-    --main-color: #1976d2;
-      --text-color: #333;
-      --bg-color: #e3f2fd;
-      --border-radius: 16px;
-      --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    --nav-height: 70px;
-      /* Chiều cao cố định của nav bar */
+  --main-color: #1976d2;
+  --text-color: #333;
+  --bg-color: #e3f2fd;
+  --border-radius: 16px;
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  --nav-height: 70px;
 }
 
 * {
-    box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
 }
 
 body {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      color: var(--text-color);
-    /* Giảm margin trên cùng để dành chỗ cho nav bar cố định */
-      margin: 0;
-      padding-top: var(--nav-height);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      overflow-x: hidden;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: var(--text-color);
+  margin: 0;
+  padding-top: var(--nav-height);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
 }
 
-.page-title {
-    font-size: 26px;
-    font-weight: 700;
-      color: #0b3c7d;
-      margin-bottom: 30px;
-      text-align: left;
-      align-self: flex-start;
-    /* Loại bỏ margin-left cố định cũ */
-      margin-left: 0;
-      padding: 0 40px;
-      width: 100%;
-}
-
-/* Main content adjustments */
+/* Main Content */
 .main-content {
-      width: 100%;
-      max-width: 1300px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+  width: 100%;
+  max-width: 1300px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ==================== EMOTION SECTION & BANNER ==================== */
+.emotion-section {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+  padding: 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .banner-text {
-    width: 100%;
-      margin-top: 10px;
-      font-size: 20px;
-      font-weight: 700;
-      color: #0b3c7d;
-      text-shadow: none;
-      margin-bottom: 10px;
+  width: 100%;
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b3c7d;
+  text-shadow: none;
+  margin-bottom: 10px;
 }
 
-.emotion-section {
-    width: 90%;
-      max-width: 1200px;
-      margin: 0 auto;
-      flex: 1;
-      padding: 20px 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+.banner-container {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .banner {
-    width: 100%;
-      height: 300px;
-      overflow: hidden;
-      border-radius: 20px;
-      border: 3px solid #1976d2;
-      position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 3px solid #1976d2;
+  position: relative;
 }
 
-/* Khung chứa các slide để trượt */
 .slides {
-    display: flex;
-      width: 300%;
-      height: 100%;
-      transition: transform 0.6s ease;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
-/* Ảnh trong banner */
-.slides img {
-    width: 100%;
-      height: 100%;
-      object-fit: cover;
+.slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
 }
 
-.slide.active {
-    display: flex;
+.slide-image:first-child {
+  opacity: 1;
 }
 
+/* Arrow Buttons */
 .arrow {
-    background-color: #1976d2;
-      border: none;
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      font-size: 20px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1976d2;
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: none;
 }
 
 .arrow:hover {
-    background-color: #1565c0;
+  background-color: #1565c0;
 }
 
-.left {
-    position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
+.arrow.left {
+  left: 12px;
 }
 
-.right {
-    position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
+.arrow.right {
+  right: 12px;
 }
 
+/* Dots Navigation */
 .dots {
-    display: flex;
-      justify-content: center;
-      margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
 }
 
 .dot {
-    height: 10px;
-      width: 10px;
-      background-color: #ccc;
-      border-radius: 50%;
-      margin: 0 5px;
-      transition: background-color 0.3s;
-      cursor: pointer;
+  height: 10px;
+  width: 10px;
+  background-color: #ccc;
+  border-radius: 50%;
+  margin: 0 5px;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.dot:hover {
+  background-color: #999;
 }
 
 .dot.active {
-    background-color: #1976d2;
+  background-color: #1976d2;
 }
 
-/* Section tổng thể */
+/* ==================== RECENT GAMES SECTION ==================== */
 .recent-games-section {
-    width: 90%;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      max-width: 1200px;
-      margin: 0 auto;
-      flex: 1;
-      padding: 20px 40px;
+  width: 90%;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+  padding: 20px 40px;
 }
 
-/* Tiêu đề section */
 .section-title {
-    font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 15px;
-      color: #0b3c7d;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #0b3c7d;
 }
 
-/* Danh sách trò chơi */
 .game-list {
-    display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      /* 4 cột đều nhau */
-      gap: 20px;
-      /* khoảng cách giữa các thẻ */
-      justify-items: center;
-      /* căn giữa nội dung trong từng ô */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  justify-items: center;
 }
 
-/* Thẻ trò chơi */
 .game-card {
-    background-color: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-      width: 100%;
-      /* tự chiếm toàn bộ cột của grid */
-      max-width: 250px;
-      /* giới hạn độ rộng tối đa */
-      border: 3px solid transparent;
-      transition: all 0.3s ease;
-      cursor: pointer;
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 250px;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .game-card:hover {
-    border: 3px solid #1976d2;
-      /* màu viền khi hover */
-      transform: translateY(-5px);
-      /* hiệu ứng nổi nhẹ */
+  border: 3px solid #1976d2;
+  transform: translateY(-5px);
 }
 
-/* Ảnh trong thẻ */
 .game-card img {
-    width: 100%;
-      height: 140px;
-      object-fit: cover;
-      display: block;
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
 }
 
-/* Tên trò chơi */
 .game-name {
-    font-size: 16px;
-      font-weight: 600;
-      color: #000;
-      text-align: center;
-      padding: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0b3c7d;
+  text-align: center;
+  padding: 10px;
 }
 
-/*menu bài học và game*/
+.no-games {
+  text-align: center;
+  color: #666;
+  font-size: 18px;
+  padding: 40px;
+  grid-column: 1 / -1;
+}
+
+.loading-indicator {
+  text-align: center;
+  color: #1976d2;
+  font-size: 18px;
+  padding: 40px;
+  grid-column: 1 / -1;
+}
+
+/* ==================== EMOTION LEARNING SECTION ==================== */
 .emotion-learning-section {
-    width: 90%;
-      max-width: 1200px;
-      margin: 60px auto;
-      text-align: center;
+  width: 90%;
+  max-width: 1200px;
+  margin: 60px auto;
+  text-align: center;
 }
 
 .emotion-learning-section .section-title {
-    font-size: 26px;
-      font-weight: 700;
-      color: #0b3c7d;
-      margin-bottom: 30px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0b3c7d;
+  margin-bottom: 30px;
 }
 
 .learning-container {
-    display: flex;
-      justify-content: center;
-      gap: 200px;
-      flex-wrap: wrap;
-      align-items: stretch;
+  display: flex;
+  justify-content: center;
+  gap: 200px;
+  flex-wrap: wrap;
+  align-items: stretch;
 }
 
-/* Thẻ lớn cho từng phần */
 .learning-card {
-    background: linear-gradient(145deg, #ffffff, #e3f2fd);
-      border: 3px solid #1976d2;
-      border-radius: 20px;
-      padding: 30px 25px;
-      width: 320px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: all 0.3s ease;
-      box-shadow: 0 6px 12px rgba(25, 118, 210, 0.2);
-      justify-content: space-between;
+  background: linear-gradient(145deg, #ffffff, #e3f2fd);
+  border: 3px solid #1976d2;
+  border-radius: 20px;
+  padding: 30px 25px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 12px rgba(25, 118, 210, 0.2);
+  justify-content: space-between;
 }
 
 .learning-card:hover {
-    transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(25, 118, 210, 0.4);
-      border-color: #1565c0;
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(25, 118, 210, 0.4);
+  border-color: #1565c0;
 }
 
-/* Biểu tượng cảm xúc/game */
 .card-icon {
-    font-size: 60px;
-      margin-bottom: 20px;
+  font-size: 60px;
+  margin-bottom: 20px;
 }
 
-/* Tiêu đề */
 .card-title {
-    font-size: 20px;
-      font-weight: 700;
-      color: #0b3c7d;
-      margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b3c7d;
+  margin-bottom: 10px;
 }
 
-/* Mô tả */
 .card-desc {
-    font-size: 15px;
-      color: #444;
-      line-height: 1.5;
-      margin-bottom: 20px;
+  font-size: 15px;
+  color: #444;
+  line-height: 1.5;
+  margin-bottom: 20px;
 }
 
-/* Nút hành động */
 .card-btn {
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 .card-btn:hover {
-    background: linear-gradient(135deg, #1976d2, #1565c0);
+  background: linear-gradient(135deg, #1976d2, #1565c0);
 }
 
 .card-btn a {
   text-decoration: none;
-    color: inherit;
+  color: inherit;
 }
 
-/*Stats bar */
-/* Section thống kê cảm xúc */
+/* ==================== EMOTION STATS SECTION ==================== */
 .emotion-stats-section {
-    width: 90%;
-      max-width: 1200px;
-      margin: 80px auto;
-      text-align: center;
+  width: 90%;
+  max-width: 1200px;
+  margin: 80px auto;
+  text-align: center;
 }
 
 .emotion-stats-section .section-title {
-    font-size: 26px;
-      font-weight: 700;
-      color: #0b3c7d;
-      margin-bottom: 40px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0b3c7d;
+  margin-bottom: 40px;
 }
 
-/* Container chứa 3 chart */
 .chart-container {
-    display: flex;
-    justify-content: center;
-    flex-wrap: nowrap; /* Thay đổi từ wrap thành nowrap */
-    gap: 40px;
-    align-items: stretch; /* Thêm dòng này để các card có cùng chiều cao */
+  display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 40px;
+  align-items: stretch;
 }
 
-/* Thẻ chứa từng biểu đồ */
 .chart-card {
-    background: linear-gradient(145deg, #ffffff, #e3f2fd);
-    border: 3px solid #1976d2;
-    border-radius: 20px;
-    padding: 25px 20px;
-    width: 340px;
-    min-width: 300px; /* Thêm min-width để đảm bảo không bị co quá nhỏ */
-    flex-shrink: 0; /* Thêm dòng này để card không bị co lại */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: 0 6px 12px rgba(25, 118, 210, 0.2);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: linear-gradient(145deg, #ffffff, #e3f2fd);
+  border: 3px solid #1976d2;
+  border-radius: 20px;
+  padding: 25px 20px;
+  width: 340px;
+  min-width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 6px 12px rgba(25, 118, 210, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .chart-card:hover {
-    transform: scale(1.03);
-      box-shadow: 0 8px 16px rgba(25, 118, 210, 0.4);
+  transform: scale(1.03);
+  box-shadow: 0 8px 16px rgba(25, 118, 210, 0.4);
 }
 
-/* Icon và tiêu đề */
 .chart-icon {
-    font-size: 50px;
-      margin-bottom: 10px;
+  font-size: 50px;
+  margin-bottom: 10px;
 }
 
 .chart-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b3c7d;
+  margin-bottom: 15px;
+}
+
+.chart-card canvas {
+  width: 100% !important;
+  max-width: 280px !important;
+  height: 280px !important;
+  max-height: 280px !important;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (max-width: 1200px) {
+  .chart-container {
+    gap: 25px;
+  }
+  
+  .learning-container {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .banner {
+    height: 300px;
+  }
+  
+  .banner-text {
     font-size: 20px;
+  }
+  
+  .arrow {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .arrow.left {
+    left: 10px;
+  }
+  
+  .arrow.right {
+    right: 10px;
+  }
+  
+  .game-list {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  
+  .section-title {
+    font-size: 22px;
+  }
+  
+  .learning-container {
+    gap: 30px;
+  }
+  
+  .learning-card {
+    max-width: 100%;
+  }
+  
+  .chart-card {
+    max-width: 100%;
+    min-width: 280px;
+  }
+
+  .chart-card canvas {
+    max-width: 250px !important;
+    height: 250px !important;
+    max-height: 250px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 20px 15px;
+  }
+  
+  .banner {
+    height: 250px;
+  }
+  
+  .banner-text {
+    font-size: 18px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+  }
+  
+  .game-list {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card canvas {
+    max-width: 250px !important;
+    height: 220px !important;
+    max-height: 220px !important;
+  }
+}
+
+/* Banner Emotion Cards Styles */
+    .emotion-section {
+      margin-bottom: 30px;
+    }
+
+    .emotion-banner-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .emotion-banner-title {
+      font-size: 28px;
       font-weight: 700;
       color: #0b3c7d;
-      margin-bottom: 15px;
-}
+      margin-bottom: 10px;
+    }
 
-/* Chart canvas */
-.chart-card canvas {
-    width: 100%;
-      max-width: 280px;
-      height: 280px;
-}
+    .emotion-cards-container {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding: 20px 10px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .chart-card {
-        width: 90%;
+    .emotion-cards-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .emotion-cards-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .emotion-cards-container::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    .emotion-cards-container::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    .emotion-card {
+      min-width: 180px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .emotion-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+      pointer-events: none;
+    }
+
+    .emotion-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .emotion-card.low-error {
+      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
+    }
+
+    .emotion-card.medium-error {
+      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
+    }
+
+    .emotion-card.high-error {
+      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
+    }
+
+    .emotion-icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .emotion-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .emotion-error-rate {
+      font-size: 32px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .emotion-label {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .emotion-rank {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .no-data-message {
+      text-align: center;
+      padding: 60px 20px;
+      color: #7f8c8d;
+      font-size: 18px;
+    }
+
+    .no-data-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+      .emotion-card {
+        min-width: 160px;
+        padding: 20px;
       }
-}
 
-/* Accessibility */
+      .emotion-icon {
+        font-size: 48px;
+      }
+
+      .emotion-name {
+        font-size: 18px;
+      }
+
+      .emotion-error-rate {
+        font-size: 28px;
+      }
+    }
+  
+/* ==================== ACCESSIBILITY ==================== */
 button, .card, .learn-box, .small-game {
-    font-weight: 600;
-      outline: none;
+  font-weight: 600;
+  outline: none;
 }
 
-button:focus, .card:focus, .learn-box:focus, .small-game:focus {
-    outline: 3px solid #1976d2;
+button:focus, .card:focus, .learn-box:focus, .small-game:focus,
+.card-btn:focus,
+.arrow:focus,
+.dot:focus {
+  outline: 3px solid #1976d2;
 }

@@ -112,3 +112,29 @@ async def end_level(body: EndLevelRequest, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"[ERROR] End Level (Generic) {body.session_id}: {e}")
         raise HTTPException(status_code=500, detail="Lỗi khi kết thúc level")
+    
+# ✅ NEW: Start game với số câu dynamic theo level (10/15/...)
+@router.post("/start-dynamic/{game_id}")
+async def start_game_dynamic(
+    game_id: UUID,
+    body: StartGameRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Bắt đầu một phiên chơi (Dynamic).
+    Tạo Session và trả về số câu hỏi phụ thuộc level (VD: 1-2:10, 3-4:15, ...).
+    """
+    service = GamePlayService(db)
+    try:
+        result = service.start_session_dynamic(
+            game_id=str(game_id),
+            level=body.level,
+            user_id=str(body.user_id)
+        )
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"[ERROR] Start Game (Dynamic) {game_id}: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi máy chủ khi bắt đầu game (dynamic)")
