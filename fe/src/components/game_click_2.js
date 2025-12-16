@@ -651,6 +651,13 @@ function updateStats() {
     questionTotal.textContent = totalQuestions;
   }
   scoreElement.textContent = sessionContext.score;
+
+  const progressFill = document.getElementById("click-progress-fill");
+  if (progressFill) {
+    const current = Math.min(questionsAnswered + 1, totalQuestions);
+    const percentage = (current / totalQuestions) * 100;
+    progressFill.style.width = `${percentage}%`;
+  }
 }
 
 function resetFace() {

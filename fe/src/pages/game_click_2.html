@@ -27,12 +27,15 @@
                 <p class="subtitle">Xây dựng khuôn mặt theo biểu cảm phù hợp</p>
             </div>
             <div class="header-actions">
-                <div class="header-stats stats">
-                    <div class="stat-badge stat-pill">
-                        <span class="stat-text">
-                            Câu <span id="questionNumber">1</span>/<span id="questionTotal">1</span>
-                        </span>
+                <div class="stat-badge stat-pill progress-pill" aria-label="Tiến độ câu hỏi">
+                    <div class="click-level-progress">
+                        <div id="click-progress-fill" class="click-level-progress-fill"></div>
                     </div>
+                    <span class="stat-text">
+                        Câu <span id="questionNumber">1</span>/<span id="questionTotal">1</span>
+                    </span>
+                </div>
+                <div class="header-stats stats">
                     <div class="stat-badge stat-pill">
                         <span class="stat-text">Điểm: <span id="score">0</span></span>
                     </div>

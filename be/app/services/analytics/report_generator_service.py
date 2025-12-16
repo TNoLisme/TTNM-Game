@@ -23,13 +23,30 @@ class ReportGeneratorService:
         
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            font_path = os.path.join(current_dir, '..', '..', 'fe', 'assets', 'fonts', 'DejaVuSans.ttf')
-            
-            if os.path.exists(font_path):
-                pdfmetrics.registerFont(TTFont('DejaVu', font_path))
+            fonts_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', '..', 'fe', 'assets', 'fonts'))
+
+            regular_path = os.path.join(fonts_dir, 'DejaVuSans.ttf')
+            bold_path = os.path.join(fonts_dir, 'DejaVuSans-Bold.ttf')
+            italic_path = os.path.join(fonts_dir, 'DejaVuSansCondensed.ttf')
+            bold_italic_path = os.path.join(fonts_dir, 'DejaVuSans-BoldOblique.ttf')
+
+            if os.path.exists(regular_path) and os.path.exists(bold_path) and os.path.exists(bold_italic_path):
+                pdfmetrics.registerFont(TTFont('DejaVu', regular_path))
+                pdfmetrics.registerFont(TTFont('DejaVu-Bold', bold_path))
+                if os.path.exists(italic_path):
+                    pdfmetrics.registerFont(TTFont('DejaVu-Italic', italic_path))
+                else:
+                    pdfmetrics.registerFont(TTFont('DejaVu-Italic', regular_path))
+                pdfmetrics.registerFont(TTFont('DejaVu-BoldItalic', bold_italic_path))
+
+                self.main_font = 'DejaVu'
+                self.bold_font = 'DejaVu-Bold'
+                self.italic_font = 'DejaVu-Italic'
+                self.bold_italic_font = 'DejaVu-BoldItalic'
+
                 print("✅ Vietnamese font loaded successfully")
             else:
-                print(f"⚠️ Vietnamese font not found at: {font_path}")
+                print(f"⚠️ Vietnamese font not found at: {fonts_dir}")
         except Exception as e:
             print(f"⚠️ Warning: Could not load Vietnamese font: {e}")
     
@@ -314,24 +331,24 @@ class ReportGeneratorService:
         except:
             pass
         
-        title = Paragraph("BAO CAO TIEN DO HOC TAP", title_style)
+        title = Paragraph("BÁO CÁO TIẾN ĐỘ HỌC TẬP", title_style)
         elements.append(title)
         
-        period_text = "TUAN" if progress_data.get("period") == "weekly" else "THANG"
+        period_text = "TUẦN" if progress_data.get("period") == "weekly" else "THÁNG"
         subtitle = Paragraph(
-            f"{period_text}: {progress_data.get('start_date')} den {progress_data.get('end_date')}",
+            f"{period_text}: {progress_data.get('start_date')} đến {progress_data.get('end_date')}",
             subtitle_style
         )
         elements.append(subtitle)
         
         # ==================== THÔNG TIN HỌC VIÊN ====================
-        elements.append(self._create_header_box("THONG TIN HOC VIEN"))
+        elements.append(self._create_header_box("THÔNG TIN HỌC VIÊN"))
         elements.append(Spacer(1, 15))
         
         child_info = [
-            ['Ho va ten:', child_data.get('name', 'N/A')],
-            ['Tuoi:', str(child_data.get('age', 'N/A')) + ' tuoi'],
-            ['Ma hoc vien:', child_data.get('user_id', 'N/A')[:12] + '...'],
+            ['Họ và tên:', child_data.get('name', 'N/A')],
+            ['Tuổi:', str(child_data.get('age', 'N/A')) + ' tuổi'],
+            ['Mã học viên:', child_data.get('user_id', 'N/A')[:12] + '...'],
             ['Email:', child_data.get('email', 'N/A')],
         ]
         
@@ -353,16 +370,16 @@ class ReportGeneratorService:
         elements.append(Spacer(1, 20))
         
         # ==================== TỔNG QUAN - CARDS ====================
-        elements.append(self._create_header_box("TONG QUAN HOAT DONG", '#764ba2'))
+        elements.append(self._create_header_box("TỔNG QUAN HOẠT ĐỘNG", '#764ba2'))
         elements.append(Spacer(1, 15))
         
         stats_row1 = [
-            [self._create_stat_card("Tong so phien", str(progress_data.get('total_sessions', 0))),
-             self._create_stat_card("Thoi gian choi", f"{progress_data.get('total_playtime', 0)}p")]
+            [self._create_stat_card("Tổng số phiên", str(progress_data.get('total_sessions', 0))),
+             self._create_stat_card("Thời gian chơi", f"{progress_data.get('total_playtime', 0)}p")]
         ]
         stats_row2 = [
-            [self._create_stat_card("Diem trung binh", f"{progress_data.get('avg_score', 0):.1f}/10"),
-             self._create_stat_card("So tro choi", str(len(progress_data.get('games_stats', []))))]
+            [self._create_stat_card("Điểm trung bình", f"{progress_data.get('avg_score', 0):.1f}/10"),
+             self._create_stat_card("Số trò chơi", str(len(progress_data.get('games_stats', []))))]
         ]
         
         stats_table1 = Table(stats_row1, colWidths=[3.25*inch, 3.25*inch])
@@ -383,14 +400,14 @@ class ReportGeneratorService:
         
         # Tổng quan text
         summary_text = self._generate_overview_text(progress_data)
-        summary_box = self._create_summary_box("TONG KET", summary_text, '#764ba2')
+        summary_box = self._create_summary_box("TỔNG KẾT", summary_text, '#764ba2')
         elements.append(summary_box)
         elements.append(Spacer(1, 20))
         
         # ==================== BIỂU ĐỒ SONG SONG ====================
         games_stats = progress_data.get('games_stats', [])
         if games_stats:
-            elements.append(self._create_header_box("PHAN TICH TRO CHOI", '#f093fb'))
+            elements.append(self._create_header_box("PHÂN TÍCH TRÒ CHƠI", '#f093fb'))
             elements.append(Spacer(1, 15))
             
             # Đặt 2 charts cạnh nhau
@@ -406,7 +423,7 @@ class ReportGeneratorService:
             elements.append(Spacer(1, 15))
             
             # Games detail table
-            games_data = [['Ten tro choi', 'Phien', 'Diem TB', 'Level', 'Tien do']]
+            games_data = [['Tên trò chơi', 'Phiên', 'Điểm TB', 'Level', 'Tiến độ']]
             
             for game in games_stats[:5]:
                 progress_pct = min(game.get('avg_score', 0) * 10, 100)
@@ -444,13 +461,13 @@ class ReportGeneratorService:
         # ==================== THỐNG KÊ CẢM XÚC ====================
         emotion_stats = progress_data.get('emotion_stats', {})
         if emotion_stats:
-            elements.append(self._create_header_box("THONG KE NHAN DIEN CAM XUC", '#4facfe'))
+            elements.append(self._create_header_box("THỐNG KÊ NHẬN DIỆN CẢM XÚC", '#4facfe'))
             elements.append(Spacer(1, 15))
             
             elements.append(self._create_emotion_chart(emotion_stats))
             elements.append(Spacer(1, 15))
             
-            emotion_data = [['Cam xuc', 'Dung', 'Sai', 'Tong', 'Do chinh xac']]
+            emotion_data = [['Cảm xúc', 'Đúng', 'Sai', 'Tổng', 'Độ chính xác']]
             
             for emotion, stats in emotion_stats.items():
                 correct = stats.get('correct', 0)
@@ -488,7 +505,7 @@ class ReportGeneratorService:
             elements.append(Spacer(1, 20))
         
         # ==================== THÀNH TỰU ====================
-        elements.append(self._create_header_box("THANH TUU DAT DUOC", '#43e97b'))
+        elements.append(self._create_header_box("THÀNH TỰU ĐẠT ĐƯỢC", '#43e97b'))
         elements.append(Spacer(1, 15))
         
         achievements = progress_data.get('achievements', [])
@@ -508,13 +525,13 @@ class ReportGeneratorService:
             ]))
             elements.append(achievement_table)
         else:
-            no_achievement = Paragraph("Chua co thanh tuu nao. Hay tiep tuc co gang!", section_style)
+            no_achievement = Paragraph("Chưa có thành tựu nào. Hãy tiếp tục cố gắng!", section_style)
             elements.append(no_achievement)
         
         elements.append(Spacer(1, 20))
         
         # ==================== NHẬN XÉT ====================
-        elements.append(self._create_header_box("NHAN XET VA KHUYEN NGHI", '#f59e0b'))
+        elements.append(self._create_header_box("NHẬN XÉT VÀ KHUYẾN NGHỊ", '#f59e0b'))
         elements.append(Spacer(1, 15))
         
         comments = self._generate_comments(progress_data)
@@ -564,8 +581,8 @@ class ReportGeneratorService:
         )
         
         footer_text = f"""
-        Bao cao duoc tao tu dong boi he thong EmoGarden<br/>
-        Ngay tao: {datetime.now().strftime('%d/%m/%Y luc %H:%M')}<br/>
+        Báo cáo được tạo tự động bởi hệ thống EmoGarden<br/>
+        Ngày tạo: {datetime.now().strftime('%d/%m/%Y lúc %H:%M')}<br/>
         Email: support@emogarden.com | Hotline: 1900-xxxx | Web: www.emogarden.com
         """
         footer = Paragraph(footer_text, footer_style)
@@ -582,15 +599,15 @@ class ReportGeneratorService:
         avg_score = progress_data.get('avg_score', 0)
         
         if avg_score >= 8:
-            level = "xuat sac"
+            level = "xuất sắc"
         elif avg_score >= 7:
-            level = "tot"
+            level = "tốt"
         elif avg_score >= 6:
-            level = "kha"
+            level = "khá"
         else:
-            level = "can co gang"
+            level = "cần cố gắng"
         
-        return f"Be da hoan thanh {total_sessions} phien hoc tap voi diem trung binh {avg_score:.1f}/10 - muc do {level}. Be the hien su tien bo ro ret trong qua trinh hoc tap va ren luyen ky nang nhan dien cam xuc."
+        return f"Bé đã hoàn thành {total_sessions} phiên học tập với điểm trung bình {avg_score:.1f}/10 - mức độ {level}. Bé thể hiện sự tiến bộ rõ rệt trong quá trình học tập và rèn luyện kỹ năng nhận diện cảm xúc."
     
     def _generate_comments(self, progress_data: Dict) -> List[str]:
         comments = []
@@ -600,21 +617,21 @@ class ReportGeneratorService:
         
         # Nhận xét về tần suất chơi
         if total_sessions >= 20:
-            comments.append("Be rat cham chi va deu dan trong viec hoc tap. Day la mot thoi quen tuyet voi!")
+            comments.append("Bé rất chăm chỉ và đều đặn trong việc học tập. Đây là một thói quen tuyệt vời!")
         elif total_sessions >= 10:
-            comments.append("Be co tan suat hoc tap tot. Hay tiep tuc duy tri va co gang tang them nhe!")
+            comments.append("Bé có tần suất học tập tốt. Hãy tiếp tục duy trì và cố gắng tăng thêm nhé!")
         else:
-            comments.append("Khuyen khich be danh nhieu thoi gian hon de hoc tap va ren luyen ky nang.")
+            comments.append("Khuyến khích bé dành nhiều thời gian hơn để học tập và rèn luyện kỹ năng.")
         
         # Nhận xét về điểm số
         if avg_score >= 8:
-            comments.append("Ket qua hoc tap xuat sac! Be dang tien bo rat tot va nam vung kien thuc.")
+            comments.append("Kết quả học tập xuất sắc! Bé đang tiến bộ rất tốt và nắm vững kiến thức.")
         elif avg_score >= 6:
-            comments.append("Ket qua kha tot. Be dang tren da phat trien va cai thien tung ngay.")
+            comments.append("Kết quả khá tốt. Bé đang trên đà phát triển và cải thiện từng ngày.")
         elif avg_score >= 4:
-            comments.append("Be dang lam quen voi cac bai hoc. Can them thoi gian de nam vung kien thuc.")
+            comments.append("Bé đang làm quen với các bài học. Cần thêm thời gian để nắm vững kiến thức.")
         else:
-            comments.append("Be can duoc ho tro va khuyen khich nhieu hon trong qua trinh hoc tap.")
+            comments.append("Bé cần được hỗ trợ và khuyến khích nhiều hơn trong quá trình học tập.")
         
         # Nhận xét về cảm xúc
         emotion_stats = progress_data.get('emotion_stats', {})
