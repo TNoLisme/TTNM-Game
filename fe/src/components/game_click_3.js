@@ -1042,7 +1042,7 @@ async function restartCurrentLevel() {
 async function closePopupAndNext() {
   const popup = document.getElementById("result-popup");
   popup.classList.remove("show");
-  setTimeout(() => popup.classList.add("hidden"), 200);
+  popup.classList.add("hidden");
 
   roundIndex++;
   if (roundIndex >= TOTAL_ROUNDS) {
