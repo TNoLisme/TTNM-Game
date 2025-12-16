@@ -58,6 +58,8 @@ let gameState = {
 
 const ROUND_TIMER_WARNING_MS = 5000;
 
+const CV_MAX_SCENARIOS_PER_LEVEL = 5;
+
 // Emotion mapping from face-api.js to game emotions
 const EMOTION_MAP = {
     'happy': 'vui',
@@ -198,7 +200,7 @@ function applyGameConfig() {
         console.warn("Unable to set document title:", error);
     }
 
-    const navTitleEl = $$(".navbar span");
+    const navTitleEl = $$(".navbar-title");
     if (navTitleEl) {
         navTitleEl.textContent = config.navTitle;
     }
@@ -339,6 +341,11 @@ async function initGame() {
     }
     // For GV1, scenarios are already filtered and randomized by backend, no need to filter again
 
+    if (gameState.scenarios.length > CV_MAX_SCENARIOS_PER_LEVEL) {
+        gameState.scenarios = gameState.scenarios.slice(0, CV_MAX_SCENARIOS_PER_LEVEL);
+        console.log(`Limited scenarios to ${CV_MAX_SCENARIOS_PER_LEVEL} per level`);
+    }
+
     if (gameState.scenarios.length === 0) {
         let emptyMessage = `Không có màn nào ở level ${gameState.selectedLevel}. Vui lòng chọn level khác.`;
         if (gameState.config?.requiresEmotion && gameState.selectedEmotion) {
@@ -373,6 +380,9 @@ async function initGame() {
     // Start first scenario (or continue from saved progress)
     // At this point, currentScenarioIndex and sessionId are already set
     if (gameState.scenarios.length > 0) {
+        if (gameState.currentScenarioIndex >= gameState.scenarios.length) {
+            gameState.currentScenarioIndex = 0;
+        }
         const savedIndex = gameState.currentScenarioIndex || 0;
         startScenario(savedIndex);
     }
@@ -511,6 +521,16 @@ function updateScenarioUI() {
         progressIndicator.textContent = gameState.gameId === 'GV1'
             ? `Màn ${currentScenario}/${totalScenarios}`
             : `Lượt ${currentScenario}/${totalScenarios}`;
+    }
+
+    // Update progress bar
+    const progressBarFill = document.getElementById('cv-level-progress-fill');
+    if (progressBarFill) {
+        const currentScenario = gameState.currentScenarioIndex + 1;
+        const totalScenarios = gameState.scenarios.length;
+        const percentage = (currentScenario / totalScenarios) * 100;
+        
+        progressBarFill.style.width = `${percentage}%`;
     }
     
     // Hiển thị ảnh minh họa nếu có
@@ -1692,60 +1712,23 @@ function showContinueGameModal(progress, progressKey) {
     return new Promise((resolve) => {
         const modal = document.createElement('div');
         modal.id = 'continue-game-modal';
-        modal.style.cssText = `
-            display: flex;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        `;
+        modal.className = 'game-complete-modal';
+        modal.style.display = 'flex';
 
         modal.innerHTML = `
-            <div style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 25px;
-                padding: 32px 24px;
-                max-width: 480px;
-                width: 90%;
-                box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
-                text-align: center;
-                animation: slideUp 0.4s ease-out;
-            ">
-                <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700;">
-                    🎮 Tiếp tục chơi?
-                </h2>
-                <p style="margin: 8px 0 20px; font-size: 15px; line-height: 1.5;">
-                    Bạn đang chơi dở level <strong style=\"color:#ffd700;\">${gameState.selectedLevel}</strong>.<br>
-                    Tiếp tục từ màn <strong style=\"color:#ffd700;\">${progress.currentScenarioIndex + 1}</strong> nhé?
-                </p>
-                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
-                    <button id="continue-yes-btn" style="
-                        padding: 10px 20px;
-                        border-radius: 10px;
-                        border: none;
-                        cursor: pointer;
-                        font-weight: 600;
-                        background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
-                        color: white;
-                        min-width: 160px;
-                    ">
-                        ✅ Tiếp tục
-                    </button>
-                    <button id="continue-no-btn" style="
-                        padding: 10px 20px;
-                        border-radius: 10px;
-                        border: none;
-                        cursor: pointer;
-                        font-weight: 600;
-                        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                        color: white;
-                        min-width: 160px;
-                    ">
-                        🔄 Chơi lại từ đầu
-                    </button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🎮 Tiếp tục chơi?</h2>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Bạn đang chơi dở level <strong class="cv-modal-highlight">${gameState.selectedLevel}</strong>.<br>
+                        Tiếp tục từ màn <strong class="cv-modal-highlight">${progress.currentScenarioIndex + 1}</strong> nhé?
+                    </p>
+                </div>
+                <div class="modal-actions">
+                    <button id="continue-yes-btn" class="modal-btn play-again-btn">✅ Tiếp tục</button>
+                    <button id="continue-no-btn" class="modal-btn exit-btn">🔄 Chơi lại từ đầu</button>
                 </div>
             </div>
         `;
@@ -1868,7 +1851,7 @@ function clearGameProgress() {
 }
 
 // Logout
-function handleLogout() {
+async function handleLogout() {
     const doLogout = () => {
         localStorage.removeItem('currentUser');
         window.location.href = '/src/pages/login.html';
@@ -1884,9 +1867,97 @@ function handleLogout() {
         return;
     }
 
-    if (confirm('Bạn có muốn đăng xuất không?')) {
-        doLogout();
+    if (!window.egInlineConfirm) {
+        window.egEnsureInlineConfirmModal = function () {
+            if (document.getElementById('eg-confirm-overlay')) return;
+
+            if (!document.getElementById('eg-confirm-style')) {
+                const style = document.createElement('style');
+                style.id = 'eg-confirm-style';
+                style.textContent = `
+                    .eg-confirm-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+                    .eg-confirm-overlay.is-open{display:flex;}
+                    .eg-confirm-modal{width:min(520px,92vw);background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.35);border:1px solid rgba(148,163,184,.35);overflow:hidden;}
+                    .eg-confirm-header{padding:16px 18px;background:linear-gradient(135deg,rgba(25,118,210,.12),rgba(59,130,246,.08));font-weight:800;color:#0b3c7d;}
+                    .eg-confirm-body{padding:16px 18px;color:#0f172a;line-height:1.5;white-space:pre-line;}
+                    .eg-confirm-actions{display:flex;gap:10px;justify-content:flex-end;padding:14px 18px;background:#f8fafc;border-top:1px solid rgba(148,163,184,.28);}
+                    .eg-confirm-btn{border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;}
+                    .eg-confirm-btn.cancel{background:#e2e8f0;color:#0f172a;}
+                    .eg-confirm-btn.ok{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;}
+                    .eg-confirm-btn:active{transform:scale(.98);}
+                `;
+                document.head.appendChild(style);
+            }
+
+            const overlay = document.createElement('div');
+            overlay.id = 'eg-confirm-overlay';
+            overlay.className = 'eg-confirm-overlay';
+            overlay.innerHTML = `
+                <div class="eg-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="eg-confirm-title">
+                    <div class="eg-confirm-header" id="eg-confirm-title"></div>
+                    <div class="eg-confirm-body" id="eg-confirm-message"></div>
+                    <div class="eg-confirm-actions">
+                        <button type="button" class="eg-confirm-btn cancel" id="eg-confirm-cancel"></button>
+                        <button type="button" class="eg-confirm-btn ok" id="eg-confirm-ok"></button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        };
+
+        window.egInlineConfirm = function (message, title, okText, cancelText) {
+            window.egEnsureInlineConfirmModal();
+
+            const overlay = document.getElementById('eg-confirm-overlay');
+            const titleEl = document.getElementById('eg-confirm-title');
+            const msgEl = document.getElementById('eg-confirm-message');
+            const okBtn = document.getElementById('eg-confirm-ok');
+            const cancelBtn = document.getElementById('eg-confirm-cancel');
+
+            if (!overlay || !titleEl || !msgEl || !okBtn || !cancelBtn) {
+                return Promise.resolve(confirm(message));
+            }
+
+            titleEl.textContent = title || 'Xác nhận';
+            msgEl.textContent = message || '';
+            okBtn.textContent = okText || 'OK';
+            cancelBtn.textContent = cancelText || 'Hủy';
+
+            return new Promise((resolve) => {
+                const close = (result) => {
+                    overlay.classList.remove('is-open');
+                    okBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                    overlay.onclick = null;
+                    document.removeEventListener('keydown', onKeyDown);
+                    resolve(result);
+                };
+
+                const onKeyDown = (e) => {
+                    if (e.key === 'Escape') close(false);
+                };
+
+                okBtn.onclick = () => close(true);
+                cancelBtn.onclick = () => close(false);
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) close(false);
+                };
+                document.addEventListener('keydown', onKeyDown);
+
+                overlay.classList.add('is-open');
+                cancelBtn.focus();
+            });
+        };
     }
+
+    const ok = await window.egInlineConfirm(
+        'Bạn có chắc chắn muốn đăng xuất không?',
+        'Xác nhận đăng xuất',
+        'Đăng xuất',
+        'Hủy'
+    );
+    if (!ok) return;
+    doLogout();
 }
 
 // REMOVED beforeunload: It was ending session on reload (F5) too

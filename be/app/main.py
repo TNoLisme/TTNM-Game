@@ -44,6 +44,7 @@ def home():
 app.include_router(user_router)
 app.include_router(game_router)
 app.include_router(cv_router)
+app.include_router(assistant_router)
 app.include_router(admin_router)
 app.include_router(reports_router)
 app.include_router(emotion_concepts_router)

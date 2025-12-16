@@ -258,6 +258,15 @@ function initializeRound() {
   gameState.answers = {};
   gameState.submitted = false;
   gameState.results = {};
+
+  const progressFill = document.getElementById("click-progress-fill");
+  if (progressFill && Array.isArray(questions) && questions.length) {
+    const remaining = Array.isArray(remainingQuestions) ? remainingQuestions.length : 0;
+    const currentRoundSize = Array.isArray(gameState.characters) ? gameState.characters.length : 0;
+    const completed = Math.max(0, questions.length - remaining - currentRoundSize);
+    const percentage = (completed / questions.length) * 100;
+    progressFill.style.width = `${percentage}%`;
+  }
   gameState.retryUsed = false;
   localResults = []; // reset mảng kết quả cho vòng chơi
   renderGame();
