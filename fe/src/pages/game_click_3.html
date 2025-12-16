@@ -24,6 +24,12 @@
             <div class="game-header">
                 <h1 class="game-title">Đang tải...</h1>
                 <div class="difficulty-badge" id="difficulty-badge"></div>
+                <div class="game-meta">
+                    <div class="cv-level-progress">
+                        <div id="cv-level-progress-fill" class="cv-level-progress-fill"></div>
+                    </div>
+                    <div id="score-label" class="score-label">Điểm: 0</div>
+                </div>
             </div>
 
             <!-- Phần tình huống -->
@@ -61,7 +67,7 @@
                 <!-- Nút chơi lại vòng hiện tại (random lại) -->
                 <button id="reset-btn" class="reset-btn" onclick="resetGame()
                         " style="display: none;">
-                    🔄 Chơi lại vòng này
+                    🔄 Xem lại
                 </button>
 
                 <!-- Nút sang câu tiếp theo / level tiếp theo -->
@@ -70,7 +76,6 @@
                 </button>
             </div>
 
-            <!-- Thông báo kết quả ngắn (nếu cần dùng) -->
             <div id="result-message" class="result-message hidden"></div>
         </div>
     </div>
@@ -86,7 +91,7 @@
             <p id="popup-message" class="popup-message"></p>
 
             <div class="popup-buttons">
-                <button class="popup-btn replay-btn" onclick="closePopupAndReplay()">🔄 Chơi lại</button>
+                <button class="popup-btn replay-btn" onclick="closePopupAndReplay()">🔄Xem lại</button>
                 <button id="popup-next-btn" class="popup-btn next-btn" onclick="closePopupAndNext()">➡️ Câu tiếp
                     theo</button>
             </div>

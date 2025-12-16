@@ -1,14 +1,58 @@
-// ================== BIẾN LIÊN QUAN BACKEND (NEW) ==================
 let sessionId = null;
 let user = null;
 let gameId = null;
 let level = null;
-let questions = []; // Mảng câu hỏi BE trả về
-let localResults = []; // Mảng lưu kết quả để gửi lên /games/end-level
+let questions = [];
+let localResults = [];
 let remainingQuestions = [];
-
+let roundIndex = 0;
+const TOTAL_ROUNDS = 5;
+let score = 0;
+let endLevelSent = false;
+let draggedName = null;
 let gameInfo = null;
 let isEmotionMatchGame = false;
+let pendingNextLevel = null;
+let isLevelCompletePopup = false;
+let isTTSManualOnly = true;
+
+let maxErrors = 1;
+let emotionErrors = {};
+let learnedEmotions = [];
+let learningCards = {};
+let roundScored = false;
+let reviewMode = false;
+
+let gameState = {
+  difficulty: "easy",
+  shuffledCharacters: [],
+  answers: {},
+  submitted: false,
+  results: {},
+  currentLevel: 1,
+  canRetry: true,
+  retryUsed: false,
+};
+const LEVEL_META = [
+  { num: 1, icon: "😊", name: "Dễ" },
+  { num: 2, icon: "❤️", name: "Vui" },
+  { num: 3, icon: "⭐", name: "Hay" },
+  { num: 4, icon: "✨", name: "Giỏi" },
+  { num: 5, icon: "☀️", name: "Xuất sắc" },
+  { num: 6, icon: "🌸", name: "Tuyệt vời" },
+  { num: 7, icon: "🌈", name: "Siêu đẳng" },
+  { num: 8, icon: "🎮", name: "Cao thủ" },
+];
+
+function getLevelMeta(lv) {
+  return (
+    LEVEL_META.find((l) => l.num === lv) || {
+      num: lv,
+      icon: "🎯",
+      name: `Level ${lv}`,
+    }
+  );
+}
 
 function normalizeText(text) {
   return (text || "")
@@ -20,24 +64,6 @@ function normalizeText(text) {
     .replace(/đ/g, "d");
 }
 
-// ====== BIẾN GIỐNG LOGIC recognize_emotion ======
-let maxErrors = 1;
-let emotionErrors = {};
-let learnedEmotions = []; // sẽ gửi lên BE qua review_emotions
-let learningCards = {}; // nếu sau này dùng popup học lại
-
-// ================== TRẠNG THÁI GAME ==================
-let gameState = {
-  difficulty: "easy", // sẽ set lại theo level nếu muốn
-  shuffledCharacters: [], // <-- Sẽ lấy từ questions của BE
-  answers: {},
-  submitted: false,
-  results: {},
-  currentLevel: 1,
-  canRetry: true,
-  retryUsed: false,
-};
-
 function shuffleArray(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -47,29 +73,47 @@ function shuffleArray(array) {
   return arr;
 }
 
-// Chọn một nhóm câu hỏi cho level hiện tại, và loại chúng khỏi remainingQuestions
-function pickQuestionsForCurrentLevel() {
-  if (!remainingQuestions || remainingQuestions.length === 0) {
-    return [];
+function getNumQuestionsPerRound(lv) {
+  if (lv <= 2) return 2;
+  if (lv <= 4) return 3;
+  if (lv <= 6) return 4;
+  if (lv <= 8) return 5;
+  return 5;
+}
+
+function pickQuestionsForCurrentLevelUnique(
+  opts = { uniqueName: true, uniqueEmotion: true }
+) {
+  if (!remainingQuestions || remainingQuestions.length === 0) return [];
+
+  const maxPerRound = getNumQuestionsPerRound(level);
+  const num = Math.min(maxPerRound, remainingQuestions.length);
+  const pool = shuffleArray(remainingQuestions);
+
+  const usedNames = new Set();
+  const usedEmotions = new Set();
+  const selected = [];
+
+  for (const q of pool) {
+    if (selected.length >= num) break;
+
+    const name = (q.correct_answer || "").trim().toLowerCase();
+    const emo = (q.emotion || "").trim().toLowerCase();
+
+    if (opts.uniqueName && name && usedNames.has(name)) continue;
+    if (opts.uniqueEmotion && emo && usedEmotions.has(emo)) continue;
+
+    selected.push(q);
+    if (name) usedNames.add(name);
+    if (emo) usedEmotions.add(emo);
   }
-
-  // Số câu tối đa mỗi level
-  let maxPerLevel;
-  if (level === 1) {
-    maxPerLevel = 2; // Level 1: 2 câu
-  } else if (level === 2) {
-    maxPerLevel = 3; // Level 2: 3 câu (tuỳ bạn)
-  } else {
-    maxPerLevel = 4; // Level 3+: 4 câu
+  if (selected.length < num) {
+    for (const q of pool) {
+      if (selected.length >= num) break;
+      if (selected.some((x) => x.question_id === q.question_id)) continue;
+      selected.push(q);
+    }
   }
-
-  const num = Math.min(maxPerLevel, remainingQuestions.length);
-
-  // Shuffle remainingQuestions rồi lấy num câu
-  const shuffled = shuffleArray(remainingQuestions);
-  const selected = shuffled.slice(0, num);
-
-  // Loại những câu đã chọn khỏi remainingQuestions
   const selectedIds = new Set(selected.map((q) => q.question_id));
   remainingQuestions = remainingQuestions.filter(
     (q) => !selectedIds.has(q.question_id)
@@ -78,9 +122,50 @@ function pickQuestionsForCurrentLevel() {
   return selected;
 }
 
-// ================== TỰ ĐỘNG BẮT ĐẦU GAME KHI TRANG LOAD ==================
+function pickQuestionsForCurrentLevel() {
+  if (!remainingQuestions || remainingQuestions.length === 0) return [];
+
+  const maxPerRound = getNumQuestionsPerRound(level);
+  const num = Math.min(maxPerRound, remainingQuestions.length);
+
+  const shuffled = shuffleArray(remainingQuestions);
+  const selected = shuffled.slice(0, num);
+
+  const selectedIds = new Set(selected.map((q) => q.question_id));
+  remainingQuestions = remainingQuestions.filter(
+    (q) => !selectedIds.has(q.question_id)
+  );
+
+  return selected;
+}
+function updateProgressUI() {
+  const progressLabel = document.getElementById("progress-label");
+  const scoreLabel = document.getElementById("score-label");
+
+  const progressBarFill = document.getElementById("cv-level-progress-fill");
+
+  const current = roundIndex + 1;
+  const total = TOTAL_ROUNDS;
+
+  const percentage = (current / total) * 100;
+
+  if (progressLabel) progressLabel.textContent = `Câu ${current}/${total}`;
+  if (scoreLabel) scoreLabel.textContent = `Điểm: ${score}`;
+
+  if (progressBarFill) {
+    progressBarFill.style.width = `${percentage}%`;
+
+    let hue;
+    if (percentage < 33) hue = 0;
+    else if (percentage < 66) hue = 60;
+    else hue = 120;
+
+    progressBarFill.style.backgroundColor = `hsl(${hue}, 70%, 50%)`;
+    progressBarFill.style.boxShadow = `0 6px 14px hsla(${hue}, 70%, 50%, 0.25)`;
+  }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
-  // 1. Lấy user từ localStorage
   user = JSON.parse(localStorage.getItem("currentUser"));
   if (!user) {
     alert("Vui lòng đăng nhập!");
@@ -88,7 +173,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // 2. Lấy gameId + level từ URL (?gameId=GC4&level=1 ...)
   const urlParams = new URLSearchParams(window.location.search);
   gameId = urlParams.get("gameId");
   level = parseInt(urlParams.get("level"));
@@ -99,7 +183,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // 2.5. Lấy thông tin game để set tiêu đề/copy cho đúng game
   try {
     const gameRes = await fetch(`/games/${gameId}`);
     if (gameRes.ok) {
@@ -134,9 +217,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     // ignore
   }
 
-  // 3. Gọi BE để START SESSION + LẤY DỮ LIỆU CÂU HỎI
   try {
-    const res = await fetch(`/games/start/${gameId}`, {
+    const res = await fetch(`/games/start-dynamic/${gameId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -155,13 +237,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     const data = await res.json();
     sessionId = data.session_id;
     questions = data.questions || [];
-
-    // ====== ĐỒNG BỘ LOGIC VỚI recognize_emotion ======
-    // max_errors từ BE (hoặc dùng 3 giống file recognize_emotion)
     maxErrors = data.max_errors || 3;
     learningCards = data.learning_cards || {};
-
-    // Chuẩn hóa key cảm xúc của learningCards về chữ thường (nếu sau dùng)
     const normalizedLearningCards = {};
     for (const key in learningCards) {
       if (Object.prototype.hasOwnProperty.call(learningCards, key)) {
@@ -170,7 +247,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     learningCards = normalizedLearningCards;
 
-    // emotion_errors từ BE hoặc default 6 cảm xúc
     emotionErrors = data.emotion_errors || {
       "sợ hãi": 0,
       "buồn bã": 0,
@@ -179,30 +255,36 @@ window.addEventListener("DOMContentLoaded", async () => {
       "ngạc nhiên": 0,
       "vui vẻ": 0,
     };
-    learnedEmotions = []; // reset mỗi khi start session
+    learnedEmotions = [];
 
     if (!questions || questions.length === 0) {
       throw new Error("Không tải được câu hỏi cho level này (mảng rỗng)");
     }
 
     remainingQuestions = [...questions];
-    const selectedQuestions = pickQuestionsForCurrentLevel();
+    roundIndex = 0;
+    score = 0;
+    localResults = [];
+    endLevelSent = false;
+    updateProgressUI();
+    const selectedQuestions = pickQuestionsForCurrentLevelUnique({
+      uniqueName: true,
+      uniqueEmotion: true,
+    });
+
     if (selectedQuestions.length === 0) {
       throw new Error("Không còn câu hỏi nào cho level này");
     }
 
-    // 4. Map questions -> characters cho game WhoIsWho
-    // Giả định structure:
-    // q.question_id, q.media_path (ảnh mặt), q.correct_answer (tên), q.emotion (cảm xúc)
     gameState.characters = selectedQuestions.map((q) => ({
       id: q.question_id,
-      name: q.correct_answer, // Tên đúng cần ghép
-      emotion: q.emotion || "", // Cảm xúc (dùng để tính emotionErrors / learnedEmotions)
-      image: q.media_path, // Ảnh khuôn mặt
+      name: q.correct_answer,
+      emotion: q.emotion || "",
+      image: q.media_path,
     }));
 
     gameState.shuffledCharacters = shuffleArray(gameState.characters);
-    // Có thể set difficulty dựa trên số lượng nhân vật hoặc level
+
     if (gameState.characters.length <= 2) {
       gameState.difficulty = "easy";
       gameState.currentLevel = 1;
@@ -221,40 +303,29 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// ================== HÀM GỬI KẾT QUẢ LÊN BACKEND (GIỐNG recognize_emotion) ==================
 async function sendFinalResults() {
-  if (!sessionId) {
-    console.warn("Không có sessionId, bỏ qua gửi kết quả.");
-    return;
-  }
-  console.log("Đang gửi kết quả cuối cùng:", {
-    session_id: sessionId,
-    results: localResults,
-    review_emotions: learnedEmotions,
-  });
+  if (!sessionId) return;
+  if (endLevelSent) return;
+  endLevelSent = true;
 
   try {
     const res = await fetch("/games/end-level", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         session_id: sessionId,
         results: localResults,
-        review_emotions: learnedEmotions, // <-- GIỐNG recognize_emotion
+        review_emotions: learnedEmotions,
       }),
     });
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("Server trả lỗi end-level:", res.status, text);
-      throw new Error("Lỗi khi gửi kết quả cuối cùng.");
+      throw new Error(text || "Lỗi end-level");
     }
-    console.log("Đã lưu tiến trình thành công.");
   } catch (err) {
-    console.error("Lỗi khi gửi kết quả cuối cùng:", err);
-    alert("Đã xảy ra lỗi khi lưu tiến trình của bạn.");
+    console.error(err);
+    alert("Đã xảy ra lỗi khi lưu tiến trình.");
   }
 }
 
@@ -264,21 +335,19 @@ function initializeRound() {
   gameState.submitted = false;
   gameState.results = {};
   gameState.retryUsed = false;
-  localResults = []; // reset mảng kết quả cho vòng chơi
+  roundScored = false;
+  reviewMode = false;
   renderGame();
+  updateProgressUI();
 }
 
 // ================== RENDER GAME ==================
 function renderGame() {
-  const difficultyText =
-    gameState.difficulty === "easy"
-      ? "Dễ 🙂"
-      : gameState.difficulty === "medium"
-      ? "Vừa 😊"
-      : "Khó 🤩";
+  const qTotal = 5;
+  const qAnswered = Object.keys(gameState.answers || {}).length;
   document.getElementById(
     "difficulty-badge"
-  ).textContent = `Mức độ: ${difficultyText}`;
+  ).textContent = `Câu: ${qAnswered}/${qTotal}`;
 
   renderHints();
   renderFaces();
@@ -288,7 +357,6 @@ function renderGame() {
   document.getElementById("result-message").classList.add("hidden");
 }
 
-// Render phần gợi ý
 function renderHints() {
   const hintsContainer = document.getElementById("hints-list");
   hintsContainer.innerHTML = gameState.characters
@@ -379,7 +447,6 @@ function renderFaces() {
     .join("");
 }
 
-// Render thẻ tên
 function renderNameCards() {
   const usedNames = Object.values(gameState.answers);
   const availableNames = gameState.characters
@@ -409,40 +476,25 @@ function renderNameCards() {
   }
 }
 
-// Render buttons
 function renderButtons() {
   const allAnswered =
     Object.keys(gameState.answers).length === gameState.characters.length;
+
   const allCorrect =
     gameState.submitted && Object.values(gameState.results).every((r) => r);
+  const submitBtn = document.getElementById("submit-btn");
+  submitBtn.style.display = !gameState.submitted ? "block" : "none";
+  submitBtn.disabled = !allAnswered;
 
-  document.getElementById("submit-btn").style.display = !gameState.submitted
-    ? "block"
-    : "none";
-  document.getElementById("submit-btn").disabled = !allAnswered;
+  const retryBtn = document.getElementById("retry-btn");
+  retryBtn.style.display = "none";
 
-  const showRetry =
-    gameState.submitted &&
-    !allCorrect &&
-    gameState.canRetry &&
-    !gameState.retryUsed;
-  document.getElementById("retry-btn").style.display = showRetry
-    ? "block"
-    : "none";
-
-  const showReset = gameState.submitted;
-  document.getElementById("reset-btn").style.display = showReset
-    ? "block"
-    : "none";
-
-  const showNext = gameState.submitted && allCorrect;
-  document.getElementById("next-btn").style.display = showNext
-    ? "block"
-    : "none";
+  const resetBtn = document.getElementById("reset-btn");
+  resetBtn.style.display = "none";
+  const nextBtn = document.getElementById("next-btn");
+  const showNextInGame = gameState.submitted && (allCorrect || reviewMode);
+  nextBtn.style.display = showNextInGame ? "block" : "none";
 }
-
-// Drag and Drop
-let draggedName = null;
 
 function handleDragStart(event, name) {
   if (gameState.submitted) return;
@@ -482,22 +534,21 @@ function handleDrop(event) {
   renderGame();
 }
 
-// Xóa tên
 function removeName(characterId) {
   if (gameState.submitted) return;
   delete gameState.answers[characterId];
   renderGame();
 }
 
-// Text-to-speech
-function speak(text) {
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "vi-VN";
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
-  }
+function speak(text, fromButton = false) {
+  if (!("speechSynthesis" in window)) return;
+  if (isTTSManualOnly && !fromButton) return;
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "vi-VN";
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
 }
 
 function speakHints() {
@@ -510,7 +561,18 @@ function speakHints() {
   speak(hints);
 }
 
-// ================== NỘP BÀI (ĐỒNG BỘ VỚI BACKEND) ==================
+function showScoreFly(points) {
+  const el = document.createElement("div");
+  el.className = "score-fly";
+  el.textContent = `+${points} ⭐`;
+  document.body.appendChild(el);
+
+  // force reflow để animation chạy
+  requestAnimationFrame(() => el.classList.add("show"));
+
+  setTimeout(() => el.remove(), 900);
+}
+
 async function submitAnswer() {
   if (Object.keys(gameState.answers).length !== gameState.characters.length) {
     alert("Hãy đặt tên cho tất cả các khuôn mặt trước khi nộp bài!");
@@ -519,7 +581,7 @@ async function submitAnswer() {
 
   let allCorrect = true;
   let correctCount = 0;
-
+  if (gameState.submitted) return;
   gameState.characters.forEach((char) => {
     const isCorrect = gameState.answers[char.id] === char.name;
     gameState.results[char.id] = isCorrect;
@@ -529,19 +591,29 @@ async function submitAnswer() {
       allCorrect = false;
     }
   });
+  const gainedScore = correctCount * 10;
+  if (!roundScored) {
+    score += gainedScore;
+    roundScored = true;
+
+    updateProgressUI();
+
+    if (gainedScore > 0) {
+      showScoreFly(gainedScore);
+    }
+  } else {
+    updateProgressUI();
+  }
 
   gameState.submitted = true;
+  reviewMode = false;
   renderGame();
 
-  // ====== LƯU KẾT QUẢ ĐỂ GỬI BE + ĐẾM LỖI THEO CẢM XÚC ======
-  localResults = [];
-  const newLearnedThisRound = []; // cảm xúc mới vượt ngưỡng trong lần submit này
+  const newLearnedThisRound = [];
 
   gameState.characters.forEach((char) => {
     const isCorrect = gameState.results[char.id];
     const chosen = gameState.answers[char.id];
-
-    // Cập nhật emotionErrors + learnedEmotions giống recognize_emotion (dựa trên char.emotion)
     if (!isCorrect) {
       const emoKey = (char.emotion || "").trim().toLowerCase();
       if (emoKey) {
@@ -558,28 +630,32 @@ async function submitAnswer() {
     }
 
     localResults.push({
-      question_id: char.id, // question_id BE trả về
-      answer: chosen, // tên user đã chọn
+      question_id: char.id,
+      answer: chosen,
       is_correct: isCorrect,
-      used_hint: false, // game này chưa có hint, set false
-      response_time_ms: 5000, // TODO: có thể đo thời gian thực
+      used_hint: false,
+      response_time_ms: 5000,
     });
   });
 
-  // Gửi kết quả lên BE (giống recognize_emotion.js)
-  await sendFinalResults();
-
-  // Nếu có cảm xúc mới cần học lại trong lần submit này -> hiện popup thẻ học trước
   if (newLearnedThisRound.length > 0) {
-    const emoToLearn = newLearnedThisRound[0]; // tạm thời hiện 1 cảm xúc đầu tiên
+    const emoToLearn = newLearnedThisRound[0];
     showLearningCard(emoToLearn, () => {
-      // Sau khi đóng thẻ học -> hiện popup kết quả
       showResultPopup(allCorrect, correctCount);
     });
   } else {
-    // Không có cảm xúc nào vượt ngưỡng -> chỉ hiện popup kết quả
     showResultPopup(allCorrect, correctCount);
   }
+}
+
+function initializeRoundRetry() {
+  gameState.answers = {};
+  gameState.submitted = false;
+  gameState.results = {};
+  gameState.retryUsed = true;
+
+  renderGame();
+  updateProgressUI();
 }
 
 // ================== POPUP THẺ HỌC CẢM XÚC ==================
@@ -631,49 +707,309 @@ function showResultPopup(allCorrect, correctCount) {
   const icon = document.getElementById("popup-icon");
   const title = document.getElementById("popup-title");
   const message = document.getElementById("popup-message");
+
   const nextBtn = document.getElementById("popup-next-btn");
+  const replayBtn = document.getElementById("popup-replay-btn");
 
   const totalQuestions = gameState.characters.length;
+  icon.classList.remove("bounce", "shake");
+  isLevelCompletePopup = false;
+  pendingNextLevel = null;
+  if (nextBtn) nextBtn.style.display = "none";
+  if (replayBtn) replayBtn.style.display = "none";
+
+  if (replayBtn) {
+    replayBtn.style.display = "block";
+    replayBtn.textContent = "Xem lại";
+    replayBtn.onclick = () => {
+      reviewMode = true;
+      popup.classList.remove("show");
+      setTimeout(() => popup.classList.add("hidden"), 200);
+      renderGame();
+    };
+  }
+
+  if (nextBtn) {
+    nextBtn.style.display = "block";
+    nextBtn.textContent = "Next";
+    nextBtn.onclick = () => nextQuestion();
+  }
+
+  const scoreLine = `\nĐiểm hiện tại: ${score} ⭐`;
 
   if (allCorrect) {
     icon.textContent = "🎉";
+    icon.classList.add("bounce");
     title.textContent = "Bạn đã trả lời đúng!";
-    message.textContent = `Xuất sắc! Bạn đã trả lời đúng ${correctCount}/${totalQuestions} câu hỏi!`;
     title.style.color = "#22c55e";
-    nextBtn.style.display = "block";
-
-    setTimeout(() => {
-      speak("Chúc mừng! Bạn đã trả lời đúng tất cả!");
-    }, 500);
+    message.textContent =
+      `Xuất sắc! Bạn đã trả lời đúng ${correctCount}/${totalQuestions} câu hỏi!` +
+      scoreLine;
   } else {
     icon.textContent = "😢";
+    icon.classList.add("shake");
     title.textContent = "Bạn đã trả lời sai!";
-    message.textContent = `Bạn đã trả lời đúng ${correctCount}/${totalQuestions} câu hỏi. Hãy thử lại nhé!`;
     title.style.color = "#ef4444";
-    nextBtn.style.display = "none";
-
-    setTimeout(() => {
-      speak(
-        `Bạn đã trả lời đúng ${correctCount} trên ${totalQuestions} câu hỏi. Hãy thử lại nhé!`
-      );
-    }, 500);
+    message.textContent =
+      `Bạn đã trả lời đúng ${correctCount}/${totalQuestions} câu hỏi. Hãy xem lại rồi bấm Next nhé!` +
+      scoreLine;
   }
 
   popup.classList.remove("hidden");
+  requestAnimationFrame(() => popup.classList.add("show"));
+}
+
+function showLevelCompletePopup(nextLevel) {
+  const popup = document.getElementById("result-popup");
+  const icon = document.getElementById("popup-icon");
+  const title = document.getElementById("popup-title");
+  const message = document.getElementById("popup-message");
+
+  const nextBtn = document.getElementById("popup-next-btn");
+  const replayBtn = document.getElementById("popup-replay-btn");
+
+  isLevelCompletePopup = true;
+  pendingNextLevel = nextLevel;
+
+  const currentMeta = getLevelMeta(level);
+  const nextMeta = getLevelMeta(nextLevel);
+
+  if (icon) icon.textContent = "🏁";
+  if (title) {
+    title.textContent = `${currentMeta.icon} Hoàn thành level ${currentMeta.name}!`;
+    title.style.color = "#22c55e";
+  }
+  if (message) {
+    message.textContent =
+      `Bạn đã vượt qua level "${currentMeta.name}". ` +
+      `Điểm hiện tại: ${score} ⭐. ` +
+      `Sẵn sàng sang level mới: ${nextMeta.icon} ${nextMeta.name}?`;
+  }
+
+  if (replayBtn) {
+    replayBtn.style.display = "block";
+    replayBtn.textContent = "Chơi lại level";
+    replayBtn.onclick = async () => {
+      popup.classList.remove("show");
+      setTimeout(() => popup.classList.add("hidden"), 200);
+      try {
+        await restartCurrentLevel();
+      } catch (err) {
+        console.error(err);
+        showErrorPopup(err?.message || "Không thể chơi lại level");
+      }
+    };
+  }
+
+  if (nextBtn) {
+    nextBtn.style.display = "block";
+    nextBtn.textContent = `${nextMeta.icon} Level mới`;
+    nextBtn.onclick = async () => {
+      popup.classList.remove("show");
+      setTimeout(() => popup.classList.add("hidden"), 200);
+      try {
+        await startLevel(pendingNextLevel);
+      } catch (err) {
+        console.error(err);
+        showErrorPopup(err?.message || "Không thể chuyển level");
+      }
+    };
+  }
+
+  popup.classList.remove("hidden");
+  requestAnimationFrame(() => popup.classList.add("show"));
+}
+
+function showErrorPopup(text) {
+  const popup = document.getElementById("result-popup");
+  const icon = document.getElementById("popup-icon");
+  const title = document.getElementById("popup-title");
+  const message = document.getElementById("popup-message");
+  const nextBtn = document.getElementById("popup-next-btn");
+  const replayBtn = document.getElementById("popup-replay-btn");
+
+  if (icon) icon.textContent = "⚠️";
+  if (title) {
+    title.textContent = "Có lỗi xảy ra";
+    title.style.color = "#ef4444";
+  }
+  if (message) message.textContent = text;
+
+  if (replayBtn) replayBtn.style.display = "none";
+  if (nextBtn) {
+    nextBtn.style.display = "block";
+    nextBtn.textContent = "Về menu";
+    nextBtn.onclick = () => {
+      popup.classList.add("hidden");
+      window.location.href = "./select_game.html";
+    };
+  }
+
+  popup.classList.remove("hidden");
+  requestAnimationFrame(() => popup.classList.add("show"));
 }
 
 function closePopupAndReplay() {
-  document.getElementById("result-popup").classList.add("hidden");
-  initializeRound();
+  const popup = document.getElementById("result-popup");
+  popup.classList.remove("show");
+  setTimeout(() => popup.classList.add("hidden"), 200);
+  initializeRoundRetry();
   speak("Chơi lại!");
 }
 
-function closePopupAndNext() {
-  document.getElementById("result-popup").classList.add("hidden");
-  const nextQuestions = pickQuestionsForCurrentLevel();
+async function startLevel(newLevel) {
+  level = newLevel;
+
+  const res = await fetch(`/games/start-dynamic/${gameId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: user.user_id, level }),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || "Lỗi khởi động level mới");
+  }
+
+  const data = await res.json();
+  sessionId = data.session_id;
+  questions = data.questions || [];
+
+  maxErrors = data.max_errors || 3;
+
+  learningCards = data.learning_cards || {};
+  const normalizedLearningCards = {};
+  for (const key in learningCards) {
+    if (Object.prototype.hasOwnProperty.call(learningCards, key)) {
+      normalizedLearningCards[key.trim().toLowerCase()] = learningCards[key];
+    }
+  }
+  learningCards = normalizedLearningCards;
+
+  emotionErrors = data.emotion_errors || {
+    "sợ hãi": 0,
+    "buồn bã": 0,
+    "tức giận": 0,
+    "ghê tởm": 0,
+    "ngạc nhiên": 0,
+    "vui vẻ": 0,
+  };
+  learnedEmotions = [];
+
+  if (!questions.length) throw new Error("Level mới không có câu hỏi");
+
+  remainingQuestions = [...questions];
+  roundIndex = 0;
+  score = 0;
+  localResults = [];
+  endLevelSent = false;
+
+  const selected = pickQuestionsForCurrentLevelUnique({
+    uniqueName: true,
+    uniqueEmotion: true,
+  });
+  if (!selected.length) throw new Error("Không đủ câu hỏi cho round");
+
+  gameState.characters = selected.map((q) => ({
+    id: q.question_id,
+    name: q.correct_answer,
+    emotion: q.emotion || "",
+    image: q.media_path,
+  }));
+  gameState.shuffledCharacters = shuffleArray(gameState.characters);
+
+  initializeRound();
+}
+
+async function restartCurrentLevel() {
+  roundIndex = 0;
+  score = 0;
+  localResults = [];
+  endLevelSent = false;
+  learnedEmotions = [];
+  const res = await fetch(`/games/start-dynamic/${gameId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: user.user_id, level }),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || "Lỗi khởi động lại level");
+  }
+
+  const data = await res.json();
+  sessionId = data.session_id;
+  questions = data.questions || [];
+
+  maxErrors = data.max_errors || 3;
+
+  learningCards = data.learning_cards || {};
+  const normalizedLearningCards = {};
+  for (const key in learningCards) {
+    if (Object.prototype.hasOwnProperty.call(learningCards, key)) {
+      normalizedLearningCards[key.trim().toLowerCase()] = learningCards[key];
+    }
+  }
+  learningCards = normalizedLearningCards;
+
+  emotionErrors = data.emotion_errors || {
+    "sợ hãi": 0,
+    "buồn bã": 0,
+    "tức giận": 0,
+    "ghê tởm": 0,
+    "ngạc nhiên": 0,
+    "vui vẻ": 0,
+  };
+
+  if (!questions.length) throw new Error("Level này không có câu hỏi");
+
+  remainingQuestions = [...questions];
+
+  const selected = pickQuestionsForCurrentLevelUnique({
+    uniqueName: true,
+    uniqueEmotion: true,
+  });
+  if (!selected.length) throw new Error("Không đủ câu hỏi cho round");
+
+  gameState.characters = selected.map((q) => ({
+    id: q.question_id,
+    name: q.correct_answer,
+    emotion: q.emotion || "",
+    image: q.media_path,
+  }));
+  gameState.shuffledCharacters = shuffleArray(gameState.characters);
+
+  initializeRound();
+}
+
+async function closePopupAndNext() {
+  const popup = document.getElementById("result-popup");
+  popup.classList.remove("show");
+  setTimeout(() => popup.classList.add("hidden"), 200);
+
+  roundIndex++;
+  if (roundIndex >= TOTAL_ROUNDS) {
+    await sendFinalResults();
+
+    const nextLevel = level + 1;
+
+    if (gameInfo?.num_levels && nextLevel > gameInfo.num_levels) {
+      showErrorPopup("Bạn đã hoàn thành tất cả level!");
+      return;
+    }
+    showLevelCompletePopup(nextLevel);
+    return;
+  }
+
+  const nextQuestions = pickQuestionsForCurrentLevelUnique({
+    uniqueName: true,
+    uniqueEmotion: true,
+  });
   if (nextQuestions.length === 0) {
-    speak("Bạn đã hoàn thành tất cả câu hỏi của level này!");
-    alert("Bạn đã làm hết câu hỏi cho level này rồi!");
+    alert("Không đủ câu hỏi cho round tiếp theo của level này.");
+    await sendFinalResults();
+    window.location.href = "./select_game.html";
     return;
   }
 
@@ -683,19 +1019,7 @@ function closePopupAndNext() {
     emotion: q.emotion || "",
     image: q.media_path,
   }));
-
   gameState.shuffledCharacters = shuffleArray(gameState.characters);
-
-  if (gameState.characters.length <= 2) {
-    gameState.difficulty = "easy";
-    gameState.currentLevel = 1;
-  } else if (gameState.characters.length === 3) {
-    gameState.difficulty = "medium";
-    gameState.currentLevel = 2;
-  } else {
-    gameState.difficulty = "hard";
-    gameState.currentLevel = 3;
-  }
 
   initializeRound();
   speak("Câu hỏi mới!");
@@ -714,8 +1038,7 @@ function resetGame() {
 }
 
 function nextQuestion() {
-  initializeRound();
-  speak("Câu hỏi mới!");
+  closePopupAndNext();
 }
 
 function backToMenu() {
@@ -724,6 +1047,8 @@ function backToMenu() {
   window.speechSynthesis.cancel();
 }
 document.getElementById("popup-close-btn").onclick = () => {
-  document.getElementById("result-popup").classList.add("hidden");
+  const popup = document.getElementById("result-popup");
+  popup.classList.remove("show");
+  setTimeout(() => popup.classList.add("hidden"), 200);
   window.speechSynthesis.cancel();
 };
