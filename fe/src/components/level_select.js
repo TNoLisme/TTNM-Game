@@ -20,54 +20,103 @@ const EMOTION_OPTIONS = [
     { key: 'ghê tởm',    icon: '🤢', name: 'Ghê tởm' }
 ];
 
-function normalizeText(text) {
-    return (text || '')
-        .toString()
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd');
-}
+// gameId trong DB của game "Thử thách cảm xúc" (game_cv_2)
+const GAME_CV_REQUEST_ID = '61f5e09e-eefa-44c1-86e1-87dfceac3b8e'.toLowerCase();
 
-function resolveGameKey(gameInfo) {
-    const name = normalizeText(gameInfo?.name);
-    const type = (gameInfo?.game_type || '').toString();
+if (!window.egInlineConfirm) {
+    window.egEnsureInlineConfirmModal = function () {
+        if (document.getElementById('eg-confirm-overlay')) return;
 
-    // CV2: "Thử thách cảm xúc" (chọn cảm xúc thay vì chọn level)
-    if (name.includes('thu thach') && name.includes('cam xuc')) return 'game_cv_2';
+        if (!document.getElementById('eg-confirm-style')) {
+            const style = document.createElement('style');
+            style.id = 'eg-confirm-style';
+            style.textContent = `
+                .eg-confirm-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+                .eg-confirm-overlay.is-open{display:flex;}
+                .eg-confirm-modal{width:min(520px,92vw);background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.35);border:1px solid rgba(148,163,184,.35);overflow:hidden;}
+                .eg-confirm-header{padding:16px 18px;background:linear-gradient(135deg,rgba(25,118,210,.12),rgba(59,130,246,.08));font-weight:800;color:#0b3c7d;}
+                .eg-confirm-body{padding:16px 18px;color:#0f172a;line-height:1.5;white-space:pre-line;}
+                .eg-confirm-actions{display:flex;gap:10px;justify-content:flex-end;padding:14px 18px;background:#f8fafc;border-top:1px solid rgba(148,163,184,.28);}
+                .eg-confirm-btn{border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;}
+                .eg-confirm-btn.cancel{background:#e2e8f0;color:#0f172a;}
+                .eg-confirm-btn.ok{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;}
+                .eg-confirm-btn:active{transform:scale(.98);}
+            `;
+            document.head.appendChild(style);
+        }
 
-    // Game CV chuẩn
-    if (type === 'GameCV') return 'gameCV';
-
-    // Game Click
-    // "Cảm xúc đúng chỗ" (có thể DB đặt tên khác như "Chọn cảm xúc theo tình huống")
-    if (
-        name.includes('cam xuc dung cho') ||
-        (name.includes('cam xuc') && name.includes('dung cho')) ||
-        (name.includes('chon') && name.includes('cam xuc') && name.includes('tinh huong'))
-    ) {
-        return 'game_click_3';
-    }
-    if (name.includes('tham tu') && name.includes('cam xuc')) return 'game_click_4';
-    if (name.includes('ai la ai')) return 'game_click_3';
-
-    if (name.includes('xuong') && name.includes('cam xuc')) return 'game_click_2';
-    if (name.includes('chiec hop') && name.includes('cam xuc')) return 'recognize_emotion';
-
-    return null;
-}
-
-function getGameHtmlFileByKey(gameKey) {
-    const map = {
-        recognize_emotion: './recognize_emotion.html',
-        game_click_2: './game_click_2.html',
-        game_click_3: './game_click_3.html',
-        game_click_4: './game_click_4.html',
-        gameCV: './gameCV.html',
-        game_cv_2: './game_cv_2.html'
+        const overlay = document.createElement('div');
+        overlay.id = 'eg-confirm-overlay';
+        overlay.className = 'eg-confirm-overlay';
+        overlay.innerHTML = `
+            <div class="eg-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="eg-confirm-title">
+                <div class="eg-confirm-header" id="eg-confirm-title"></div>
+                <div class="eg-confirm-body" id="eg-confirm-message"></div>
+                <div class="eg-confirm-actions">
+                    <button type="button" class="eg-confirm-btn cancel" id="eg-confirm-cancel"></button>
+                    <button type="button" class="eg-confirm-btn ok" id="eg-confirm-ok"></button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
     };
-    return map[gameKey] || null;
+
+    window.egInlineConfirm = function (message, title, okText, cancelText) {
+        window.egEnsureInlineConfirmModal();
+
+        const overlay = document.getElementById('eg-confirm-overlay');
+        const titleEl = document.getElementById('eg-confirm-title');
+        const msgEl = document.getElementById('eg-confirm-message');
+        const okBtn = document.getElementById('eg-confirm-ok');
+        const cancelBtn = document.getElementById('eg-confirm-cancel');
+
+        if (!overlay || !titleEl || !msgEl || !okBtn || !cancelBtn) {
+            return Promise.resolve(confirm(message));
+        }
+
+        titleEl.textContent = title || 'Xác nhận';
+        msgEl.textContent = message || '';
+        okBtn.textContent = okText || 'OK';
+        cancelBtn.textContent = cancelText || 'Hủy';
+
+        return new Promise((resolve) => {
+            const close = (result) => {
+                overlay.classList.remove('is-open');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+                overlay.onclick = null;
+                document.removeEventListener('keydown', onKeyDown);
+                resolve(result);
+            };
+
+            const onKeyDown = (e) => {
+                if (e.key === 'Escape') close(false);
+            };
+
+            okBtn.onclick = () => close(true);
+            cancelBtn.onclick = () => close(false);
+            overlay.onclick = (e) => {
+                if (e.target === overlay) close(false);
+            };
+            document.addEventListener('keydown', onKeyDown);
+
+            overlay.classList.add('is-open');
+            cancelBtn.focus();
+        });
+    };
+}
+
+function getGameHtmlFile(gameId) {
+    const map = {
+        '3bcb2108-721c-4a15-a585-31f3084ed000': './recognize_emotion.html',
+        '33ecafaa-ec7e-40d2-9c67-ed0a29ac0051': './game_click_2.html',
+        '08bbffbf-d147-4556-bccb-b7621cafbf15': './game_click_3.html',
+        'aacaf79e-e15e-42a9-a3d1-a522720d919b': './game_click_4.html',
+        'e05909f3-3dee-42a6-9a75-fd985b1bdf47': './gameCV.html',
+        '61f5e09e-eefa-44c1-86e1-87dfceac3b8e': './game_cv_2.html'
+    };
+    if (!gameId) return null;
+    return map[gameId.toLowerCase()] || null;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -76,8 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const gameId = urlParams.get('gameId');
     const user = JSON.parse(localStorage.getItem('currentUser'));
 
-    let gameKey = null;
-    let isCvRequestGame = false;
+    const isCvRequestGame = gameId && gameId.toLowerCase() === GAME_CV_REQUEST_ID;
 
     console.log('Level Select - gameId:', gameId, 'user:', user);
 
@@ -106,11 +154,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const gameRes = await fetch(`/games/${gameId}`);
         if (!gameRes.ok) throw new Error('Không thể tải thông tin game');
         gameInfo = await gameRes.json();
-
-        gameKey = resolveGameKey(gameInfo);
-        isCvRequestGame = gameKey === 'game_cv_2';
-
-        console.log('[Level Select] gameInfo.name:', gameInfo?.name, '| game_type:', gameInfo?.game_type, '| gameKey:', gameKey);
 
         // Cập nhật tiêu đề theo tên game trong DB
         const headerTitle = document.querySelector('.header h1');
@@ -333,7 +376,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 5. Xử lý nút Bắt đầu Game (ĐÃ SỬA: CHỈ CHUYỂN TRANG, KHÔNG GỌI API)
     startButton.addEventListener('click', () => {
-        const gameFile = getGameHtmlFileByKey(gameKey);
+        // Lấy đường dẫn file HTML tương ứng
+        const gameFile = getGameHtmlFile(gameId);
         if (!gameFile) {
             const back = () => (window.location.href = './select_game.html');
             if (window.egModal && typeof window.egModal.alert === 'function') {
@@ -368,7 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 6. Xử lý Đăng xuất
-    document.getElementById('logout-button')?.addEventListener('click', () => {
+    document.getElementById('logout-button')?.addEventListener('click', async () => {
         const doLogout = () => {
             localStorage.removeItem('currentUser');
             window.location.href = '/src/pages/login.html';
@@ -384,7 +428,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
+        const ok = await window.egInlineConfirm(
+            'Bạn có chắc chắn muốn đăng xuất không?',
+            'Xác nhận đăng xuất',
+            'Đăng xuất',
+            'Hủy'
+        );
+        if (!ok) return;
         doLogout();
     });
 

@@ -9,6 +9,9 @@ from email.mime.base import MIMEBase
 from email import encoders
 import os
 import json
+import re
+import unicodedata
+from urllib.parse import quote
 from dotenv import load_dotenv
 
 from app.repository.users_repo import UsersRepository
@@ -208,6 +211,14 @@ class ReportService:
         return summary
     
     # ==================== EMAIL LOGIC ====================
+    def _sanitize_filename(self, filename: str) -> str:
+        name = (filename or '').strip()
+        name = unicodedata.normalize('NFKD', name)
+        name = ''.join(ch for ch in name if not unicodedata.combining(ch))
+        name = re.sub(r'[^A-Za-z0-9._-]+', '_', name)
+        name = re.sub(r'_+', '_', name).strip('_')
+        return name or 'BaoCao'
+
     def _send_report_email(
         self,
         to_email: str,
@@ -244,10 +255,11 @@ Trân trọng,
             attachment.set_payload(report_pdf.read())
             encoders.encode_base64(attachment)
             
-            filename = f"BaoCao_{child_name}_{period}.pdf"
+            filename_utf8 = f"BaoCao_{child_name}_{period}.pdf"
+            filename_ascii = self._sanitize_filename(filename_utf8)
             attachment.add_header(
                 'Content-Disposition',
-                f'attachment; filename= {filename}'
+                f'attachment; filename="{filename_ascii}"; filename*=UTF-8\'\'{quote(filename_utf8)}'
             )
             msg.attach(attachment)
             

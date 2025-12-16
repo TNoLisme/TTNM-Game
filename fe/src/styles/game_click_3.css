@@ -87,6 +87,45 @@ body {
     gap: 16px;
 }
 
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.progress-pill {
+    padding: 6px 10px;
+    background: rgba(25, 118, 210, 0.08);
+    border-radius: 999px;
+    border: 1px solid rgba(25, 118, 210, 0.22);
+    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.28);
+    display: inline-flex;
+    align-items: center;
+}
+
+.click-level-progress {
+    width: min(320px, 32vw);
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(25, 118, 210, 0.12);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.progress-pill .click-level-progress {
+    width: min(240px, 24vw);
+}
+
+.click-level-progress-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: #3b82f6;
+    transition: width 220ms ease;
+    box-shadow: 0 6px 14px rgba(59, 130, 246, 0.25);
+}
+
 .game-title {
     font-size: 1.8rem;
     color: #4c2c92;
@@ -244,7 +283,7 @@ body {
 }
 
 .status-icon {
-    font-size: 1.25rem;
+    font-size: 1.35rem;
 }
 
 .answer-hint {
@@ -252,7 +291,7 @@ body {
     padding: 8px;
     background: #dcfce7;
     border-radius: 6px;
-    font-size: 0.875rem;
+    font-size: 1rem;
 }
 
 /* Name Cards */
@@ -317,7 +356,7 @@ body {
 }
 
 .name-text {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
 }
 
 .no-names-msg {

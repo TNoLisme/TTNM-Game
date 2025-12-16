@@ -189,6 +189,12 @@ function loadQuestion(index) {
     if (elements.scoreLabel) {
         elements.scoreLabel.textContent = `Điểm: ${score}`;
     }
+
+    const progressFill = document.getElementById('click-progress-fill');
+    if (progressFill) {
+        const percentage = ((index + 1) / questions.length) * 100;
+        progressFill.style.width = `${percentage}%`;
+    }
 }
 
 function normalizeEmotion(text) {

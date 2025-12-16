@@ -13,10 +13,15 @@
 
 <body>
     <div class="navbar">
-        <button id="back-button" class="back-btn global-back-btn">&#x2190; Quay lại</button>
-        <span>Game CV - Nhận diện cảm xúc</span>
+        <button id="back-button" class="back-btn">&#x2190; Quay lại</button>
+        <span class="navbar-title">Game CV - Nhận diện cảm xúc</span>
         <div class="navbar-right">
-            <span id="progress-indicator" class="progress-indicator">Màn 0/10</span>
+            <div class="progress-indicator cv-progress-pill" aria-label="Tiến độ màn chơi">
+                <div class="cv-level-progress">
+                    <div id="cv-level-progress-fill" class="cv-level-progress-fill"></div>
+                </div>
+                <span id="progress-indicator">Màn 0/10</span>
+            </div>
         </div>
     </div>
 
