@@ -4,6 +4,93 @@
   const BACKEND_BASE = API_URL.replace('/assistant/chat', '');
   let allowTts = false;
 
+  const STORAGE_PREFIX = 'egChatbot';
+  const OPEN_STATE_KEY = `${STORAGE_PREFIX}:open`;
+  const HISTORY_LIMIT = 80;
+  const PANEL_SIZE_KEY = `${STORAGE_PREFIX}:panelSize`;
+
+  function getUserStorageKey() {
+    try {
+      const raw = localStorage.getItem('currentUser');
+      if (!raw) return 'global';
+      const user = JSON.parse(raw);
+      const id = user && (user.user_id || user.userId || user.id);
+      if (!id) return 'global';
+      return String(id).trim() || 'global';
+    } catch (e) {
+      return 'global';
+    }
+  }
+
+  function getHistoryKey() {
+    return `${STORAGE_PREFIX}:history:${getUserStorageKey()}`;
+  }
+
+  function loadStoredHistory() {
+    try {
+      const raw = localStorage.getItem(getHistoryKey());
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((m) => m && typeof m.text === 'string' && typeof m.role === 'string')
+        .slice(-HISTORY_LIMIT);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveStoredHistory(history) {
+    try {
+      const safe = Array.isArray(history) ? history.slice(-HISTORY_LIMIT) : [];
+      localStorage.setItem(getHistoryKey(), JSON.stringify(safe));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function loadOpenState() {
+    try {
+      return localStorage.getItem(OPEN_STATE_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function saveOpenState(isOpen) {
+    try {
+      localStorage.setItem(OPEN_STATE_KEY, isOpen ? '1' : '0');
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function loadPanelSize() {
+    try {
+      const raw = localStorage.getItem(PANEL_SIZE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      const w = Number(parsed.w);
+      const h = Number(parsed.h);
+      if (!Number.isFinite(w) || !Number.isFinite(h)) return null;
+      return { w, h };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function savePanelSize(w, h) {
+    try {
+      const ww = Number(w);
+      const hh = Number(h);
+      if (!Number.isFinite(ww) || !Number.isFinite(hh)) return;
+      localStorage.setItem(PANEL_SIZE_KEY, JSON.stringify({ w: ww, h: hh }));
+    } catch (e) {
+      // ignore
+    }
+  }
+
   let hasVietnameseVoice = null;
   let vietnameseVoiceCache = null;
 
@@ -261,6 +348,8 @@
         💬
       </button>
       <div class="eg-chatbot-panel" aria-label="Trợ lý EmoGarden" role="dialog">
+        <div class="eg-chatbot-resize-handle eg-chatbot-resize-left" aria-hidden="true"></div>
+        <div class="eg-chatbot-resize-handle eg-chatbot-resize-top" aria-hidden="true"></div>
         <div class="eg-chatbot-header">
           <div class="eg-chatbot-title">Trợ lý EmoGarden</div>
           <button class="eg-chatbot-close" aria-label="Đóng">×</button>
@@ -302,6 +391,18 @@
     const voiceText = container.querySelector('.eg-chatbot-voice-text');
     const voiceCancelBtn = container.querySelector('.eg-chatbot-voice-cancel');
     const voiceConfirmBtn = container.querySelector('.eg-chatbot-voice-confirm');
+
+    const resizeLeft = container.querySelector('.eg-chatbot-resize-left');
+    const resizeTop = container.querySelector('.eg-chatbot-resize-top');
+
+    const savedSize = loadPanelSize();
+    if (savedSize && panel) {
+      panel.style.width = `${savedSize.w}px`;
+      panel.style.height = `${savedSize.h}px`;
+    }
+
+    const history = loadStoredHistory();
+    const wasOpen = loadOpenState();
 
     const SpeechRecognition =
       (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) ||
@@ -421,19 +522,100 @@
       panel.classList.add('eg-chatbot-panel-open');
       allowTts = true;
       input.focus();
+      saveOpenState(true);
     }
 
     function closePanel() {
       panel.classList.remove('eg-chatbot-panel-open');
+      saveOpenState(false);
     }
 
-    function addMessage(text, role) {
+    function renderMessage(text, role) {
       const el = createMessageElement(text, role);
       messagesEl.appendChild(el);
       messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function addMessage(text, role) {
+      renderMessage(text, role);
       if (role === 'assistant' && allowTts) {
         speakTextVi(text);
       }
+
+      // Không persist tin nhắn system tạm thời (vd: "Đang nghĩ...")
+      if (role !== 'assistant system') {
+        history.push({ text, role, t: Date.now() });
+        saveStoredHistory(history);
+      }
+    }
+
+    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+    function getResizeLimits() {
+      const minW = 280;
+      const minH = 320;
+      const maxW = Math.max(minW, Math.floor(window.innerWidth * 0.92));
+      const maxH = Math.max(minH, Math.floor(window.innerHeight * 0.8));
+      return { minW, minH, maxW, maxH };
+    }
+
+    function setupEdgeResizers() {
+      if (!panel || !resizeLeft || !resizeTop) return;
+
+      const startDrag = (mode, ev) => {
+        try {
+          if (!panel.classList.contains('eg-chatbot-panel-open')) return;
+          ev.preventDefault();
+
+          const pointerId = ev.pointerId;
+          const startX = ev.clientX;
+          const startY = ev.clientY;
+          const rect = panel.getBoundingClientRect();
+          const startW = rect.width;
+          const startH = rect.height;
+          const { minW, minH, maxW, maxH } = getResizeLimits();
+
+          panel.classList.add('eg-chatbot-resizing');
+          ev.currentTarget.setPointerCapture(pointerId);
+
+          const onMove = (e) => {
+            if (e.pointerId !== pointerId) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            if (mode === 'left') {
+              // neo góc phải: kéo sang trái (dx âm) => tăng width
+              const nextW = clamp(startW - dx, minW, maxW);
+              panel.style.width = `${nextW}px`;
+            }
+            if (mode === 'top') {
+              // neo đáy: kéo lên (dy âm) => tăng height
+              const nextH = clamp(startH - dy, minH, maxH);
+              panel.style.height = `${nextH}px`;
+            }
+          };
+
+          const end = () => {
+            panel.classList.remove('eg-chatbot-resizing');
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', end);
+            window.removeEventListener('pointercancel', end);
+            try {
+              const r = panel.getBoundingClientRect();
+              savePanelSize(r.width, r.height);
+            } catch (_) {}
+          };
+
+          window.addEventListener('pointermove', onMove);
+          window.addEventListener('pointerup', end, { once: true });
+          window.addEventListener('pointercancel', end, { once: true });
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      resizeLeft.addEventListener('pointerdown', (ev) => startDrag('left', ev));
+      resizeTop.addEventListener('pointerdown', (ev) => startDrag('top', ev));
     }
 
     toggleBtn.addEventListener('click', () => {
@@ -443,6 +625,8 @@
         openPanel();
       }
     });
+
+    setupEdgeResizers();
 
     closeBtn.addEventListener('click', () => {
       closePanel();
@@ -498,8 +682,19 @@
       }
     });
 
-    // Lời chào ban đầu
-    addMessage('Chào bé! Mình là trợ lý EmoGarden, có thể giúp bé hiểu cách chơi game này.', 'assistant');
+    // Restore lịch sử chat (không đọc lại TTS)
+    if (history.length > 0) {
+      history.forEach((m) => {
+        if (!m || typeof m.text !== 'string' || typeof m.role !== 'string') return;
+        renderMessage(m.text, m.role);
+      });
+    } else {
+      addMessage('Chào bé! Mình là trợ lý EmoGarden, có thể giúp bé hiểu cách chơi game này.', 'assistant');
+    }
+
+    if (wasOpen) {
+      openPanel();
+    }
   }
 
   if (document.readyState === 'loading') {
