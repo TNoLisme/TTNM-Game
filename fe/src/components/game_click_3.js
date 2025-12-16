@@ -437,7 +437,7 @@ function renderFaces() {
 
           ${
             showAnswer
-              ? `<div class="answer-hint">✓ Đáp án: ${char.name}</div>`
+              ? `<div class="answer-hint">Đáp án đúng: ${char.name}</div>`
               : ""
           }
         </div>
@@ -597,7 +597,9 @@ async function submitAnswer() {
       allCorrect = false;
     }
   });
-  const gainedScore = correctCount * 10;
+  const allCorrectThisRound = correctCount === gameState.characters.length;
+  const gainedScore = allCorrectThisRound ? 10 : 0;
+
   if (!roundScored) {
     score += gainedScore;
     roundScored = true;
