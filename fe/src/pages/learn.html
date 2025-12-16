@@ -1,129 +1,136 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>EmoGarden • Học cảm xúc</title>
-    <link rel="stylesheet" href="../styles/navigation.css" />
-    <link rel="stylesheet" href="../styles/learn.css" />
-    <link rel="stylesheet" href="../styles/chatbot_widget.css" />
-    <script type="module" src="../components/learn.js"></script>
-  </head>
 
-  <body>
-    <nav class="main-nav">
-      <div class="nav-brand">
-        <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
-      </div>
-      <div class="nav-links">
-        <a href="./home.html" class="nav-item">Trang chủ</a>
-        <a href="./learn.html" class="nav-item active">Học</a>
-        <a href="./select_game.html" class="nav-item" id="game-nav-link">Chơi game</a>
-      </div>
-      <div class="nav-user-actions">
-        <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
-          <div class="profile-icon"></div>
-        </a>
-        <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
-      </div>
-    </nav>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EmoGarden • Học cảm xúc</title>
+  <link rel="stylesheet" href="../styles/navigation.css" />
+  <link rel="stylesheet" href="../styles/learn.css" />
+  <link rel="stylesheet" href="../styles/chatbot_widget.css" />
+  <script type="module" src="../components/learn.js"></script>
+</head>
 
-    <!-- MAIN CONTENT -->
-    <main class="learn" id="main-content">
-      <header class="learn__header">
-        <h1 class="learn__title">HỌC CẢM XÚC</h1>
-      </header>
+<body>
+  <nav class="main-nav">
+    <div class="nav-brand">
+      <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
+    </div>
+    <div class="nav-links">
+      <a href="./home.html" class="nav-item">Trang chủ</a>
+      <a href="./learn.html" class="nav-item active">Học</a>
+      <a href="./select_game.html" class="nav-item" id="game-nav-link">Chơi game</a>
+    </div>
+    <div class="nav-user-actions">
+      <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
+        <div class="profile-icon"></div>
+      </a>
+      <button class="nav-logout-btn" id="logout-button">Đăng xuất</button>
+    </div>
+  </nav>
 
-      <section class="learn__body" aria-label="Khu vực học video">
-        <!-- CỘT TRÁI: DANH SÁCH CẢM XÚC -->
-        <aside class="emotion-list" aria-label="Các cảm xúc">
-          <h2 class="emotion-list__title">CÁC CẢM XÚC</h2>
-          <ul class="emotion-list__items" id="emotion-list">
-            <!-- ví dụ placeholder; sau này load động -->
-            <li>
-              <button class="emotion-pill" data-emotion="happy">Vui</button>
-            </li>
-            <li>
-              <button class="emotion-pill" data-emotion="sad">Buồn</button>
-            </li>
-            <li>
-              <button class="emotion-pill" data-emotion="angry">
-                Tức giận
-              </button>
-            </li>
-            <li>
-              <button class="emotion-pill" data-emotion="fear">Sợ hãi</button>
-            </li>
-            <li>
-              <button class="emotion-pill" data-emotion="surprise">
-                Ngạc nhiên
-              </button>
-            </li>
-            <li>
-              <button class="emotion-pill" data-emotion="disgust">
-                Ghê tởm
-              </button>
-            </li>
-          </ul>
-        </aside>
+  <!-- MAIN CONTENT -->
+  <main class="learn" id="main-content">
+    <header class="learn__header">
+      <h1 class="learn__title">HỌC CẢM XÚC</h1>
+    </header>
 
-        <!-- KHUNG GIỮA: VIDEO/CAROUSEL -->
-        <section class="media-carousel" aria-label="Video ảnh các thứ">
-          <button
-            class="media-carousel__nav media-carousel__nav--prev"
-            aria-label="Bài trước"
-            data-action="prev"
-          >
-            ‹
-          </button>
+    <section class="learn__body" aria-label="Khu vực học video">
+      <!-- CỘT TRÁI: DANH SÁCH CẢM XÚC -->
+      <aside class="emotion-list" aria-label="Các cảm xúc">
+        <h2 class="emotion-list__title">CÁC CẢM XÚC</h2>
+        <ul class="emotion-list__items" id="emotion-list">
+          <!-- ví dụ placeholder; sau này load động -->
+          <li>
+            <button class="emotion-pill" data-emotion="happy">Vui</button>
+          </li>
+          <li>
+            <button class="emotion-pill" data-emotion="sad">Buồn</button>
+          </li>
+          <li>
+            <button class="emotion-pill" data-emotion="angry">
+              Tức giận
+            </button>
+          </li>
+          <li>
+            <button class="emotion-pill" data-emotion="fear">Sợ hãi</button>
+          </li>
+          <li>
+            <button class="emotion-pill" data-emotion="surprise">
+              Ngạc nhiên
+            </button>
+          </li>
+          <li>
+            <button class="emotion-pill" data-emotion="disgust">
+              Ghê tởm
+            </button>
+          </li>
+        </ul>
+      </aside>
 
-          <figure class="media-carousel__stage">
-            <!-- JS sẽ tự đổ video / ảnh vào đây -->
-          </figure>
+      <!-- KHUNG GIỮA: VIDEO/CAROUSEL -->
+      <section class="media-carousel" aria-label="Video ảnh các thứ">
+        <button class="media-carousel__nav media-carousel__nav--prev" aria-label="Bài trước" data-action="prev">
+          ‹
+        </button>
 
-          <button
-            class="media-carousel__nav media-carousel__nav--next"
-            aria-label="Bài tiếp theo"
-            data-action="next"
-          >
-            ›
-          </button>
+        <figure class="media-carousel__stage">
+          <!-- JS sẽ tự đổ video / ảnh vào đây -->
+        </figure>
 
-          <!-- 🔊 KHUNG TÌNH HUỐNG SAU VIDEO -->
-          <div
-            class="situation-panel"
-            id="situation-panel"
-            aria-label="Tình huống minh họa cảm xúc"
-          >
-            <div class="situation-panel__text-wrap">
-              <p id="situation-text">
-                Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.
-              </p>
-              <button
-                type="button"
-                class="situation-panel__audio-btn"
-                id="situation-audio-btn"
-                aria-label="Nghe câu đọc"
-              >
-                🔊
-              </button>
-            </div>
+        <button class="media-carousel__nav media-carousel__nav--next" aria-label="Bài tiếp theo" data-action="next">
+          ›
+        </button>
+
+        <!-- Thanh chỉ mục/tiến độ -->
+        <div class="media-carousel__dots" role="tablist" aria-label="Chọn bài">
+          <!-- JS sẽ render các chấm/bước -->
+        </div>
+        <button class="media-carousel__nav media-carousel__nav--next" aria-label="Bài tiếp theo" data-action="next">
+          ›
+        </button>
+
+        <!-- 🔊 KHUNG TÌNH HUỐNG SAU VIDEO -->
+        <div class="situation-panel" id="situation-panel" aria-label="Tình huống minh họa cảm xúc">
+          <div class="situation-panel__text-wrap">
+            <p id="situation-text">
+              Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.
+            </p>
+            <button type="button" class="situation-panel__audio-btn" id="situation-audio-btn" aria-label="Nghe câu đọc">
+              🔊
+            </button>
           </div>
-
-          <!-- Thanh chỉ mục/tiến độ -->
-          <div
-            class="media-carousel__dots"
-            role="tablist"
-            aria-label="Chọn bài"
-          >
-            <!-- JS sẽ render các chấm/bước -->
-          </div>
-        </section>
+        </div>
       </section>
-    </main>
+    </section>
+  </main>
+  <!-- 🔊 KHUNG TÌNH HUỐNG SAU VIDEO -->
+  <div class="situation-panel" id="situation-panel" aria-label="Tình huống minh họa cảm xúc">
+    <div class="situation-panel__text-wrap">
+      <p id="situation-text">
+        Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.
+      </p>
+      <button type="button" class="situation-panel__audio-btn" id="situation-audio-btn" aria-label="Nghe câu đọc">
+        🔊
+      </button>
+    </div>
+  </div>
 
-    <!-- GỢI Ý: JS sẽ gắn sau -->
-    <script type="module" src="/src/components/learn.js"></script>
-    <script src="../components/chatbot_widget.js"></script>
-  </body>
+  <!-- Thanh chỉ mục/tiến độ -->
+  <div class="media-carousel__dots" role="tablist" aria-label="Chọn bài">
+    <!-- JS sẽ render các chấm/bước -->
+  </div>
+  </section>
+  </section>
+  </main>
+
+  <!-- GỢI Ý: JS sẽ gắn sau -->
+  <script type="module" src="/src/components/learn.js"></script>
+</body>
+
+<!-- GỢI Ý: JS sẽ gắn sau -->
+<script type="module" src="/src/components/learn.js"></script>
+<script src="../components/chatbot_widget.js"></script>
+</body>
+
 </html>

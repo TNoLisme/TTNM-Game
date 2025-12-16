@@ -163,3 +163,86 @@ class QuestionService:
             list_of_questions.append(question)
 
         return list_of_questions
+    
+    def _get_target_question_count_by_level(self, level: int) -> int:
+        if level <= 2:
+            return 10
+        if level <= 4:
+            return 15
+        if level <= 6:
+            return 20
+        if level <= 8:
+            return 25
+        return 30
+    def get_or_generate_questions_dynamic(
+        self, user_id: UUID, game_id: UUID, level: int, ratio: List[float]
+    ) -> List[Question]:
+        target_count = self._get_target_question_count_by_level(level)
+
+        questions = self._get_cached_questions(user_id, game_id, level)
+        if questions and len(questions) >= target_count:
+            print(f"[QuestionService] Cache HIT (enough {len(questions)}/{target_count}) user {user_id} | game {game_id}")
+            return questions[:target_count]
+
+        if questions:
+            print(f"[QuestionService] Cache HIT but NOT enough ({len(questions)}/{target_count}) -> regenerate")
+
+        print(f"[QuestionService] Cache MISS for user {user_id} | game {game_id}. Generating {target_count} questions.")
+        return self._generate_new_questions_dynamic(user_id, game_id, level, ratio, target_count)
+
+    def _generate_new_questions_dynamic(
+        self, user_id: UUID, game_id: UUID, level: int, ratio: List[float], target_count: int
+    ) -> List[Question]:
+        emotions = ["Vui vẻ", "Buồn bã", "Tức giận", "Sợ hãi", "Ngạc nhiên", "Ghê tởm"]
+
+        if not ratio or len(ratio) != len(emotions):
+            ratio = [1 / len(emotions)] * len(emotions)
+
+        counts = [round(r * target_count) for r in ratio]
+        while sum(counts) > target_count:
+            counts[counts.index(max(counts))] -= 1
+        while sum(counts) < target_count:
+            counts[counts.index(min(counts))] += 1
+        main_contents: List[GameContent] = []
+        for i, emotion in enumerate(emotions):
+            cnt = counts[i]
+            if cnt <= 0:
+                continue
+
+            candidates = self.contents_repo.get_game_content_by_emotion_and_level(game_id, level, emotion)
+            if not candidates:
+                continue
+
+            selected = random.sample(candidates, min(len(candidates), cnt))
+            main_contents.extend(selected)
+
+        if len(main_contents) < target_count:
+            needed = target_count - len(main_contents)
+            all_contents = self.contents_repo.get_game_content_by_level(game_id, level)
+
+            existing_ids = {c.content_id for c in main_contents}
+            extra_candidates = [c for c in all_contents if c.content_id not in existing_ids]
+
+            if extra_candidates:
+                selected_extra = random.sample(extra_candidates, min(len(extra_candidates), needed))
+                main_contents.extend(selected_extra)
+
+        main_contents = main_contents[:target_count]
+
+        if len(main_contents) < target_count:
+            raise ValueError(
+                f"Not enough GameContent for game={game_id} level={level}. "
+                f"Need {target_count}, got {len(main_contents)}."
+            )
+        new_data = GameData(data_id=uuid4(), game_id=game_id, user_id=user_id, level=level, questions=[])
+        saved_data = self.game_data_repo.create(new_data)
+
+        list_of_questions: List[Question] = []
+        for content in main_contents:
+            question = self.questions_repo.get_or_create_by_content(content)
+            link = GameDataContentsDomain(data_id=saved_data.data_id, question_id=question.question_id)
+            self.game_data_contents_repo.create(link)
+            list_of_questions.append(question)
+
+        return list_of_questions
+
