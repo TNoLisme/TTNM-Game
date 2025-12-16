@@ -22,6 +22,7 @@ let learnedEmotions = [];
 let learningCards = {};
 let roundScored = false;
 let reviewMode = false;
+let lastRoundSnapshot = null;
 
 let gameState = {
   difficulty: "easy",
@@ -43,6 +44,10 @@ const LEVEL_META = [
   { num: 7, icon: "🌈", name: "Siêu đẳng" },
   { num: 8, icon: "🎮", name: "Cao thủ" },
 ];
+
+function isLockedInteraction() {
+  return gameState.submitted || reviewMode;
+}
 
 function getLevelMeta(lv) {
   return (
@@ -71,6 +76,10 @@ function shuffleArray(array) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+function resolveImagePath(p) {
+  if (!p) return "";
+  return p.replace(/^\/fe\//, "/"); // "/fe/assets/..." -> "/assets/..."
 }
 
 function getNumQuestionsPerRound(lv) {
@@ -142,26 +151,23 @@ function updateProgressUI() {
   const progressLabel = document.getElementById("progress-label");
   const scoreLabel = document.getElementById("score-label");
 
-  const progressBarFill = document.getElementById("cv-level-progress-fill");
+  // ✅ ID đúng theo HTML mới
+  const progressBarFill = document.getElementById("click-progress-fill");
 
   const current = roundIndex + 1;
   const total = TOTAL_ROUNDS;
-
   const percentage = (current / total) * 100;
 
-  if (progressLabel) progressLabel.textContent = `Câu ${current}/${total}`;
-  if (scoreLabel) scoreLabel.textContent = `Điểm: ${score}`;
+  if (progressLabel) {
+    progressLabel.textContent = `Câu ${current}/${total}`;
+  }
+
+  if (scoreLabel) {
+    scoreLabel.textContent = `Điểm: ${score}`;
+  }
 
   if (progressBarFill) {
     progressBarFill.style.width = `${percentage}%`;
-
-    let hue;
-    if (percentage < 33) hue = 0;
-    else if (percentage < 66) hue = 60;
-    else hue = 120;
-
-    progressBarFill.style.backgroundColor = `hsl(${hue}, 70%, 50%)`;
-    progressBarFill.style.boxShadow = `0 6px 14px hsla(${hue}, 70%, 50%, 0.25)`;
   }
 }
 
@@ -280,7 +286,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       id: q.question_id,
       name: q.correct_answer,
       emotion: q.emotion || "",
-      image: q.media_path,
+      image: resolveImagePath(q.media_path),
     }));
 
     gameState.shuffledCharacters = shuffleArray(gameState.characters);
@@ -345,9 +351,6 @@ function initializeRound() {
 function renderGame() {
   const qTotal = 5;
   const qAnswered = Object.keys(gameState.answers || {}).length;
-  document.getElementById(
-    "difficulty-badge"
-  ).textContent = `Câu: ${qAnswered}/${qTotal}`;
 
   renderHints();
   renderFaces();
@@ -362,18 +365,6 @@ function renderHints() {
   hintsContainer.innerHTML = gameState.characters
     .map((char, index) => {
       const emo = char.emotion || char.name || "một cảm xúc nào đó";
-
-      if (isEmotionMatchGame) {
-        return `
-            <p>
-                ${index + 1}. 
-                Bạn nhỏ này đang cảm thấy 
-                "<strong>${emo}</strong>", 
-                hãy kéo thẻ cảm xúc phù hợp vào đúng khuôn mặt.
-            </p>
-        `;
-      }
-
       return `
             <p>
                 ${index + 1}. 
@@ -393,56 +384,64 @@ function renderFaces() {
     ? gameState.shuffledCharacters
     : gameState.characters;
 
+  const locked = isLockedInteraction();
+
   facesGrid.innerHTML = faces
     .map((char) => {
       const droppedName = gameState.answers[char.id];
       const isCorrect = gameState.results[char.id];
       const showAnswer = gameState.submitted && isCorrect === false;
 
+      // Khi locked => KHÔNG gắn ondrop/ondragover/ondragleave
+      const dropHandlers = locked
+        ? ""
+        : `ondrop="handleDrop(event)"
+           ondragover="handleDragOver(event)"
+           ondragleave="handleDragLeave(event)"`;
+
       return `
-            <div class="face-card">
-                <img src="${char.image}" alt="${
-        char.emotion
-      }" class="face-image">
-                <div class="drop-zone ${droppedName ? "filled" : ""}" 
-                     data-character-id="${char.id}"
-                     ondrop="handleDrop(event)" 
-                     ondragover="handleDragOver(event)"
-                     ondragleave="handleDragLeave(event)">
+        <div class="face-card">
+          <img src="${char.image}" alt="${char.emotion}" class="face-image">
+
+          <div class="drop-zone ${droppedName ? "filled" : ""} ${
+        locked ? "locked" : ""
+      }"
+               data-character-id="${char.id}"
+               ${dropHandlers}>
+            ${
+              droppedName
+                ? `
+                  <div class="dropped-name">
+                    <span>${droppedName}</span>
                     ${
-                      droppedName
-                        ? `
-                        <div class="dropped-name">
-                            <span>${droppedName}</span>
-                            ${
-                              isCorrect === undefined
-                                ? `
-                                <button class="remove-btn" onclick="removeName('${char.id}')">✕</button>
-                            `
-                                : ""
-                            }
-                            ${
-                              isCorrect === true
-                                ? '<span class="status-icon">✓</span>'
-                                : ""
-                            }
-                            ${
-                              isCorrect === false
-                                ? '<span class="status-icon">✗</span>'
-                                : ""
-                            }
-                        </div>
-                    `
-                        : '<span class="drop-zone-placeholder">Thả tên vào đây</span>'
+                      // KHÔNG bao giờ cho xóa khi locked
+                      !locked && isCorrect === undefined
+                        ? `<button class="remove-btn" onclick="removeName('${char.id}')">✕</button>`
+                        : ""
                     }
-                </div>
-                ${
-                  showAnswer
-                    ? `<div class="answer-hint">✓ Đáp án: ${char.name}</div>`
-                    : ""
-                }
-            </div>
-        `;
+                    ${
+                      isCorrect === true
+                        ? '<span class="status-icon">✓</span>'
+                        : ""
+                    }
+                    ${
+                      isCorrect === false
+                        ? '<span class="status-icon">✗</span>'
+                        : ""
+                    }
+                  </div>
+                `
+                : '<span class="drop-zone-placeholder">Thả tên vào đây</span>'
+            }
+          </div>
+
+          ${
+            showAnswer
+              ? `<div class="answer-hint">✓ Đáp án: ${char.name}</div>`
+              : ""
+          }
+        </div>
+      `;
     })
     .join("");
 }
@@ -454,26 +453,29 @@ function renderNameCards() {
     .filter((name) => !usedNames.includes(name));
 
   const container = document.getElementById("name-cards-container");
+  const locked = isLockedInteraction();
 
-  if (availableNames.length === 0 && !gameState.submitted) {
+  if (availableNames.length === 0 && !locked) {
     container.innerHTML =
       '<p class="no-names-msg">Tất cả thẻ tên đã được sử dụng</p>';
-  } else {
-    const shuffledNames = shuffleArray(availableNames);
-    container.innerHTML = shuffledNames
-      .map(
-        (name) => `
-            <div class="name-card ${gameState.submitted ? "disabled" : ""}" 
-                 draggable="${!gameState.submitted}"
-                 ondragstart="handleDragStart(event, '${name}')"
-                 ondragend="handleDragEnd(event)">
-                <button class="name-speaker-btn" onclick="speak('${name}')">🔊</button>
-                <span class="name-text">${name}</span>
-            </div>
-        `
-      )
-      .join("");
+    return;
   }
+
+  const shuffledNames = shuffleArray(availableNames);
+  container.innerHTML = shuffledNames
+    .map(
+      (name) => `
+        <div class="name-card ${locked ? "disabled" : ""}"
+             draggable="${!locked}"
+             ${locked ? "" : `ondragstart="handleDragStart(event, '${name}')"`}
+             ${locked ? "" : `ondragend="handleDragEnd(event)"`}
+             style="${locked ? "pointer-events:none; opacity:0.6;" : ""}">
+          <button class="name-speaker-btn" onclick="speak('${name}', true)">🔊</button>
+          <span class="name-text">${name}</span>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function renderButtons() {
@@ -493,11 +495,15 @@ function renderButtons() {
   resetBtn.style.display = "none";
   const nextBtn = document.getElementById("next-btn");
   const showNextInGame = gameState.submitted && (allCorrect || reviewMode);
-  nextBtn.style.display = showNextInGame ? "block" : "none";
+  if (nextBtn) {
+    nextBtn.style.display = showNextInGame ? "block" : "none";
+    nextBtn.textContent = "Câu tiếp theo";
+    nextBtn.onclick = () => nextQuestion();
+  }
 }
 
 function handleDragStart(event, name) {
-  if (gameState.submitted) return;
+  if (gameState.submitted || reviewMode) return;
   draggedName = name;
   event.currentTarget.classList.add("dragging");
 }
@@ -523,7 +529,7 @@ function handleDrop(event) {
   const dropZone = event.currentTarget;
   dropZone.classList.remove("drag-over");
 
-  if (gameState.submitted) return;
+  if (gameState.submitted || reviewMode) return;
 
   const characterId = dropZone.dataset.characterId;
   if (gameState.answers[characterId]) return;
@@ -535,7 +541,7 @@ function handleDrop(event) {
 }
 
 function removeName(characterId) {
-  if (gameState.submitted) return;
+  if (gameState.submitted || reviewMode) return;
   delete gameState.answers[characterId];
   renderGame();
 }
@@ -606,6 +612,10 @@ async function submitAnswer() {
   }
 
   gameState.submitted = true;
+  lastRoundSnapshot = {
+    answers: { ...gameState.answers },
+    results: { ...gameState.results },
+  };
   reviewMode = false;
   renderGame();
 
@@ -646,6 +656,21 @@ async function submitAnswer() {
   } else {
     showResultPopup(allCorrect, correctCount);
   }
+}
+
+function enterReviewMode() {
+  reviewMode = true;
+
+  // Restore lại đáp án của lượt vừa submit
+  if (lastRoundSnapshot) {
+    gameState.answers = { ...lastRoundSnapshot.answers };
+    gameState.results = { ...lastRoundSnapshot.results };
+  }
+
+  // đảm bảo đang ở trạng thái "đã nộp" để khóa submit
+  gameState.submitted = true;
+
+  renderGame();
 }
 
 function initializeRoundRetry() {
@@ -722,16 +747,15 @@ function showResultPopup(allCorrect, correctCount) {
     replayBtn.style.display = "block";
     replayBtn.textContent = "Xem lại";
     replayBtn.onclick = () => {
-      reviewMode = true;
       popup.classList.remove("show");
       setTimeout(() => popup.classList.add("hidden"), 200);
-      renderGame();
+      enterReviewMode();
     };
   }
 
   if (nextBtn) {
     nextBtn.style.display = "block";
-    nextBtn.textContent = "Next";
+    nextBtn.textContent = "Câu tiếp theo";
     nextBtn.onclick = () => nextQuestion();
   }
 
@@ -742,17 +766,13 @@ function showResultPopup(allCorrect, correctCount) {
     icon.classList.add("bounce");
     title.textContent = "Bạn đã trả lời đúng!";
     title.style.color = "#22c55e";
-    message.textContent =
-      `Xuất sắc! Bạn đã trả lời đúng ${correctCount}/${totalQuestions} câu hỏi!` +
-      scoreLine;
+    message.textContent = scoreLine;
   } else {
     icon.textContent = "😢";
     icon.classList.add("shake");
     title.textContent = "Bạn đã trả lời sai!";
     title.style.color = "#ef4444";
-    message.textContent =
-      `Bạn đã trả lời đúng ${correctCount}/${totalQuestions} câu hỏi. Hãy xem lại rồi bấm Next nhé!` +
-      scoreLine;
+    message.textContent = scoreLine;
   }
 
   popup.classList.remove("hidden");
@@ -776,14 +796,11 @@ function showLevelCompletePopup(nextLevel) {
 
   if (icon) icon.textContent = "🏁";
   if (title) {
-    title.textContent = `${currentMeta.icon} Hoàn thành level ${currentMeta.name}!`;
+    title.textContent = `${currentMeta.icon} Hoàn thành level!`;
     title.style.color = "#22c55e";
   }
   if (message) {
-    message.textContent =
-      `Bạn đã vượt qua level "${currentMeta.name}". ` +
-      `Điểm hiện tại: ${score} ⭐. ` +
-      `Sẵn sàng sang level mới: ${nextMeta.icon} ${nextMeta.name}?`;
+    message.textContent = `Tổng điểm: ${score} ⭐. `;
   }
 
   if (replayBtn) {
@@ -807,12 +824,49 @@ function showLevelCompletePopup(nextLevel) {
     nextBtn.onclick = async () => {
       popup.classList.remove("show");
       setTimeout(() => popup.classList.add("hidden"), 200);
-      try {
-        await startLevel(pendingNextLevel);
-      } catch (err) {
-        console.error(err);
-        showErrorPopup(err?.message || "Không thể chuyển level");
-      }
+      window.location.href = `./level_select.html?gameId=${encodeURIComponent(
+        gameId
+      )}&level=${encodeURIComponent(pendingNextLevel)}`;
+    };
+  }
+
+  popup.classList.remove("hidden");
+  requestAnimationFrame(() => popup.classList.add("show"));
+}
+
+function showLevelFinishedPopupGoSelectLevel() {
+  const popup = document.getElementById("result-popup");
+  const icon = document.getElementById("popup-icon");
+  const title = document.getElementById("popup-title");
+  const message = document.getElementById("popup-message");
+
+  const nextBtn = document.getElementById("popup-next-btn");
+  const replayBtn = document.getElementById("popup-replay-btn");
+
+  const currentMeta = getLevelMeta(level);
+
+  if (icon) icon.textContent = "🏁";
+  if (title) {
+    title.textContent = `${currentMeta.icon} Hoàn thành level!`;
+    title.style.color = "#22c55e";
+  }
+  if (message) {
+    message.textContent = `Bạn đã hoàn thành level". Tổng điểm: ${score} ⭐`;
+  }
+
+  // Ẩn nút chơi lại (tuỳ bạn)
+  if (replayBtn) replayBtn.style.display = "none";
+
+  if (nextBtn) {
+    nextBtn.style.display = "block";
+    nextBtn.textContent = "Về chọn level";
+    nextBtn.onclick = () => {
+      // đóng popup cho gọn
+      popup.classList.remove("show");
+      setTimeout(() => popup.classList.add("hidden"), 150);
+
+      // điều hướng
+      window.location.href = "./level_select.html";
     };
   }
 
@@ -914,7 +968,7 @@ async function startLevel(newLevel) {
     id: q.question_id,
     name: q.correct_answer,
     emotion: q.emotion || "",
-    image: q.media_path,
+    image: resolveImagePath(q.media_path),
   }));
   gameState.shuffledCharacters = shuffleArray(gameState.characters);
 
@@ -976,7 +1030,7 @@ async function restartCurrentLevel() {
     id: q.question_id,
     name: q.correct_answer,
     emotion: q.emotion || "",
-    image: q.media_path,
+    image: resolveImagePath(q.media_path),
   }));
   gameState.shuffledCharacters = shuffleArray(gameState.characters);
 
@@ -995,7 +1049,7 @@ async function closePopupAndNext() {
     const nextLevel = level + 1;
 
     if (gameInfo?.num_levels && nextLevel > gameInfo.num_levels) {
-      showErrorPopup("Bạn đã hoàn thành tất cả level!");
+      showLevelFinishedPopupGoSelectLevel(); // ✅ popup hoàn thành + tổng điểm + nút về chọn level
       return;
     }
     showLevelCompletePopup(nextLevel);
@@ -1017,7 +1071,7 @@ async function closePopupAndNext() {
     id: q.question_id,
     name: q.correct_answer,
     emotion: q.emotion || "",
-    image: q.media_path,
+    image: resolveImagePath(q.media_path),
   }));
   gameState.shuffledCharacters = shuffleArray(gameState.characters);
 
