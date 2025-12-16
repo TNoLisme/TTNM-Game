@@ -3,8 +3,8 @@ const API_URL = "http://localhost:8000";
 const CV_GAME_CONFIG = {
     GV1: {
         id: "GV1",
-        documentTitle: "Game CV - Biểu cảm theo tình huống",
-        navTitle: "Game CV - Biểu cảm theo tình huống",
+        documentTitle: "Câu chuyện trên khuôn mặt",
+        navTitle: "Câu chuyện trên khuôn mặt",
         endpoint: "/games/cv/scenarios",
         emptyLevelMessage: (level) => `Không có tình huống nào ở level ${level}. Vui lòng chọn level khác.`,
         introBuilder: (scenario) => `Con nghe tình huống nhé. ${scenario.description}`,
@@ -13,8 +13,8 @@ const CV_GAME_CONFIG = {
     },
     GV2: {
         id: "GV2",
-        documentTitle: "Game CV - Biểu cảm theo yêu cầu",
-        navTitle: "Game CV - Biểu cảm theo yêu cầu",
+        documentTitle: "Thử thách cảm xúc",
+        navTitle: "Thử thách cảm xúc",
         endpoint: "/games/cv/requests",
         requiresEmotion: true,
         emptyEmotionMessage: (emotion) => `Hiện chưa có bài luyện cho cảm xúc "${emotion}". Vui lòng quay lại chọn cảm xúc khác.`,
@@ -25,6 +25,10 @@ const CV_GAME_CONFIG = {
             `Con đã luyện tập các biểu cảm ${emotion || "đa dạng"} rất tốt hôm nay! Nhớ giữ phong độ nhé!`,
     },
 };
+
+// Map game_id từ database sang key nội bộ GV1/GV2
+const DB_GAME_CV_SCENARIO_ID = "e05909f3-3dee-42a6-9a75-fd985b1bdf47".toLowerCase(); // Câu chuyện trên khuôn mặt (GV1)
+const DB_GAME_CV_REQUEST_ID = "61f5e09e-eefa-44c1-86e1-87dfceac3b8e".toLowerCase(); // Thử thách cảm xúc (GV2)
 
 // Game state
 let gameState = {
@@ -69,6 +73,39 @@ const EMOTION_ICONS = {
     'sợ hãi': '😨',
     'ngạc nhiên': '😲',
     'ghê tởm': '🤢'
+};
+
+// Local tracking of how many times each emotion has been failed in this session
+const CV_MAX_INCORRECT_BEFORE_LEARN = 3;
+const cvEmotionErrorCounts = {};
+const cvLearnedEmotions = new Set();
+
+// Simple learning cards for each basic emotion (texts reused từ trang Học)
+const CV_LEARNING_CARDS = {
+    'vui': {
+        title: 'Vui',
+        description: 'Lan được tặng một món quà bất ngờ nên Lan rất vui và mỉm cười.'
+    },
+    'buồn': {
+        title: 'Buồn',
+        description: 'An đánh rơi kem rồi, nên An buồn và khóc.'
+    },
+    'tức giận': {
+        title: 'Tức giận',
+        description: 'Nam bị bạn giật đồ chơi mà không xin phép nên Nam tức giận.'
+    },
+    'sợ hãi': {
+        title: 'Sợ hãi',
+        description: 'Bé Mai đi lạc mẹ trong siêu thị nên cảm thấy rất sợ hãi.'
+    },
+    'ngạc nhiên': {
+        title: 'Ngạc nhiên',
+        description: 'Huy mở hộp quà ra và thấy món đồ chơi mình rất thích nên rất ngạc nhiên.'
+    },
+    'ghê tởm': {
+        title: 'Ghê tởm',
+        description: 'Minh ngửi thấy mùi rác thối nên cảm thấy rất ghê tởm.'
+    }
 };
 
 // Helper functions
@@ -151,13 +188,28 @@ async function initGame() {
     
     console.log('✅ User found:', userId);
 
-    // Get level from query params
+    // Get level & game from query params
     const urlParams = new URLSearchParams(window.location.search);
-    const gameId = urlParams.get('gameId') || 'GV1';
-    gameState.gameId = gameId;
-    gameState.config = CV_GAME_CONFIG[gameId] || CV_GAME_CONFIG.GV1;
+    const rawGameId = urlParams.get('gameId');
+
+    // Mặc định: GV1 (biểu cảm theo tình huống)
+    let gameKey = "GV1";
+
+    if (rawGameId) {
+        const lowerId = rawGameId.toLowerCase();
+        if (lowerId === DB_GAME_CV_REQUEST_ID) {
+            // Thử thách cảm xúc (game_cv_2)
+            gameKey = "GV2";
+        } else if (lowerId === DB_GAME_CV_SCENARIO_ID) {
+            // Câu chuyện trên khuôn mặt / game CV tình huống
+            gameKey = "GV1";
+        }
+    }
+
+    gameState.gameId = gameKey;
+    gameState.config = CV_GAME_CONFIG[gameKey] || CV_GAME_CONFIG.GV1;
     applyGameConfig();
-    console.log('Selected game:', gameId);
+    console.log('Selected game:', gameKey, 'rawGameId:', rawGameId);
 
     const selectedLevel = parseInt(urlParams.get('level')) || 1;
     const selectedEmotion = urlParams.get('emotion');
@@ -690,6 +742,75 @@ function handleIncorrectEmotion(emotion, confidence) {
     }
 }
 
+// Normalize game emotion name to a stable key
+function normalizeGameEmotionKey(rawEmotion) {
+    if (!rawEmotion) return '';
+    return String(rawEmotion).toLowerCase().trim();
+}
+
+// Map game emotion key (vui, buồn, ...) sang key dùng trên trang Học
+function mapGameEmotionToLearnKey(gameEmotion) {
+    const map = {
+        'vui': 'happy',
+        'buồn': 'sad',
+        'tức giận': 'angry',
+        'sợ hãi': 'fear',
+        'ngạc nhiên': 'surprise',
+        'ghê tởm': 'disgust'
+    };
+    return map[gameEmotion] || 'happy';
+}
+
+// Ghi nhận một lần thất bại cho cảm xúc hiện tại, nếu vượt ngưỡng thì mở thẻ học
+function registerCvIncorrectAndMaybeShowLearn() {
+    const key = normalizeGameEmotionKey(gameState.targetEmotion);
+    if (!key) return false;
+
+    cvEmotionErrorCounts[key] = (cvEmotionErrorCounts[key] || 0) + 1;
+    console.log('📊 CV emotion incorrect count', key, cvEmotionErrorCounts[key]);
+
+    if (cvEmotionErrorCounts[key] >= CV_MAX_INCORRECT_BEFORE_LEARN && !cvLearnedEmotions.has(key)) {
+        cvLearnedEmotions.add(key);
+        showCvLearningCard(key);
+        return true;
+    }
+    return false;
+}
+
+// Hiển thị popup thẻ học cảm xúc cho game CV
+function showCvLearningCard(emotionKey) {
+    const modal = document.getElementById('cv-learning-modal');
+    const titleEl = document.getElementById('cv-learning-emotion-title');
+    const descEl = document.getElementById('cv-learning-description');
+    const learnBtn = document.getElementById('cv-learning-open-learn');
+    const closeBtn = document.getElementById('cv-learning-close-btn');
+
+    if (!modal || !titleEl || !descEl || !closeBtn) {
+        console.warn('CV learning modal elements not found');
+        return;
+    }
+
+    const card = CV_LEARNING_CARDS[emotionKey] || { title: emotionKey, description: '' };
+    const icon = EMOTION_ICONS[emotionKey] || '🙂';
+
+    titleEl.textContent = `${icon} ${card.title}`;
+    descEl.textContent = card.description || '';
+    modal.style.display = 'flex';
+
+    if (learnBtn) {
+        const learnEmotion = mapGameEmotionToLearnKey(emotionKey);
+        learnBtn.onclick = () => {
+            window.location.href = `/src/pages/learn.html?emotion=${encodeURIComponent(learnEmotion)}`;
+        };
+    }
+
+    closeBtn.onclick = () => {
+        modal.style.display = 'none';
+        const nextIndex = gameState.currentScenarioIndex + 1;
+        startScenario(nextIndex);
+    };
+}
+
 // Update traffic light
 function updateTrafficLight(color) {
     const red = $('traffic-red');
@@ -783,7 +904,14 @@ async function handleTimeout() {
     console.log(`💾 Saving timeout (failure) - no confidence score saved`);
     await saveResult(false, 0); // Lưu 0 vì không đạt được success
     
-    // Move to next scenario
+    // Đếm số lần thất bại cho cảm xúc hiện tại, nếu vượt ngưỡng thì mở thẻ học
+    const shouldShowLearn = registerCvIncorrectAndMaybeShowLearn();
+    if (shouldShowLearn) {
+        // Khi đóng thẻ học sẽ tự nhảy sang màn tiếp theo
+        return;
+    }
+    
+    // Nếu chưa cần học lại, chuyển sang màn tiếp theo như cũ
     const nextIndex = gameState.currentScenarioIndex + 1;
     console.log(`Moving to next scenario: ${nextIndex} (total: ${gameState.scenarios.length})`);
     setTimeout(() => {

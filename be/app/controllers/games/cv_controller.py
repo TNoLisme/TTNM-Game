@@ -439,7 +439,9 @@ async def audio_proxy(url: str):
             
             # Determine content type from response or URL
             content_type = response.headers.get("content-type", "")
-            is_json = "json" in content_type.lower() or url.endswith(".json") or "api.fpt.ai" in url
+            # Chỉ coi là JSON khi header hoặc đuôi URL thể hiện rõ JSON.
+            # Các URL mp3 từ FPT (dù thuộc api.fpt.ai) sẽ đi nhánh audio.
+            is_json = "json" in content_type.lower() or url.endswith(".json")
             is_audio = "audio" in content_type.lower() or ".mp3" in url or "file01.fpt.ai" in url
             
             if response.status_code in [200, 206]:  # 206 is Partial Content for audio

@@ -8,17 +8,20 @@
     <link rel="stylesheet" href="../styles/home.css">
     <link rel="stylesheet" href="../styles/navigation.css">
     <link rel="stylesheet" href="../styles/level_select.css"> 
+    <link rel="stylesheet" href="../styles/chatbot_widget.css"> 
 </head>
 
 <body>
-    <nav class="main-nav">
+    <nav class="main-nav level-select-nav">
       <div class="nav-brand">
-        <img src="../../assets/images/logo.png" alt="Emo Garden Logo" class="brand-logo">
+        <button type="button" class="back-btn" onclick="window.history.back()">
+            ← Quay lại
+        </button>
       </div>
       <div class="nav-links">
-        <a href="./home.html" class="nav-item active">Trang chủ</a>
+        <a href="./home.html" class="nav-item">Trang chủ</a>
         <a href="./learn.html" class="nav-item">Học</a>
-        <a href="./select_game.html" class="nav-item" id="game-nav-link">Chơi game</a>
+        <a href="./select_game.html" class="nav-item active" id="game-nav-link">Chơi game</a>
       </div>
       <div class="nav-user-actions">
         <a href="./profile.html" class="nav-profile-link" title="Hồ sơ" id="profile-button">
@@ -31,10 +34,10 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🎮 Nhận Diện Cảm Xúc 🎮</h1>
+            <h1> Nhận Diện Cảm Xúc </h1>
             <p class="subtitle">Hoàn thành 1 level để mở khóa level mới!</p>
             <div class="progress-badge">
-                <span class="trophy-icon">🏆</span>
+                <span class="trophy-icon"></span>
                 <span class="progress-text">Level đã mở: <span id="unlockedCount">1</span>/8</span>
             </div>
         </div>
@@ -62,6 +65,7 @@
     </div>
 
     <script src="../components/level_select.js"></script> 
+    <script src="../components/chatbot_widget.js"></script>
 </body>
 
 </html>

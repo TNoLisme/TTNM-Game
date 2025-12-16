@@ -42,10 +42,25 @@ async def login(request: LoginRequest, db=Depends(get_db)):
 
     return result
 
+
+@router.post("/verify-otp")
+async def verify_otp(request: UserSchema.VerifyOtpRequest, db=Depends(get_db)):
+    user_repo = UsersRepository(db)
+    child_repo = ChildRepository(db)
+    service = UsersService(user_repo, child_repo)
+
+    result = service.verify_otp(request.dict())
+    if result.get("status") != "success":
+        raise HTTPException(400, detail=result.get("message"))
+
+    return result
+
+
 @router.post("/logout")
 async def api_logout():
     logout()
     return {"success": True, "message": "Đăng xuất thành công"}
+
 
 @router.post("/forgot-password")
 async def forgot_password(request: UserSchema.ForgotPasswordRequest, db=Depends(get_db)):
