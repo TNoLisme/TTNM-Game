@@ -20,54 +20,19 @@ const EMOTION_OPTIONS = [
     { key: 'ghê tởm',    icon: '🤢', name: 'Ghê tởm' }
 ];
 
-function normalizeText(text) {
-    return (text || '')
-        .toString()
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd');
-}
+// gameId trong DB của game "Thử thách cảm xúc" (game_cv_2)
+const GAME_CV_REQUEST_ID = '61f5e09e-eefa-44c1-86e1-87dfceac3b8e'.toLowerCase();
 
-function resolveGameKey(gameInfo) {
-    const name = normalizeText(gameInfo?.name);
-    const type = (gameInfo?.game_type || '').toString();
-
-    // CV2: "Thử thách cảm xúc" (chọn cảm xúc thay vì chọn level)
-    if (name.includes('thu thach') && name.includes('cam xuc')) return 'game_cv_2';
-
-    // Game CV chuẩn
-    if (type === 'GameCV') return 'gameCV';
-
-    // Game Click
-    // "Cảm xúc đúng chỗ" (có thể DB đặt tên khác như "Chọn cảm xúc theo tình huống")
-    if (
-        name.includes('cam xuc dung cho') ||
-        (name.includes('cam xuc') && name.includes('dung cho')) ||
-        (name.includes('chon') && name.includes('cam xuc') && name.includes('tinh huong'))
-    ) {
-        return 'game_click_3';
-    }
-    if (name.includes('tham tu') && name.includes('cam xuc')) return 'game_click_4';
-    if (name.includes('ai la ai')) return 'game_click_3';
-
-    if (name.includes('xuong') && name.includes('cam xuc')) return 'game_click_2';
-    if (name.includes('chiec hop') && name.includes('cam xuc')) return 'recognize_emotion';
-
-    return null;
-}
-
-function getGameHtmlFileByKey(gameKey) {
+function getGameHtmlFile(gameId) {
     const map = {
-        recognize_emotion: './recognize_emotion.html',
-        game_click_2: './game_click_2.html',
-        game_click_3: './game_click_3.html',
-        game_click_4: './game_click_4.html',
-        gameCV: './gameCV.html',
-        game_cv_2: './game_cv_2.html'
+        '6c2358b3-9720-446a-94a3-111edf1ce9e1': './recognize_emotion.html',
+        'd74bbd1c-8940-4e98-94cf-5d2f29ee57a8': './game_click_2.html',
+        'bc95c5d8-e01a-4895-96fa-ccae65a18dc2': './game_click_3.html',
+        '91c00bab-78bf-4a2c-8d75-ee0b787fec1e': './game_click_4.html',
+        'd9f34ee9-583c-453f-89ff-50f24aaa663b': './gameCV.html',
+        '1c7a0065-7652-4f1f-bdf4-fdcb07cd4fc9': './game_cv_2.html'
     };
-    return map[gameKey] || null;
+    return map[gameId.toLowerCase()];
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -76,8 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const gameId = urlParams.get('gameId');
     const user = JSON.parse(localStorage.getItem('currentUser'));
 
-    let gameKey = null;
-    let isCvRequestGame = false;
+    const isCvRequestGame = gameId && gameId.toLowerCase() === GAME_CV_REQUEST_ID;
 
     console.log('Level Select - gameId:', gameId, 'user:', user);
 
@@ -106,11 +70,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const gameRes = await fetch(`/games/${gameId}`);
         if (!gameRes.ok) throw new Error('Không thể tải thông tin game');
         gameInfo = await gameRes.json();
-
-        gameKey = resolveGameKey(gameInfo);
-        isCvRequestGame = gameKey === 'game_cv_2';
-
-        console.log('[Level Select] gameInfo.name:', gameInfo?.name, '| game_type:', gameInfo?.game_type, '| gameKey:', gameKey);
 
         // Cập nhật tiêu đề theo tên game trong DB
         const headerTitle = document.querySelector('.header h1');
@@ -333,18 +292,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 5. Xử lý nút Bắt đầu Game (ĐÃ SỬA: CHỈ CHUYỂN TRANG, KHÔNG GỌI API)
     startButton.addEventListener('click', () => {
-        const gameFile = getGameHtmlFileByKey(gameKey);
-        if (!gameFile) {
-            const back = () => (window.location.href = './select_game.html');
-            if (window.egModal && typeof window.egModal.alert === 'function') {
-                window.egModal.alert('Không xác định được trang game tương ứng. Vui lòng chọn lại game.', 'Lỗi').then(back);
-            } else {
-                alert('Không xác định được trang game tương ứng. Vui lòng chọn lại game.');
-                back();
-            }
-            return;
-        }
-
         // Game "Thử thách cảm xúc": cần chọn cảm xúc
         if (isCvRequestGame) {
             if (!selectedEmotion) return;
@@ -361,6 +308,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Hiệu ứng bấm nút
         startButton.textContent = '🚀 Đang vào game...';
+        // Lấy đường dẫn file HTML tương ứng
+        const gameFile = getGameHtmlFile(gameId);
 
         // Chuyển hướng ngay lập tức kèm tham số
         // recognize_emotion.js sẽ tự lo việc gọi API start
