@@ -331,7 +331,7 @@ class ReportGeneratorService:
         child_info = [
             ['Ho va ten:', child_data.get('name', 'N/A')],
             ['Tuoi:', str(child_data.get('age', 'N/A')) + ' tuoi'],
-            ['Ma hoc vien:', child_data.get('user_id', 'N/A')[:12] + '...'],
+            ['Ma hoc vien:', child_data.get('user_id', 'N/A')],
             ['Email:', child_data.get('email', 'N/A')],
         ]
         
