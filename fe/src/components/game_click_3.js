@@ -6,7 +6,7 @@ let questions = [];
 let localResults = [];
 let remainingQuestions = [];
 let roundIndex = 0;
-const TOTAL_ROUNDS = 5;
+
 let score = 0;
 let endLevelSent = false;
 let draggedName = null;
@@ -23,7 +23,7 @@ let learningCards = {};
 let roundScored = false;
 let reviewMode = false;
 let lastRoundSnapshot = null;
-
+let roundResults = [];
 let gameState = {
   difficulty: "easy",
   shuffledCharacters: [],
@@ -34,6 +34,7 @@ let gameState = {
   canRetry: true,
   retryUsed: false,
 };
+const TOTAL_ROUNDS = 5;
 const LEVEL_META = [
   { num: 1, icon: "😊", name: "Dễ" },
   { num: 2, icon: "❤️", name: "Vui" },
@@ -271,6 +272,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     roundIndex = 0;
     score = 0;
     localResults = [];
+    roundResults = [];
     endLevelSent = false;
     updateProgressUI();
     const selectedQuestions = pickQuestionsForCurrentLevelUnique({
@@ -599,7 +601,9 @@ async function submitAnswer() {
   });
   const allCorrectThisRound = correctCount === gameState.characters.length;
   const gainedScore = allCorrectThisRound ? 10 : 0;
-
+  if (!roundScored) {
+    roundResults.push(allCorrectThisRound);
+  }
   if (!roundScored) {
     score += gainedScore;
     roundScored = true;
@@ -836,6 +840,37 @@ function showLevelCompletePopup(nextLevel) {
   requestAnimationFrame(() => popup.classList.add("show"));
 }
 
+function showLevelNotPassedPopup(correctRounds, totalRounds) {
+  const popup = document.getElementById("result-popup");
+  const icon = document.getElementById("popup-icon");
+  const title = document.getElementById("popup-title");
+  const message = document.getElementById("popup-message");
+
+  const nextBtn = document.getElementById("popup-next-btn");
+  const replayBtn = document.getElementById("popup-replay-btn");
+
+  if (icon) icon.textContent = "🔁";
+  if (title) {
+    title.textContent = "Chưa đạt để qua level";
+    title.style.color = "#ef4444";
+  }
+
+  if (nextBtn) nextBtn.style.display = "none";
+
+  if (replayBtn) {
+    replayBtn.style.display = "block";
+    replayBtn.textContent = "Chơi lại level";
+    replayBtn.onclick = async () => {
+      popup.classList.remove("show");
+      popup.classList.add("hidden");
+      await restartCurrentLevel();
+    };
+  }
+
+  popup.classList.remove("hidden");
+  requestAnimationFrame(() => popup.classList.add("show"));
+}
+
 function showLevelFinishedPopupGoSelectLevel() {
   const popup = document.getElementById("result-popup");
   const icon = document.getElementById("popup-icon");
@@ -959,6 +994,7 @@ async function startLevel(newLevel) {
   score = 0;
   localResults = [];
   endLevelSent = false;
+  roundResults = [];
 
   const selected = pickQuestionsForCurrentLevelUnique({
     uniqueName: true,
@@ -983,6 +1019,7 @@ async function restartCurrentLevel() {
   localResults = [];
   endLevelSent = false;
   learnedEmotions = [];
+  roundResults = [];
   const res = await fetch(`/games/start-dynamic/${gameId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1047,11 +1084,18 @@ async function closePopupAndNext() {
   roundIndex++;
   if (roundIndex >= TOTAL_ROUNDS) {
     await sendFinalResults();
+    const totalRounds = TOTAL_ROUNDS;
+    const correctRounds = roundResults.filter(Boolean).length;
+    const passPercent = (correctRounds / totalRounds) * 100;
 
+    if (passPercent < 70) {
+      showLevelNotPassedPopup(correctRounds, totalRounds);
+      return;
+    }
     const nextLevel = level + 1;
 
     if (gameInfo?.num_levels && nextLevel > gameInfo.num_levels) {
-      showLevelFinishedPopupGoSelectLevel(); // ✅ popup hoàn thành + tổng điểm + nút về chọn level
+      showLevelFinishedPopupGoSelectLevel();
       return;
     }
     showLevelCompletePopup(nextLevel);
