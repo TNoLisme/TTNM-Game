@@ -1,95 +1,91 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
     margin: 0;
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    overflow-x: hidden;
 }
 
-header {
+body.index-page {
+    padding-top: 0 !important;
+    display: block !important;
+    align-items: initial !important;
+}
+
+body.index-page header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     /* Căn giữa tất cả các thành phần theo chiều dọc */
     padding: 10px 40px;
     background-color: #fff;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #ddd;
     width: 100%;
     box-sizing: border-box;
-    /* Tăng nhẹ chiều cao tối thiểu của header để chứa nút lớn */
-    min-height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-/* --- LOGO --- */
-.logo-container {
+/* --- LOGO (match login) --- */
+body.index-page .logo {
     display: flex;
     align-items: center;
     font-weight: bold;
     color: #333;
-    /* Giữ font size bình thường, không quá lớn */
-    font-size: 18px;
+    gap: 10px;
 }
 
-/* KHẮC PHỤC LỖI LOGO BỊ BÓP VÀ TRAN CHỮ */
-.logo-image {
-    /* Đặt kích thước cố định để ảnh hiển thị full */
+body.index-page .logo img {
     width: 100px;
-    /* BỎ object-fit: contain (đã dùng contain ở lần trước) nếu logo bị thừa khoảng trắng. 
-       Nếu ảnh logo có kích thước vuông, hãy dùng object-fit: cover hoặc bỏ hẳn.
-       Để khắc phục, ta chỉ cần set kích thước W/H đủ lớn và margin: */
-    margin-right: 8px;
-    object-fit: cover;
-    /* Hoặc 'contain' tùy vào thiết kế gốc của file ảnh */
-    /* Quan trọng: đảm bảo ảnh không bị bóp méo */
+    height: 100px;
+    object-fit: contain;
 }
 
-.logo-text {
-    /* Căn chỉnh text logo */
-    font-size: 18px;
-    line-height: 1.2;
-}
-
-/* --- HEADER BUTTONS (BTN) --- */
-.header-buttons {
+/* --- HEADER BUTTONS (match login) --- */
+body.index-page .buttons {
     display: flex;
     gap: 10px;
 }
 
-/* KHẮC PHỤC LỖI CHỮ NÚT BỊ TRÀN */
-.btn {
-    /* Tăng padding và đảm bảo đủ không gian */
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 16px;
+body.index-page .buttons a {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: 2px solid #1976d2;
     font-weight: 600;
+    transition: all 0.3s ease;
     cursor: pointer;
-    text-align: center;
-    transition: background-color 0.3s;
-    outline: none;
-    /* NGĂN CHẶN CHỮ BỊ NGẮT DÒNG */
-    white-space: nowrap;
-    /* Quan trọng: Thiết lập chiều cao và căn chỉnh text bên trong */
-    height: 40px;
-    line-height: 1.2;
-    /* Đảm bảo text không bị xô xuống */
-    display: flex;
+    background: transparent;
+    font-family: inherit;
+    text-decoration: none;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Nút Đăng nhập (Màu xanh đặc) */
-.btn-primary {
-    background-color: #1976d2;
+body.index-page .buttons a:first-child {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     color: #fff;
-    border: 1px solid #1976d2;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.35);
 }
 
-/* Nút Đăng ký (Màu trắng, viền xanh) */
-.btn-secondary {
+body.index-page .buttons a:first-child:hover {
+    background: linear-gradient(135deg, #1976d2, #1565c0);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(25, 118, 210, 0.45);
+}
+
+body.index-page .buttons a:last-child {
     background-color: #fff;
     color: #1976d2;
-    border: 1px solid #1976d2;
 }
 
-/* ... Các style auth-container và auth-box giữ nguyên ... */
+body.index-page .buttons a:last-child:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(148, 163, 184, 0.4);
+}
+
 /* ==== 2. MAIN CONTENT (Giữ style bố cục Trang chủ) ==== */
 main {
     display: flex;
@@ -150,7 +146,7 @@ main {
 }
 
 @media (max-width: 600px) {
-    header {
+    body.index-page header {
         padding: 10px 20px;
     }
 
