@@ -2,6 +2,15 @@ const API_URL = "http://localhost:8000";
 
 const $ = id => document.getElementById(id);
 
+function escapeHtml(str) {
+    return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
 const GAME_BADGES = [
     {
         gameId: '3bcb2108-721c-4a15-a585-31f3084ed000',
@@ -43,6 +52,12 @@ const GAME_BADGES = [
         name: 'Thử thách cảm xúc',
         icon: '📷',
         type: 'emotions'
+    },
+    {
+        gameId: 'eg-badge-superstar-all',
+        name: 'Siêu sao tài năng EmoGarden',
+        icon: '🌟',
+        type: 'all_badges'
     }
 ];
 
@@ -101,6 +116,8 @@ async function renderGameBadges(userId) {
     container.innerHTML = '';
     let unlockedCount = 0;
     const unlockedNow = [];
+    const baseBadgeCount = GAME_BADGES.filter((b) => b.type !== 'all_badges').length;
+    const unlockedBaseIds = [];
 
     GAME_BADGES.forEach((b, idx) => {
         let unlocked = false;
@@ -108,25 +125,53 @@ async function renderGameBadges(userId) {
             const { progress } = progressResults[idx] || {};
             const level = progress && typeof progress.level === 'number' ? progress.level : 1;
             unlocked = level >= (b.totalLevels + 1);
-        } else {
+        } else if (b.type === 'emotions') {
             const scores = emotionScores && emotionScores.scores ? emotionScores.scores : {};
             const keys = ['vui', 'buồn', 'ngạc nhiên', 'tức giận', 'sợ hãi', 'ghê tởm'];
             unlocked = keys.every((k) => {
                 const v = scores[k];
                 return typeof v === 'number' && v >= 100;
             });
+        } else if (b.type === 'all_badges') {
+            unlocked = unlockedBaseIds.length >= baseBadgeCount;
         }
 
         const el = document.createElement('div');
         el.className = unlocked ? 'badge' : 'badge locked';
+        el.textContent = b.icon;
         if (unlocked) {
             el.title = b.name;
-            el.textContent = b.icon;
             unlockedCount += 1;
             unlockedNow.push(b.gameId);
+            if (b.type !== 'all_badges') {
+                unlockedBaseIds.push(b.gameId);
+            }
         } else {
-            el.title = `Hoàn thành tất cả màn của "${b.name}" để mở khóa`;
-            el.textContent = '🔒';
+            let message = '';
+            let messageHtml = '';
+            if (b.type === 'levels') {
+                const { progress } = progressResults[idx] || {};
+                const level = progress && typeof progress.level === 'number' ? progress.level : 1;
+                const completed = Math.max(0, Math.min(b.totalLevels, level - 1));
+                message = `Để mở khóa huy hiệu "${b.name}", bé cần hoàn thành tất cả ${b.totalLevels} màn.\n\nTiến độ hiện tại: ${completed}/${b.totalLevels} màn.`;
+                messageHtml = `Để mở khóa huy hiệu <strong>${escapeHtml(b.name)}</strong>, bé cần hoàn thành tất cả <strong>${escapeHtml(b.totalLevels)}</strong> màn.<br/><br/>Tiến độ hiện tại: <strong>${escapeHtml(`${completed}/${b.totalLevels} màn`)}</strong>.`;
+            } else if (b.type === 'emotions') {
+                const scores = emotionScores && emotionScores.scores ? emotionScores.scores : {};
+                const keys = ['vui', 'buồn', 'ngạc nhiên', 'tức giận', 'sợ hãi', 'ghê tởm'];
+                const missing = keys
+                    .map((k) => ({ k, v: scores[k] }))
+                    .filter(({ v }) => typeof v !== 'number' || v < 100)
+                    .map(({ k, v }) => `${k}: ${typeof v === 'number' ? v.toFixed(0) : 0}%`);
+                message = `Để mở khóa huy hiệu "${b.name}", bé cần đạt 100% cho tất cả cảm xúc.\n\nCòn thiếu: ${missing.length ? missing.join(', ') : '---'}.`;
+                messageHtml = `Để mở khóa huy hiệu <strong>${escapeHtml(b.name)}</strong>, bé cần đạt <strong>100%</strong> cho tất cả cảm xúc.<br/><br/>Còn thiếu: <strong>${missing.length ? missing.map(escapeHtml).join(', ') : '---'}</strong>.`;
+            } else if (b.type === 'all_badges') {
+                message = `Để mở khóa huy hiệu "${b.name}", bé cần mở khóa tất cả các huy hiệu còn lại.\n\nTiến độ hiện tại: ${unlockedBaseIds.length}/${baseBadgeCount} huy hiệu.`;
+                messageHtml = `Để mở khóa huy hiệu <strong>${escapeHtml(b.name)}</strong>, bé cần mở khóa tất cả <strong>${escapeHtml(baseBadgeCount)}</strong> huy hiệu còn lại.<br/><br/>Tiến độ hiện tại: <strong>${escapeHtml(`${unlockedBaseIds.length}/${baseBadgeCount} huy hiệu`)}</strong>.`;
+            }
+            el.title = 'Bấm để xem điều kiện mở khóa';
+            el.addEventListener('click', async () => {
+                await inlineAlert(messageHtml || message, 'Chưa mở khóa huy hiệu', 'Đã hiểu', b.icon, true);
+            });
         }
         container.appendChild(el);
     });
@@ -170,7 +215,8 @@ function ensureInlineConfirmModal() {
             .eg-confirm-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
             .eg-confirm-overlay.is-open{display:flex;}
             .eg-confirm-modal{width:min(520px,92vw);background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(15,23,42,.35);border:1px solid rgba(148,163,184,.35);overflow:hidden;}
-            .eg-confirm-header{padding:16px 18px;background:linear-gradient(135deg,rgba(25,118,210,.12),rgba(59,130,246,.08));font-weight:800;color:#0b3c7d;}
+            .eg-confirm-header{padding:16px 18px;background:linear-gradient(135deg,rgba(25,118,210,.12),rgba(59,130,246,.08));font-weight:800;color:#0b3c7d;display:flex;align-items:center;gap:10px;}
+            .eg-confirm-title-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:rgba(15,23,42,.06);filter:grayscale(1) opacity(.7);font-size:16px;flex-shrink:0;}
             .eg-confirm-body{padding:16px 18px;color:#0f172a;line-height:1.5;white-space:pre-line;}
             .eg-confirm-actions{display:flex;gap:10px;justify-content:flex-end;padding:14px 18px;background:#f8fafc;border-top:1px solid rgba(148,163,184,.28);}
             .eg-confirm-btn{border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;}
@@ -185,8 +231,11 @@ function ensureInlineConfirmModal() {
     overlay.id = 'eg-confirm-overlay';
     overlay.className = 'eg-confirm-overlay';
     overlay.innerHTML = `
-        <div class="eg-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="eg-confirm-title">
-            <div class="eg-confirm-header" id="eg-confirm-title"></div>
+        <div class="eg-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="eg-confirm-title-text">
+            <div class="eg-confirm-header">
+                <span class="eg-confirm-title-icon" id="eg-confirm-title-icon" aria-hidden="true"></span>
+                <span id="eg-confirm-title-text"></span>
+            </div>
             <div class="eg-confirm-body" id="eg-confirm-message"></div>
             <div class="eg-confirm-actions">
                 <button type="button" class="eg-confirm-btn cancel" id="eg-confirm-cancel"></button>
@@ -201,16 +250,19 @@ function inlineConfirm(message, title, okText, cancelText) {
     ensureInlineConfirmModal();
 
     const overlay = document.getElementById('eg-confirm-overlay');
-    const titleEl = document.getElementById('eg-confirm-title');
+    const titleEl = document.getElementById('eg-confirm-title-text');
+    const titleIconEl = document.getElementById('eg-confirm-title-icon');
     const msgEl = document.getElementById('eg-confirm-message');
     const okBtn = document.getElementById('eg-confirm-ok');
     const cancelBtn = document.getElementById('eg-confirm-cancel');
 
-    if (!overlay || !titleEl || !msgEl || !okBtn || !cancelBtn) {
+    if (!overlay || !titleEl || !titleIconEl || !msgEl || !okBtn || !cancelBtn) {
         return Promise.resolve(confirm(message));
     }
 
     titleEl.textContent = title || 'Xác nhận';
+    titleIconEl.textContent = '';
+    titleIconEl.style.display = titleIconEl.textContent ? 'flex' : 'none';
     msgEl.textContent = message || '';
     okBtn.textContent = okText || 'OK';
     cancelBtn.textContent = cancelText || 'Hủy';
@@ -241,16 +293,17 @@ function inlineConfirm(message, title, okText, cancelText) {
     });
 }
 
-function inlineAlert(message, title, okText) {
+function inlineAlert(message, title, okText, titleIcon, isHtml) {
     ensureInlineConfirmModal();
 
     const overlay = document.getElementById('eg-confirm-overlay');
-    const titleEl = document.getElementById('eg-confirm-title');
+    const titleEl = document.getElementById('eg-confirm-title-text');
+    const titleIconEl = document.getElementById('eg-confirm-title-icon');
     const msgEl = document.getElementById('eg-confirm-message');
     const okBtn = document.getElementById('eg-confirm-ok');
     const cancelBtn = document.getElementById('eg-confirm-cancel');
 
-    if (!overlay || !titleEl || !msgEl || !okBtn || !cancelBtn) {
+    if (!overlay || !titleEl || !titleIconEl || !msgEl || !okBtn || !cancelBtn) {
         alert(message);
         return Promise.resolve();
     }
@@ -259,7 +312,13 @@ function inlineAlert(message, title, okText) {
     cancelBtn.style.display = 'none';
 
     titleEl.textContent = title || 'Thông báo';
-    msgEl.textContent = message || '';
+    titleIconEl.textContent = titleIcon || '';
+    titleIconEl.style.display = titleIconEl.textContent ? 'flex' : 'none';
+    if (isHtml) {
+        msgEl.innerHTML = message || '';
+    } else {
+        msgEl.textContent = message || '';
+    }
     okBtn.textContent = okText || 'OK';
 
     return new Promise((resolve) => {
