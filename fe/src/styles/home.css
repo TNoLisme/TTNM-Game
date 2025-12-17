@@ -469,7 +469,7 @@ body {
     .emotion-banner-title {
       font-size: 28px;
       font-weight: 700;
-      color: #0b3c7d;
+      color: #4e57a5;
       margin-bottom: 10px;
     }
 
@@ -502,7 +502,7 @@ body {
 
     .emotion-card {
       min-width: 180px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #9ccfe4 0%, #478fee 100%);
       border-radius: 16px;
       padding: 24px;
       text-align: center;
@@ -530,15 +530,15 @@ body {
     }
 
     .emotion-card.low-error {
-      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
     }
 
     .emotion-card.medium-error {
-      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
     }
 
     .emotion-card.high-error {
-      background: linear-gradient(135deg, #2badce 0%, #6ed4fc 100%);
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
     }
 
     .emotion-icon {

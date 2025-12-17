@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://localhost:8000/users';
 
 const showError = (msg) => {
     document.querySelector('#reg-error-message').textContent = msg || '';
@@ -20,9 +20,9 @@ const showToast = (message, type = 'success') => {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
-        <div class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
-        <div class="toast-message">${message}</div>
-    `;
+        <div class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
+        <div class="toast-message">${message}</div>
+    `;
     container.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {
@@ -55,10 +55,16 @@ const collectFormData = () => {
 
 const validateForm = (user) => {
     console.log('Validating user:', user);
-    if (Object.values(user).some(v => !v)) {
+
+    const valuesToCheck = Object.keys(user)
+        .filter(key => key !== 'age') // Loại trừ trường age
+        .map(key => user[key]);
+
+    if (valuesToCheck.some(v => !v)) {
         console.log('Empty fields found:', user);
         return 'Vui lòng điền đầy đủ thông tin.';
     }
+
     if (!user.phone_number || !/^\d{10}$/.test(user.phone_number)) {
         console.log('Phone number issue:', user.phone_number);
         return 'Số điện thoại phải là 10 chữ số.';
@@ -66,9 +72,12 @@ const validateForm = (user) => {
     if (new Date(user.date_of_birth) > new Date()) {
         return 'Ngày sinh không thể là tương lai.';
     }
-    if (user.age <= 3) {
-        return 'Tuổi phải lớn hơn 3.';
+
+    // Chắc chắn kiểm tra tuổi ở đây (sau khi kiểm tra đầy đủ thông tin)
+    if (user.age <= 2) {
+        return 'Tuổi của trẻ phải lớn hơn 2.';
     }
+
     if (!user.password || user.password.length <= 8 || !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]+/.test(user.password)) {
         return 'Mật khẩu phải lớn hơn 8 ký tự và chứa ít nhất 1 ký tự đặc biệt.';
     }

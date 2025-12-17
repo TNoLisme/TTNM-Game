@@ -4,30 +4,34 @@ body {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     overflow-x: hidden;
 }
-
-body.index-page {
-    padding-top: 0 !important;
-    display: block !important;
-    align-items: initial !important;
-}
-
-body.index-page header {
+header {
+    position: fixed !important;
+        /* Dùng !important để ưu tiên cao nhất */
+        top: 0;
+        /* Đặt ở vị trí trên cùng */
+        left: 0;
+        width: 100%;
+        /* Chiếm toàn bộ chiều rộng */
+        z-index: 9999;
+        /* Tăng Z-index lên mức cao nhất để luôn nằm trên */
+        background-color: #f7f7f7;
+        /* Màu nền trắng nhẹ */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        /* Thêm bóng mờ nhẹ */
+        padding: 10px 40px;
+        /* ĐỒNG BỘ: Sử dụng padding 10px 40px (theo CSS của login) */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* Căn giữa tất cả các thành phần theo chiều dọc */
-    padding: 10px 40px;
-    background-color: #fff;
-    border-bottom: 1px solid #ddd;
-    width: 100%;
-    box-sizing: border-box;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    /* Đảm bảo các thuộc tính này khớp với login.html */
 }
-
-/* --- LOGO (match login) --- */
-body.index-page .logo {
+        main {
+            /* Điều chỉnh padding-top lên 120px để bù cho chiều cao 100px của logo + 20px padding */
+            padding-top: 120px !important;
+            min-height: 100vh;
+        }
+/* --- LOGO --- */
+.logo-container {
     display: flex;
     align-items: center;
     font-weight: bold;

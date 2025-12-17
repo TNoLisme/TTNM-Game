@@ -141,41 +141,37 @@ async function fetchRecentGames(userId) {
     }
 }
 
-async function fetchEmotionErrors(userId) {
-    console.log('📡 [fetchEmotionErrors] Fetching for userId:', userId);
+async function fetchEmotionAccuracy(userId) {
+    console.log('📡 [fetchEmotionAccuracy] Fetching for userId:', userId);
     try {
-        const url = `${API_BASE_URL}/users/stats/emotion-errors/${userId}`;
+        const url = `${API_BASE_URL}/users/stats/emotion-accuracy/${userId}`;
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch emotion errors');
+        if (!response.ok) throw new Error('Failed to fetch emotion accuracy');
         const data = await response.json();
-        console.log('✅ [fetchEmotionErrors] Data:', data);
+        console.log('✅ [fetchEmotionAccuracy] Data:', data);
         
-        // Data structure: { "Vui vẻ": { correct: 10, incorrect: 5, accuracy: 66.67 }, ... }
-        // We need to convert to error_rate and keep incorrect count
-        const errorStats = {};
+        // Data structure: { "Vui vẻ": { correct: 165, incorrect: 10, accuracy: 94.3 }, ... }
+        // We convert to accuracy rate and keep correct/incorrect counts
+        const accuracyStats = {};
+        const correctCounts = {};
         const incorrectCounts = {};
         
         if (data.data && typeof data.data === 'object') {
             Object.entries(data.data).forEach(([emotion, stats]) => {
-                const total = (stats.correct || 0) + (stats.incorrect || 0);
-                if (total > 0) {
-                    const errorRate = ((stats.incorrect || 0) / total) * 100;
-                    errorStats[emotion] = parseFloat(errorRate.toFixed(1));
-                    incorrectCounts[emotion] = stats.incorrect || 0;
-                } else {
-                    errorStats[emotion] = 0;
-                    incorrectCounts[emotion] = 0;
-                }
+                accuracyStats[emotion] = parseFloat((stats.accuracy || 0).toFixed(1));
+                correctCounts[emotion] = stats.correct || 0;
+                incorrectCounts[emotion] = stats.incorrect || 0;
             });
         }
         
-        console.log('✅ [fetchEmotionErrors] Processed error stats:', errorStats);
-        console.log('✅ [fetchEmotionErrors] Incorrect counts:', incorrectCounts);
+        console.log('✅ [fetchEmotionAccuracy] Processed accuracy stats:', accuracyStats);
+        console.log('✅ [fetchEmotionAccuracy] Correct counts:', correctCounts);
+        console.log('✅ [fetchEmotionAccuracy] Incorrect counts:', incorrectCounts);
         
-        return { errorStats, incorrectCounts };
+        return { accuracyStats, correctCounts, incorrectCounts };
     } catch (error) {
-        console.error('❌ [fetchEmotionErrors] Error:', error);
-        return { errorStats: {}, incorrectCounts: {} };
+        console.error('❌ [fetchEmotionAccuracy] Error:', error);
+        return { accuracyStats: {}, correctCounts: {}, incorrectCounts: {} };
     }
 }
 
@@ -210,10 +206,10 @@ async function fetchGamePlayRatio(userId) {
 }
 
 // ==================== EMOTION CARDS ====================
-function getEmotionCardClass(errorRate) {
-    if (errorRate <= 20) return 'low-error';
-    if (errorRate <= 50) return 'medium-error';
-    return 'high-error';
+function getEmotionCardClass(accuracy) {
+    if (accuracy >= 75) return 'high-accuracy';  
+    if (accuracy >= 50) return 'medium-accuracy'; 
+    return 'low-accuracy'; 
 }
 
 async function renderEmotionCards(userId) {
@@ -226,25 +222,26 @@ async function renderEmotionCards(userId) {
     }
 
     try {
-        const { errorStats, incorrectCounts } = await fetchEmotionErrors(userId);
-        console.log('📊 [renderEmotionCards] Error stats:', errorStats);
+        const { accuracyStats, correctCounts, incorrectCounts } = await fetchEmotionAccuracy(userId);
+        console.log('📊 [renderEmotionCards] Accuracy stats:', accuracyStats);
 
-        // Convert to array and sort by error rate (low to high)
-        const emotionArray = Object.entries(errorStats)
+        // Convert to array and sort by accuracy (high to low)
+        const emotionArray = Object.entries(accuracyStats)
             .map(([name, rate]) => ({ 
                 name, 
                 rate,
+                correctCount: correctCounts[name] || 0,
                 incorrectCount: incorrectCounts[name] || 0
             }))
-            .sort((a, b) => a.rate - b.rate);
+            .sort((a, b) => b.rate - a.rate); // Sort descending (cao -> thấp)
 
         console.log('📊 [renderEmotionCards] Sorted emotions:', emotionArray);
 
-        if (emotionArray.length === 0 || emotionArray.every(e => e.rate === 0)) {
+        if (emotionArray.length === 0 || emotionArray.every(e => e.rate === 0 && e.correctCount === 0)) {
             container.innerHTML = `
                 <div class="no-data-message">
                     <div class="no-data-icon">📊</div>
-                    <p>Chưa có dữ liệu về tỉ lệ sai của các cảm xúc.<br>Hãy chơi game để thu thập dữ liệu nhé!</p>
+                    <p>Chưa có dữ liệu về độ chính xác của các cảm xúc.<br>Hãy chơi game để thu thập dữ liệu nhé!</p>
                 </div>
             `;
             return;
@@ -255,14 +252,16 @@ async function renderEmotionCards(userId) {
             const icon = EMOTION_ICONS[emotion.name] || '😊';
             const cardClass = getEmotionCardClass(emotion.rate);
             const rank = index + 1;
+            const total = emotion.correctCount + emotion.incorrectCount;
 
             return `
-                <div class="emotion-card ${cardClass}" style="animation-delay: ${index * 0.1}s" title="${emotion.incorrectCount} câu sai">
+                <div class="emotion-card ${cardClass}" style="animation-delay: ${index * 0.1}s" 
+                     title="${emotion.correctCount} câu đúng / ${total} câu">
                     <div class="emotion-rank">#${rank}</div>
                     <div class="emotion-icon">${icon}</div>
                     <div class="emotion-name">${emotion.name}</div>
                     <div class="emotion-error-rate">${emotion.rate}%</div>
-                    <div class="emotion-label">Tỉ lệ sai (${emotion.incorrectCount} câu)</div>
+                    <div class="emotion-label">Độ chính xác (${emotion.correctCount}/${total})</div>
                 </div>
             `;
         }).join('');
@@ -354,7 +353,7 @@ function renderRecentGames(games) {
 }
 
 // ==================== CHARTS ====================
-function createBarChart(canvasId, labels, data, title, incorrectCounts = null) {
+function createBarChart(canvasId, labels, data, title, correctCounts = null, incorrectCounts = null) {
     console.log(`📊 [createBarChart] Creating chart for ${canvasId}`);
     
     const ctx = document.getElementById(canvasId);
@@ -409,9 +408,13 @@ function createBarChart(canvasId, labels, data, title, incorrectCounts = null) {
                             label: (context) => {
                                 let label = title + ': ' + context.parsed.y.toFixed(1) + '%';
                                 
-                                // Add incorrect count if available (for error chart)
-                                if (incorrectCounts && incorrectCounts[context.label] !== undefined) {
-                                    label += ' (' + incorrectCounts[context.label] + ' câu sai)';
+                                // Add correct/total info if available (for accuracy chart)
+                                if (correctCounts && incorrectCounts && 
+                                    correctCounts[context.label] !== undefined) {
+                                    const correct = correctCounts[context.label];
+                                    const incorrect = incorrectCounts[context.label];
+                                    const total = correct + incorrect;
+                                    label += ` (${correct}/${total} câu đúng)`;
                                 }
                                 
                                 return label;
@@ -507,18 +510,18 @@ async function renderCharts(userId) {
     
     try {
         const [emotionData, improvementStats, gameRatioStats] = await Promise.all([
-            fetchEmotionErrors(userId),
+            fetchEmotionAccuracy(userId),
             fetchEmotionImprovement(userId),
             fetchGamePlayRatio(userId)
         ]);
 
-        const { errorStats, incorrectCounts } = emotionData;
+        const { accuracyStats, correctCounts, incorrectCounts } = emotionData;
 
-        // Chart 1: Error rate (with incorrect counts in tooltip)
-        if (Object.keys(errorStats).length > 0) {
-            const errorLabels = Object.keys(errorStats);
-            const errorData = Object.values(errorStats);
-            charts.error = createBarChart('errorChart', errorLabels, errorData, 'Tỉ lệ sai', incorrectCounts);
+        // Chart 1: Accuracy rate (with correct/total in tooltip)
+        if (Object.keys(accuracyStats).length > 0) {
+            const accuracyLabels = Object.keys(accuracyStats);
+            const accuracyData = Object.values(accuracyStats);
+            charts.error = createBarChart('errorChart', accuracyLabels, accuracyData, 'Độ chính xác', correctCounts, incorrectCounts);
         }
 
         // Chart 2: Improvement rate
@@ -541,7 +544,6 @@ async function renderCharts(userId) {
         console.error('❌ [renderCharts] Error:', error);
     }
 }
-
 // ==================== NAVIGATION ====================
 function initNavigation() {
     console.log('🧭 [initNavigation] Initializing...');

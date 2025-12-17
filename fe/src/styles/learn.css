@@ -878,3 +878,16 @@ body {
     justify-content: space-between;
   }
 }
+#situation-text {
+  font-size: 1.5rem;
+  /* Tăng kích thước chữ lên */
+  font-weight: 600;
+  /* Làm chữ đậm hơn để dễ đọc */
+  line-height: 1.5;
+  /* Giãn dòng ra thêm */
+}
+
+.situation-panel__text-wrap {
+  /* Đảm bảo phần tử mẹ có đủ không gian */
+  padding: 1rem;
+}
