@@ -226,10 +226,23 @@ body {
 }
 
 .media-carousel__caption {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--muted);
-  text-align: center;
+  margin-top: 12px;
+  font-size: 16px;
+  color: #111827;
+  text-align: left;
+  width: 100%;
+  max-width: 900px;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 /* Trang tình huống (ảnh + text + loa) trong carousel */
 .situation-figure .media-carousel__caption {
@@ -242,21 +255,24 @@ body {
 .situation-caption__text {
   flex: 1;
   text-align: left;
-  font-size: 14px;
+  font-size: 16px;
   color: #111827;
+  display: flex;
+  align-items: center;
+  padding-left: 24px;
 }
 
 .situation-caption__audio-btn {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   border: 2px solid #e5e7eb;
   background: #ffffff;
   display: grid;
   place-items: center;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 22px;
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
   transition: transform 0.15s ease, box-shadow 0.15s ease,
     background-color 0.15s ease;
@@ -327,21 +343,21 @@ body {
 .situation-caption__text {
     flex: 1;
     text-align: left;
-    font-size: 14px;
+    font-size: 16px;
     color: #111827;
 }
 
 .situation-caption__audio-btn {
     flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 999px;
     border: 2px solid #e5e7eb;
     background: #ffffff;
     display: grid;
     place-items: center;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 22px;
     box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
     transition: transform 0.15s ease, box-shadow 0.15s ease,
         background-color 0.15s ease;

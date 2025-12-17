@@ -109,10 +109,7 @@ const btnNext = $('.media-carousel__nav[data-action="next"]');
 const dotsWrap = $(".media-carousel__dots");
 const emotionList = $("#emotion-list");
 const mediaOverlayLabel = $(".media-carousel__label");
-//const situationImage = document.getElementById("situation-image");
-const situationText = document.getElementById("situation-text");
-const situationAudioBtn = document.getElementById("situation-audio-btn");
-const situationPanel = document.getElementById("situation-panel");
+const mediaCaption = document.getElementById("media-caption");
 
 // ================ MEDIA CAROUSEL ================
 
@@ -175,43 +172,47 @@ function renderDots() {
 }
 
 function renderSituationPanel() {
-  if (!situationPanel || !situationText) return;
+  if (!mediaCaption) return;
 
-  //  Chưa chọn cảm xúc → ẩn panel, không text, không loa
-  if (!currentEmotion) {
-    situationPanel.style.display = "none";
-    situationText.textContent =
-      "Hãy chọn một cảm xúc ở bên trái để xem tình huống minh họa nhé.";
+  // Chưa chọn cảm xúc hoặc đang ở video -> ẩn caption
+  if (!currentEmotion || current === 0) {
+    mediaCaption.style.display = "none";
+    mediaCaption.innerHTML = "";
     return;
   }
 
   const key = currentEmotion.toLowerCase();
   const info = SITUATIONS[key];
+  const text = (info?.text || "").trim();
 
-  if (!info) {
-    situationPanel.style.display = "none";
-    situationText.textContent = "";
+  if (!text) {
+    mediaCaption.style.display = "none";
+    mediaCaption.innerHTML = "";
     return;
   }
 
-  if (current === 0) {
-    // 👉 Trang 1: VIDEO → chỉ có video, ẩn panel (không text, không loa)
-    situationPanel.style.display = "none";
-    situationText.textContent = "";
-  } else {
-    // 👉 Trang 2: ẢNH TÌNH HUỐNG → hiện panel với text + loa
-    situationPanel.style.display = "flex"; // hoặc "" nếu CSS set sẵn display:flex
-    situationText.textContent = info.text; // An đánh rơi kem rồi, nên An buồn và khóc.
+  mediaCaption.style.display = "flex";
+  mediaCaption.innerHTML = `
+    <div class="situation-caption__text">${text}</div>
+    <button class="situation-caption__audio-btn" type="button" aria-label="Nghe mô tả">🔊</button>
+  `;
+
+  const btn = mediaCaption.querySelector(".situation-caption__audio-btn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      speakVietnamese(text);
+    });
   }
 }
 
 // Chỉ tự đọc khi người dùng thật sự thao tác (next/prev/chọn chấm)
 function maybeSpeakSituationFromUserAction() {
-  if (!situationPanel || !situationText) return;
+  if (!mediaCaption) return;
   if (!currentEmotion) return;
-  if (current === 0) return; // đang ở trang video thì không đọc
+  if (current === 0) return;
 
-  const text = situationText.textContent.trim();
+  const key = currentEmotion.toLowerCase();
+  const text = (SITUATIONS[key]?.text || "").trim();
   if (!text) return;
 
   speakVietnamese(text);
@@ -430,9 +431,9 @@ async function init() {
   currentEmotion = initialEmotion;
   applyFilter(initialEmotion);
 
-  // ban đầu: chưa chọn cảm xúc → ẩn panel
-  if (situationPanel) {
-    situationPanel.style.display = "none";
+  if (mediaCaption) {
+    mediaCaption.style.display = "none";
+    mediaCaption.innerHTML = "";
   }
 
   // Gán sự kiện prev/next
@@ -445,15 +446,6 @@ async function init() {
     if (e.key === "ArrowRight") goNext();
   });
 
-  // 🔊 Nút phát giọng cho câu tình huống (panel dưới)
-  if (situationAudioBtn) {
-    situationAudioBtn.addEventListener("click", () => {
-      const text = situationText ? situationText.textContent.trim() : "";
-      if (text) {
-        speakVietnamese(text);
-      }
-    });
-  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
