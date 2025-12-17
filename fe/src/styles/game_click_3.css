@@ -8,7 +8,7 @@ body {
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     min-height: 100vh;
-    padding: 20px;
+    padding: 16px;
 }
 
 :root {
@@ -81,16 +81,40 @@ body {
 }
 
 .screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    display: block;
     width: 100%;
-    max-width: 1400px;
-    /* chỉnh tùy ý: 1200, 1400, 1600... */
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
     margin: 0 auto;
-    /* căn giữa khi max-width < 100% */
-    padding: 0 50px;
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.game-header {
+    align-items: flex-start;
+}
+
+.header-main {
+    max-width: 60%;
+}
+
+.subtitle {
+    color: rgba(11, 60, 125, 0.82);
+    font-size: 0.95rem;
+    margin-top: 4px;
 }
 
 .hidden {
@@ -99,21 +123,11 @@ body {
 
 /* Game Screen */
 .game-container {
-    max-width: 1500px;
     width: 100%;
     background: white;
     border-radius: 16px;
     padding: 18px;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
-}
-
-.game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 16px;
 }
 
 .header-actions {

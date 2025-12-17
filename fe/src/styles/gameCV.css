@@ -18,7 +18,7 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 /* Game Complete Modal */
@@ -202,7 +202,7 @@ body {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    font-weight: 800;
+    font-weight: 700;
     font-size: clamp(1.25rem, 1.85vw, 1.45rem);
     text-align: center;
     color: var(--cv-deep);

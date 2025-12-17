@@ -21,11 +21,13 @@
 
     <!-- Màn hình chơi game -->
     <div id="game-screen" class="screen">
-        <div class="game-container">
-
-            <!-- Header -->
-            <div class="game-header">
-                <h1 class="game-title">Đang tải...</h1>
+        <div class="container">
+            <!-- Header (match game_click_2 layout) -->
+            <header class="header game-header">
+                <div class="header-main">
+                    <h1 class="game-title">Đang tải...</h1>
+                    <p class="subtitle">Kéo thẻ cảm xúc vào đúng khuôn mặt</p>
+                </div>
                 <div class="header-actions">
                     <div class="stat-pill progress-pill" aria-label="Tiến độ câu hỏi">
                         <div class="click-level-progress">
@@ -39,45 +41,47 @@
                         </div>
                     </div>
                 </div>
+            </header>
 
-            </div>
+            <div class="game-container">
 
-            <!-- Phần tình huống -->
-            <div class="hint-section">
-                <button class="speaker-btn" onclick="speakHints()">🔊</button>
-                <div class="hint-content">
-                    <h3>💡 Tình huống:</h3>
-                    <div id="hints-list"></div>
+                <!-- Phần tình huống -->
+                <div class="hint-section">
+                    <button class="speaker-btn" onclick="speakHints()">🔊</button>
+                    <div class="hint-content">
+                        <h3>💡 Tình huống:</h3>
+                        <div id="hints-list"></div>
+                    </div>
                 </div>
+
+                <!-- Lưới khuôn mặt -->
+                <div id="faces-grid" class="faces-grid"></div>
+
+                <!-- Kho thẻ tên -->
+                <div class="names-section">
+                    <h3>🎴 Kéo thẻ vào ô phía dưới mỗi khuôn mặt:</h3>
+                    <div id="name-cards-container" class="name-cards"></div>
+                </div>
+
+                <!-- Nút hành động -->
+                <div class="action-buttons">
+                    <!-- Nút nộp bài -->
+                    <button id="submit-btn" class="btn submit-btn" onclick="submitAnswer()">
+                        Trả lời
+                    </button>
+
+                    <!-- Nút Next (JS sẽ tự show/hide khi đúng hoặc reviewMode) -->
+                    <button id="next-btn" class="btn next-btn" onclick="nextQuestion()" style="display: none;">
+                        ➡️ Next
+                    </button>
+
+                    <!-- ❌ Không dùng nữa (không cho chơi lại câu hỏi) -->
+                    <button id="retry-btn" style="display:none;"></button>
+                    <button id="reset-btn" style="display:none;"></button>
+                </div>
+
+                <div id="result-message" class="result-message hidden"></div>
             </div>
-
-            <!-- Lưới khuôn mặt -->
-            <div id="faces-grid" class="faces-grid"></div>
-
-            <!-- Kho thẻ tên -->
-            <div class="names-section">
-                <h3>🎴 Kéo thẻ vào ô phía dưới mỗi khuôn mặt:</h3>
-                <div id="name-cards-container" class="name-cards"></div>
-            </div>
-
-            <!-- Nút hành động -->
-            <div class="action-buttons">
-                <!-- Nút nộp bài -->
-                <button id="submit-btn" class="btn submit-btn" onclick="submitAnswer()">
-                    Trả lời
-                </button>
-
-                <!-- Nút Next (JS sẽ tự show/hide khi đúng hoặc reviewMode) -->
-                <button id="next-btn" class="btn next-btn" onclick="nextQuestion()" style="display: none;">
-                    ➡️ Next
-                </button>
-
-                <!-- ❌ Không dùng nữa (không cho chơi lại câu hỏi) -->
-                <button id="retry-btn" style="display:none;"></button>
-                <button id="reset-btn" style="display:none;"></button>
-            </div>
-
-            <div id="result-message" class="result-message hidden"></div>
         </div>
     </div>
 
