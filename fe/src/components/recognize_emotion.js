@@ -135,6 +135,32 @@ const EMOTION_ICONS = {
     'ghê tởm': '🤢'
 };
 
+const VI_EMOTION_MAP = {
+    "vui vẻ": "happy",
+    "buồn bã": "sad",
+    "tức giận": "angry",
+    "sợ hãi": "fear",
+    "ngạc nhiên": "surprise",
+    "ghê tởm": "disgust"
+};
+
+const EMOTION_COLORS = {
+    happy: "#81c784",    // Soft Green
+    sad: "#64b5f6",      // Soft Blue
+    angry: "#e57373",    // Muted Red
+    fear: "#ba68c8",     // Soft Purple
+    surprise: "#ffd54f", // Soft Yellow
+    disgust: "#ffb74d"   // Soft Orange
+};
+
+
+function getEnglishEmotionKey(rawEmotion) {
+    if (!rawEmotion) return "";
+
+    const normalizedInput = rawEmotion.trim().toLowerCase();
+
+    return VI_EMOTION_MAP[normalizedInput] || normalizedInput;
+}
 const EMOTION_CHOICES = [
     'Vui vẻ', 'Buồn bã', 'Ngạc nhiên', 'Tức giận', 'Sợ hãi', 'Ghê tởm'
 ];
@@ -217,6 +243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         learningCards = normalizedLearningCards;
+        console.log("learning :", learningCards);
 
         emotionErrors = data.emotion_errors || {
             "sợ hãi": 0,
@@ -341,7 +368,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const chosen = selectedAnswer;
         const correct = normalizeEmotion(chosen) === normalizeEmotion(q.correct_answer);
         const emotion = q.correct_answer;
-        const emotionKey = normalizeEmotion(emotion);
+
+        // ĐỒNG BỘ: Sử dụng English Key cho emotionErrors và learnedEmotions
+        const emotionKey = getEnglishEmotionKey(emotion);
 
         if (correct) score += 10;
         if (elements.scoreLabel) {
@@ -357,13 +386,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (!correct) {
+            // Tăng đếm lỗi dựa trên English Key
             emotionErrors[emotionKey] = (emotionErrors[emotionKey] || 0) + 1;
 
+            // Nếu đạt max lỗi, đưa vào danh sách bắt buộc học lại
             if (emotionErrors[emotionKey] >= maxErrors && !learnedEmotions.includes(emotionKey)) {
                 learnedEmotions.push(emotionKey);
             }
         }
 
+        // Hiệu ứng màu sắc nút bấm
         elements.answers.forEach(b => {
             b.classList.remove('selected');
             if (b.dataset.answer === q.correct_answer) b.classList.add('correct');
@@ -375,45 +407,82 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.submitBtn.disabled = true;
         }
 
+        // Gọi hàm hiện modal phản hồi (Bên trong hàm này sẽ check isForcedLearning)
         showFeedback(correct, q.correct_answer, emotion);
     }
 
     // Popup Sai/Đúng (Đã sửa logic hiển thị nút)
     function showFeedback(correct, correctAns, emotion) {
-        const emotionKey = normalizeEmotion(emotion);
+        const emotionKey = getEnglishEmotionKey(emotion);
+        const correctKey = getEnglishEmotionKey(correctAns);
 
-        elements.modalTitle.textContent = correct ? 'CHÍNH XÁC!' : 'SAI RỒI!';
-        elements.modalTitle.style.color = correct ? '#10b981' : '#fca055ff';
-        elements.modalMsg.textContent = correct ? 'Bạn làm tốt lắm, tiếp tục phát huy nhé.' : `Đáp án đúng là: ${correctAns}. Hãy cố gắng hơn ở câu tiếp theo nhé!`;
+        // Lấy màu sắc nổi bật cho đáp án đúng
+        const correctColor = EMOTION_COLORS[correctKey] || "#64b5f6";
+        const emotionColor = EMOTION_COLORS[emotionKey] || "#64b5f6";
 
+
+        // 1. Thiết lập Tiêu đề Modal
+        elements.modalTitle.textContent = correct ? 'CHÍNH XÁC!' : 'CHƯA ĐÚNG RỒI!';
+        elements.modalTitle.style.color = correct ? '#66bb6a' : '#ffa726';
+
+        // 2. Xóa nội dung cũ trong container nút bấm
         elements.modalActionsContainer.innerHTML = '';
 
-        // Kiểm tra xem lỗi này có vừa đạt ngưỡng học lại bắt buộc không
+        // Kiểm tra ngưỡng học lại bắt buộc
         const isForcedLearning = !correct &&
             emotionErrors[emotionKey] >= maxErrors &&
             learnedEmotions.includes(emotionKey);
 
         if (isForcedLearning) {
-            // --- UI BẮT BUỘC HỌC LẠI (Chỉ có 1 nút) ---
+            // --- TRƯỜNG HỢP: BẮT BUỘC ÔN TẬP ---
             elements.modalTitle.textContent = 'CẦN ÔN TẬP LẠI CẢM XÚC NÀY!';
-            elements.modalTitle.style.color = '#86f8f4ff';
-            elements.modalMsg.textContent = `Bạn không đúng nhiều lần ở cảm xúc "${emotion}". Hãy học lại để ôn tập kiến thức trước khi tiếp tục.`;
+            elements.modalTitle.style.color = "#4dd0e1"; // Cyan-600
+
+            // Đồng bộ font với mặc định, chỉ giữ màu và in đậm
+            elements.modalMsg.innerHTML = `
+            <div class="text-center">
+                <p class="mb-2">Đáp án chính xác là: <strong style="color: ${correctColor}; font-weight: bold;">"${emotion}"</strong></p>
+                <p class="text-gray-600 text-sm">
+                    Bạn đã trả lời chưa đúng nhiều lần ở cảm xúc <strong style="color: ${emotionColor}; font-weight: bold;">"${emotion}"</strong>.
+                    <br>Hãy học lại để ôn tập kiến thức trước khi tiếp tục nhé!
+                </p>
+            </div>
+        `;
 
             const learnBtn = document.createElement('button');
             learnBtn.textContent = "HỌC LẠI CẢM XÚC NÀY";
-            learnBtn.className = "modal-btn learn-btn color: #5c9cf6ff";
-
-            // Gán sự kiện gọi hàm showLearningCard để hiện popup thẻ học
+            learnBtn.className = "modal-btn learn-btn";
+            learnBtn.style.backgroundColor = "#64b5f6";
+            learnBtn.style.color = "white";
             learnBtn.onclick = () => showLearningCard(emotion);
 
             elements.modalActionsContainer.appendChild(learnBtn);
         } else {
-            // --- UI BÌNH THƯỜNG (Có Xem lại và Câu tiếp theo) ---
+            // --- TRƯỜNG HỢP: PHẢN HỒI BÌNH THƯỜNG ---
+            if (correct) {
+                elements.modalMsg.innerHTML = `
+                <div class="text-center" style="color: #43a047; font-weight: 500;">
+                    ✨ Bạn làm tốt lắm, tiếp tục phát huy nhé.
+                </div>
+            `;
+            } else {
+                // Đồng bộ font với mặc định, chỉ giữ màu và in đậm
+                elements.modalMsg.innerHTML = `
+                <div class="text-center" style="color: #546e7a;">
+                    Đáp án đúng là: <strong style="color: ${correctColor}; font-weight: bold;">"${correctAns}"</strong>.
+                    <br>
+                    <span class="mt-2 block text-gray-500 italic text-sm">Hãy cố gắng hơn ở câu tiếp theo nhé!</span>
+                </div>
+            `;
+            }
+
+            // Tạo nút "Xem lại"
             const reviewBtn = document.createElement('button');
             reviewBtn.textContent = "Xem lại";
             reviewBtn.className = "modal-btn review-btn";
             reviewBtn.onclick = () => elements.feedbackModal.classList.add('hidden');
 
+            // Tạo nút "Câu tiếp theo"
             const nextBtn = document.createElement('button');
             nextBtn.textContent = "Câu tiếp theo";
             nextBtn.className = "modal-btn next-btn";
@@ -423,8 +492,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.modalActionsContainer.appendChild(nextBtn);
         }
 
+        // Hiển thị Modal
         elements.feedbackModal.classList.remove('hidden');
     }
+
     function showSystemPopup(title, message, onClose, btnText = 'OK') {
         const modal = document.getElementById('system-modal');
         const titleEl = document.getElementById('system-modal-title');
@@ -461,8 +532,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function showLearningCard(emotion) {
+        // 1. Ẩn modal phản hồi (sai/đúng) trước đó
         elements.feedbackModal.classList.add('hidden');
-        const emotionKey = normalizeEmotion(emotion);
+
+        // 2. Chuyển đổi sang key tiếng Anh và lấy mã màu
+        const emotionKey = getEnglishEmotionKey(emotion);
+        const emotionHexColor = EMOTION_COLORS[emotionKey] || "#64b5f6";
+
+        // 3. Cập nhật thông báo nổi bật đáp án và lỗi (Đồng bộ font)
+        if (elements.modalMsg) {
+            elements.modalMsg.innerHTML = `
+            <div class="mb-4">
+                <span class="text-gray-500 block text-xs uppercase font-semibold mb-1">Kết quả đúng là:</span>
+                <strong style="color: #16a34a; font-weight: bold; display: block;">"${emotion}"</strong>
+            </div>
+            <div class="text-gray-700 leading-relaxed">
+                Bạn đã trả lời chưa chính xác nhiều lần với cảm xúc 
+                <strong style="color: ${emotionHexColor}; font-weight: bold;">"${emotion}"</strong>. 
+                <br><span class="text-sm opacity-90">Hãy cùng ôn tập lại để nhận diện tốt hơn nhé!</span>
+            </div>
+        `;
+        }
 
         let cards = [];
         const rawData = learningCards[emotionKey];
@@ -473,43 +563,55 @@ document.addEventListener('DOMContentLoaded', async () => {
             cards = Object.values(rawData).flat();
         }
 
-        elements.learningTitle.textContent = emotion;
+        elements.learningTitle.textContent = `Góc ôn tập: ${emotion}`;
         elements.learningBody.innerHTML = '';
 
         if (!cards || cards.length === 0) {
-            elements.learningBody.innerHTML = `<p>Hiện không có video/thẻ học cho cảm xúc <strong>${emotion}</strong>. Vui lòng tiếp tục.</p>`;
+            elements.learningBody.innerHTML = `
+            <div class="text-center py-10">
+                <p class="text-gray-500">Hiện không có video hoặc thẻ học cho cảm xúc <strong>${emotion}</strong>.</p>
+                <p class="text-xs text-gray-400 mt-2">Vui lòng bấm đóng để tiếp tục bài luyện tập.</p>
+            </div>`;
         } else {
             cards.forEach(card => {
                 let mediaHtml = '';
 
                 if (card.video_path) {
-                    const relativeVideoPath = card.video_path.replace('/fe/', '../../');
+                    const relativeVideoPath = card.video_path.replace('/fe/', '../../') + '.mp4';
                     mediaHtml = `
-                        <video controls autoplay class="learn-media" style="width:100%; max-height:300px; border-radius:12px;">
+                    <div class="relative rounded-xl overflow-hidden bg-black shadow mb-4">
+                        <video controls autoplay class="learn-media w-full" style="max-height:300px;">
                             <source src="${relativeVideoPath}" type="video/mp4">
                             Trình duyệt không hỗ trợ video.
                         </video>
-                    `;
+                    </div>`;
                 } else if (card.image_path) {
                     const relativeImgPath = card.image_path.replace('/fe/', '../../');
                     if (relativeImgPath.match(/\.(mp4|webm|ogg|mov)$/i)) {
                         mediaHtml = `
-                            <video controls autoplay class="learn-media" style="width:100%; max-height:300px; border-radius:12px;">
+                        <div class="relative rounded-xl overflow-hidden bg-black mb-4">
+                            <video controls autoplay class="learn-media w-full" style="max-height:300px;">
                                 <source src="${relativeImgPath}" type="video/mp4">
                             </video>
-                        `;
+                        </div>`;
                     } else {
-                        mediaHtml = `<img src="${relativeImgPath}" class="learn-img" alt="${card.title}" style="max-width:100%; max-height:300px;">`;
+                        mediaHtml = `
+                        <div class="rounded-xl overflow-hidden shadow mb-4">
+                            <img src="${relativeImgPath}" class="learn-img w-full h-auto object-cover" 
+                                 alt="${card.title}" style="max-height:300px;">
+                        </div>`;
                     }
                 }
 
                 const cardHtml = `
-                    <div class="concept-card">
-                        <h3>${card.title || emotion}</h3>
-                        <p>${card.description || ""}</p>
-                        ${mediaHtml}
-                    </div>
-                `;
+                <div class="concept-card bg-white p-4 rounded-2xl border border-gray-100 mb-6 shadow-sm">
+                    <h3 class="font-bold mb-2 flex items-center gap-2" style="color: ${emotionHexColor}">
+                        <span>💡</span> ${card.title || emotion}
+                    </h3>
+                    <p class="text-gray-600 mb-4 text-sm">${card.description || "Hãy quan sát kỹ biểu cảm này nhé!"}</p>
+                    ${mediaHtml}
+                </div>`;
+
                 elements.learningBody.insertAdjacentHTML('beforeend', cardHtml);
             });
         }
@@ -517,11 +619,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.learningCloseBtn.onclick = () => {
             const videos = elements.learningBody.querySelectorAll('video');
             videos.forEach(v => v.pause());
-
             elements.learningModal.classList.add('hidden');
             currentIndex++;
             loadQuestion(currentIndex);
         };
+
         elements.learningModal.classList.remove('hidden');
     }
 
