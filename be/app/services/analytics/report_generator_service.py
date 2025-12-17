@@ -454,7 +454,7 @@ class ReportGeneratorService:
         ]
         stats_row2 = [
             [self._create_stat_card("Điểm trung bình", f"{progress_data.get('avg_score', 0):.1f}/100"),
-             self._create_stat_card("Số trò chơi", str(len(progress_data.get('games_stats', []))))]
+             self._create_stat_card("Số trò chơi đã chơi trong tuần", str(len(progress_data.get('games_stats', []))))]
         ]
         
         stats_table1 = Table(stats_row1, colWidths=[3.3*inch, 3.3*inch], spaceBefore=0, spaceAfter=0)

@@ -220,77 +220,71 @@ def normalize_emotion(emotion_str):
 
 @router.get("/stats/emotion-errors/{user_id}")
 async def get_emotion_error_stats(user_id: UUID, db=Depends(get_db)):
-    """Lấy thống kê tỉ lệ sai của 6 cảm xúc từ emotion_errors trong sessions"""
+    """Lấy thống kê tỉ lệ sai của 6 cảm xúc - trả về correct/incorrect/accuracy"""
     try:
         print(f"\n=== DEBUG emotion-errors for user {user_id} ===")
         
-        # Query chính
-        query = text("""
-            SELECT emotion_errors
-            FROM sessions
-            WHERE user_id = :user_id
-            AND emotion_errors IS NOT NULL
-            AND emotion_errors != ''
+        # Query theo cách mới - lấy correct và incorrect từ session_questions
+        emotion_query = text("""
+            SELECT 
+                gc.emotion,
+                SUM(CASE WHEN sq.is_correct = 1 THEN 1 ELSE 0 END) as correct,
+                SUM(CASE WHEN sq.is_correct = 0 THEN 1 ELSE 0 END) as incorrect
+            FROM session_questions sq
+            JOIN questions q ON sq.question_id = q.question_id
+            JOIN game_content gc ON q.content_id = gc.content_id
+            JOIN sessions s ON sq.session_id = s.session_id
+            WHERE s.user_id = :user_id
+            AND gc.emotion IS NOT NULL
+            GROUP BY gc.emotion
         """)
         
-        result = db.execute(query, {"user_id": str(user_id)})
+        emotion_results = db.execute(
+            emotion_query,
+            {"user_id": str(user_id)}
+        ).fetchall()
         
-        # Đếm errors cho mỗi cảm xúc
-        emotion_errors = {key: 0 for key in EMOTION_MAP.keys()}
-        emotion_total = {key: 0 for key in EMOTION_MAP.keys()}
-        
-        rows_processed = 0
-        for row in result:
-            rows_processed += 1
-            if row.emotion_errors:
-                try:
-                    errors = json.loads(row.emotion_errors) if isinstance(row.emotion_errors, str) else row.emotion_errors
-                    
-                    if isinstance(errors, dict):
-                        for emotion_key, count in errors.items():
-                            # Chuẩn hóa key
-                            normalized = normalize_emotion(emotion_key)
-                            if normalized:
-                                emotion_errors[normalized] += count
-                                emotion_total[normalized] += 5  # Giả sử mỗi cảm xúc có 5 câu hỏi
-                                if rows_processed <= 3:
-                                    print(f"  {emotion_key} -> {normalized}: +{count} errors")
-                    elif isinstance(errors, list):
-                        for emotion_key in errors:
-                            normalized = normalize_emotion(emotion_key)
-                            if normalized:
-                                emotion_errors[normalized] += 1
-                                emotion_total[normalized] += 5
-                except Exception as parse_error:
-                    print(f"Error parsing row {rows_processed}: {parse_error}")
-                    continue
-        
-        print(f"\nProcessed {rows_processed} rows")
-        print(f"Error counts: {emotion_errors}")
-        print(f"Total counts: {emotion_total}")
-        
-        # Tính error rate
-        stats = {}
-        for key, display_name in EMOTION_MAP.items():
-            total = emotion_total.get(key, 0)
-            errors = emotion_errors.get(key, 0)
+        emotion_stats = {}
+        for row in emotion_results:
+            total = row.correct + row.incorrect
+            error_rate = (row.incorrect / total * 100) if total > 0 else 0
             
-            if total > 0:
-                error_rate = (errors / total) * 100
-                stats[display_name] = round(min(error_rate, 100), 1)
-                print(f"{display_name}: {errors}/{total} = {error_rate:.1f}%")
-            else:
-                stats[display_name] = 0
+            # Chuẩn hóa tên emotion
+            normalized = normalize_emotion(row.emotion)
+            if normalized and normalized in EMOTION_MAP:
+                display_name = EMOTION_MAP[normalized]
+                emotion_stats[display_name] = {
+                    "correct": int(row.correct),
+                    "incorrect": int(row.incorrect),
+                    "error_rate": round(error_rate, 1)
+                }
+                print(f"{display_name}: {row.incorrect}/{total} = {error_rate:.1f}%")
         
-        print(f"Final stats: {stats}")
-        return {"status": "success", "data": stats}
+        # Đảm bảo có đầy đủ 6 cảm xúc
+        for key, display_name in EMOTION_MAP.items():
+            if display_name not in emotion_stats:
+                emotion_stats[display_name] = {
+                    "correct": 0,
+                    "incorrect": 0,
+                    "error_rate": 0.0
+                }
+        
+        print(f"✅ Emotions query executed: {len(emotion_stats)} emotions tracked")
+        print(f"Final stats: {emotion_stats}")
+        
+        return {"status": "success", "data": emotion_stats}
         
     except Exception as e:
         print(f"Error in get_emotion_error_stats: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {"status": "success", "data": {v: 0 for v in EMOTION_MAP.values()}}
-
+        
+        # Return empty stats với đúng format
+        empty_stats = {
+            v: {"correct": 0, "incorrect": 0, "error_rate": 0.0} 
+            for v in EMOTION_MAP.values()
+        }
+        return {"status": "success", "data": empty_stats}
 
 @router.get("/stats/emotion-improvement/{user_id}")
 async def get_emotion_improvement_stats(user_id: UUID, db=Depends(get_db)):

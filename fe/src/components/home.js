@@ -149,10 +149,33 @@ async function fetchEmotionErrors(userId) {
         if (!response.ok) throw new Error('Failed to fetch emotion errors');
         const data = await response.json();
         console.log('✅ [fetchEmotionErrors] Data:', data);
-        return data.data || {};
+        
+        // Data structure: { "Vui vẻ": { correct: 10, incorrect: 5, accuracy: 66.67 }, ... }
+        // We need to convert to error_rate and keep incorrect count
+        const errorStats = {};
+        const incorrectCounts = {};
+        
+        if (data.data && typeof data.data === 'object') {
+            Object.entries(data.data).forEach(([emotion, stats]) => {
+                const total = (stats.correct || 0) + (stats.incorrect || 0);
+                if (total > 0) {
+                    const errorRate = ((stats.incorrect || 0) / total) * 100;
+                    errorStats[emotion] = parseFloat(errorRate.toFixed(1));
+                    incorrectCounts[emotion] = stats.incorrect || 0;
+                } else {
+                    errorStats[emotion] = 0;
+                    incorrectCounts[emotion] = 0;
+                }
+            });
+        }
+        
+        console.log('✅ [fetchEmotionErrors] Processed error stats:', errorStats);
+        console.log('✅ [fetchEmotionErrors] Incorrect counts:', incorrectCounts);
+        
+        return { errorStats, incorrectCounts };
     } catch (error) {
         console.error('❌ [fetchEmotionErrors] Error:', error);
-        return {};
+        return { errorStats: {}, incorrectCounts: {} };
     }
 }
 
@@ -203,12 +226,16 @@ async function renderEmotionCards(userId) {
     }
 
     try {
-        const errorStats = await fetchEmotionErrors(userId);
+        const { errorStats, incorrectCounts } = await fetchEmotionErrors(userId);
         console.log('📊 [renderEmotionCards] Error stats:', errorStats);
 
         // Convert to array and sort by error rate (low to high)
         const emotionArray = Object.entries(errorStats)
-            .map(([name, rate]) => ({ name, rate }))
+            .map(([name, rate]) => ({ 
+                name, 
+                rate,
+                incorrectCount: incorrectCounts[name] || 0
+            }))
             .sort((a, b) => a.rate - b.rate);
 
         console.log('📊 [renderEmotionCards] Sorted emotions:', emotionArray);
@@ -230,12 +257,12 @@ async function renderEmotionCards(userId) {
             const rank = index + 1;
 
             return `
-                <div class="emotion-card ${cardClass}" style="animation-delay: ${index * 0.1}s">
+                <div class="emotion-card ${cardClass}" style="animation-delay: ${index * 0.1}s" title="${emotion.incorrectCount} câu sai">
                     <div class="emotion-rank">#${rank}</div>
                     <div class="emotion-icon">${icon}</div>
                     <div class="emotion-name">${emotion.name}</div>
                     <div class="emotion-error-rate">${emotion.rate}%</div>
-                    <div class="emotion-label">Tỉ lệ sai</div>
+                    <div class="emotion-label">Tỉ lệ sai (${emotion.incorrectCount} câu)</div>
                 </div>
             `;
         }).join('');
@@ -327,7 +354,7 @@ function renderRecentGames(games) {
 }
 
 // ==================== CHARTS ====================
-function createBarChart(canvasId, labels, data, title) {
+function createBarChart(canvasId, labels, data, title, incorrectCounts = null) {
     console.log(`📊 [createBarChart] Creating chart for ${canvasId}`);
     
     const ctx = document.getElementById(canvasId);
@@ -379,7 +406,16 @@ function createBarChart(canvasId, labels, data, title) {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         padding: 12,
                         callbacks: {
-                            label: (context) => title + ': ' + context.parsed.y.toFixed(1) + '%'
+                            label: (context) => {
+                                let label = title + ': ' + context.parsed.y.toFixed(1) + '%';
+                                
+                                // Add incorrect count if available (for error chart)
+                                if (incorrectCounts && incorrectCounts[context.label] !== undefined) {
+                                    label += ' (' + incorrectCounts[context.label] + ' câu sai)';
+                                }
+                                
+                                return label;
+                            }
                         }
                     }
                 },
@@ -470,17 +506,19 @@ async function renderCharts(userId) {
     console.log('📊 [renderCharts] Starting...');
     
     try {
-        const [errorStats, improvementStats, gameRatioStats] = await Promise.all([
+        const [emotionData, improvementStats, gameRatioStats] = await Promise.all([
             fetchEmotionErrors(userId),
             fetchEmotionImprovement(userId),
             fetchGamePlayRatio(userId)
         ]);
 
-        // Chart 1: Error rate
+        const { errorStats, incorrectCounts } = emotionData;
+
+        // Chart 1: Error rate (with incorrect counts in tooltip)
         if (Object.keys(errorStats).length > 0) {
             const errorLabels = Object.keys(errorStats);
             const errorData = Object.values(errorStats);
-            charts.error = createBarChart('errorChart', errorLabels, errorData, 'Tỉ lệ sai');
+            charts.error = createBarChart('errorChart', errorLabels, errorData, 'Tỉ lệ sai', incorrectCounts);
         }
 
         // Chart 2: Improvement rate
@@ -610,7 +648,7 @@ function initNavigation() {
             if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
                 doLogout();
             }
-        }
+        } 
 
         const ok = await window.egInlineConfirm(
             'Bạn có chắc chắn muốn đăng xuất không?',

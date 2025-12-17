@@ -2,6 +2,7 @@ import { loadUsers, setupUserEvents } from './admin_users.js';
 import { loadEmotionVideos, setupEmotionEvents } from './admin_ec.js';
 import { loadGameContents, setupGameContentEvents } from './admin_gc.js';
 import { loadReports, setupReportEvents } from './admin_reports.js'; // ✅ ADDED
+import { loadGamePlayStats } from './admin_charts.js';
 
 const API_BASE = "http://localhost:8000";
 const API_URL = `${API_BASE}/admin`;
@@ -273,7 +274,8 @@ function loadDashboard() {
     loadUsers();
     loadEmotionVideos();
     loadGameContents();
-    loadReports(); // ✅ ADDED
+    loadReports();
+    loadGamePlayStats();
 }
 
 function loadSectionData(section) {
@@ -287,7 +289,7 @@ function loadSectionData(section) {
         case 'game-contents':
             loadGameContents();
             break;
-        case 'reports': // ✅ ADDED
+        case 'reports':
             loadReports();
             break;
         case 'dashboard':
@@ -305,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setupUserEvents();
         setupEmotionEvents();
         setupGameContentEvents();
-        setupReportEvents(); // ✅ ADDED
+        setupReportEvents(); 
     }
 });
 
