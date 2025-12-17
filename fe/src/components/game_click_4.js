@@ -1,10 +1,27 @@
-const EMOTION_CHOICES = [
-    { value: "Vui vẻ", label: "😊 Vui vẻ" },
-    { value: "Buồn bã", label: "😢 Buồn bã" },
-    { value: "Ngạc nhiên", label: "😲 Ngạc nhiên" },
-    { value: "Tức giận", label: "😠 Tức giận" },
-    { value: "Sợ hãi", label: "😨 Sợ hãi" },
-    { value: "Ghê tởm", label: "🤢 Ghê tởm" }
+const EMOTION_CHOICES = [{
+        value: "Vui vẻ",
+        label: "😊 Vui vẻ"
+    },
+    {
+        value: "Buồn bã",
+        label: "😢 Buồn bã"
+    },
+    {
+        value: "Ngạc nhiên",
+        label: "😲 Ngạc nhiên"
+    },
+    {
+        value: "Tức giận",
+        label: "😠 Tức giận"
+    },
+    {
+        value: "Sợ hãi",
+        label: "😨 Sợ hãi"
+    },
+    {
+        value: "Ghê tởm",
+        label: "🤢 Ghê tởm"
+    }
 ];
 
 function showSystemPopup(title, message, onClose, btnText = 'OK') {
@@ -52,6 +69,101 @@ let gameId = null;
 let level = null;
 
 let elements = {};
+
+// ================== FPT TTS (NEW - giống file vừa nãy) ==================
+let ttsAudio = null;
+const ttsCache = new Map(); // key = voice:text -> audioUrl
+
+async function speakVietnamese(text, fromButton = false, voice = "thuminh", speed = 0) {
+    if (typeof isTTSManualOnly !== "undefined" && isTTSManualOnly && !fromButton) return;
+
+    const cleanText = (text || "").trim();
+    if (!cleanText) return;
+
+    const key = ttsKey(cleanText, voice, speed);
+    if (ttsCache.has(key)) {
+        const audioUrl = ttsCache.get(key);
+        if (!ttsAudio) ttsAudio = new Audio();
+        ttsAudio.pause();
+        ttsAudio.src = audioUrl;
+        await ttsAudio.play();
+        return;
+    }
+
+    const res = await fetch("http://localhost:8000/tts", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            text: cleanText,
+            voice,
+            speed
+        }),
+    });
+
+    if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(msg || "TTS error");
+    }
+
+    const {
+        audioUrl
+    } = await res.json();
+    console.log("FPT audioUrl:", audioUrl);
+    if (!audioUrl) throw new Error("Missing audioUrl from /tts");
+
+    ttsCache.set(key, audioUrl);
+
+    if (!ttsAudio) ttsAudio = new Audio();
+    ttsAudio.pause();
+    ttsAudio.src = audioUrl;
+    await ttsAudio.play();
+}
+const ttsPending = new Map(); // key -> Promise<audioUrl>
+
+function ttsKey(text, voice = "thuminh", speed = 0) {
+    return `${voice}:${speed}:${(text||"").trim().toLowerCase()}`;
+}
+
+async function prefetchTTS(text, voice = "thuminh", speed = 0) {
+    const clean = (text || "").trim();
+    if (!clean) return null;
+
+    const key = ttsKey(clean, voice, speed);
+    if (ttsCache.has(key)) return ttsCache.get(key);
+    if (ttsPending.has(key)) return await ttsPending.get(key);
+
+    const p = (async () => {
+        const res = await fetch("http://localhost:8000/tts", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                text: clean,
+                voice,
+                speed
+            }),
+        });
+        if (!res.ok) throw new Error(await res.text().catch(() => "TTS error"));
+        const {
+            audioUrl
+        } = await res.json();
+        if (!audioUrl) throw new Error("Missing audioUrl from /tts");
+        ttsCache.set(key, audioUrl);
+        return audioUrl;
+    })();
+
+    ttsPending.set(key, p);
+    try {
+        return await p;
+    } finally {
+        ttsPending.delete(key);
+    }
+}
+
+
 
 function initDetectiveGame() {
     user = JSON.parse(localStorage.getItem('currentUser'));
@@ -113,8 +225,13 @@ async function startSession() {
     try {
         const res = await fetch(`/games/start/${gameId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: user.user_id, level }),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: user.user_id,
+                level
+            }),
         });
 
         if (!res.ok) {
@@ -189,6 +306,9 @@ function loadQuestion(index) {
     if (elements.scoreLabel) {
         elements.scoreLabel.textContent = `Điểm: ${score}`;
     }
+    prefetchTTS(q.question_text, "thuminh", 0);
+    const nextQ = questions[index + 1];
+    if (nextQ) prefetchTTS(nextQ.question_text, "thuminh", 0);
 }
 
 function normalizeEmotion(text) {
@@ -204,15 +324,21 @@ function onHintClick() {
     }
 }
 
-function speakCurrentQuestion() {
+async function speakCurrentQuestion() {
     const q = questions[currentIndex];
-    if (!q || !('speechSynthesis' in window)) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(q.question_text);
-    utterance.lang = 'vi-VN';
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
+    if (!q) return;
+    try {
+        if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+        await speakVietnamese(q.question_text, true, "thuminh", 0);
+    } catch (err) {
+        console.error("FPT TTS failed:", err);
+        if ("speechSynthesis" in window) {
+            const u = new SpeechSynthesisUtterance(q.question_text);
+            u.lang = "vi-VN";
+            u.rate = 0.95;
+            window.speechSynthesis.speak(u);
+        }
+    }
 }
 
 function onAnswerClick(btn) {
@@ -305,7 +431,9 @@ async function finishGame() {
         if (sessionId) {
             await fetch('/games/end-level', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     session_id: sessionId,
                     results: localResults,
