@@ -441,9 +441,16 @@ function initializeRound() {
 
   const progressFill = document.getElementById("click-progress-fill");
   if (progressFill && Array.isArray(questions) && questions.length) {
-    const remaining = Array.isArray(remainingQuestions) ? remainingQuestions.length : 0;
-    const currentRoundSize = Array.isArray(gameState.characters) ? gameState.characters.length : 0;
-    const completed = Math.max(0, questions.length - remaining - currentRoundSize);
+    const remaining = Array.isArray(remainingQuestions)
+      ? remainingQuestions.length
+      : 0;
+    const currentRoundSize = Array.isArray(gameState.characters)
+      ? gameState.characters.length
+      : 0;
+    const completed = Math.max(
+      0,
+      questions.length - remaining - currentRoundSize
+    );
     const percentage = (completed / questions.length) * 100;
     progressFill.style.width = `${percentage}%`;
   }
@@ -1271,9 +1278,3 @@ function backToMenu() {
   document.getElementById("menu-screen").classList.remove("hidden");
   window.speechSynthesis.cancel();
 }
-document.getElementById("popup-close-btn").onclick = () => {
-  const popup = document.getElementById("result-popup");
-  popup.classList.remove("show");
-  setTimeout(() => popup.classList.add("hidden"), 200);
-  window.speechSynthesis.cancel();
-};
