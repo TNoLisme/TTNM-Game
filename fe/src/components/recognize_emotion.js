@@ -256,8 +256,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadQuestion(i) {
         if (i >= questions.length) {
             await sendFinalResults();
-            alert('Hoàn thành level!');
-            window.location.href = './select_game.html';
+            showSystemPopup('Hoàn thành', `Bạn đã hoàn thành! Tổng điểm: ${score}`, () => {
+                window.location.href = `./level_select.html?gameId=${gameId}`;
+            }, 'Quay lại chọn level');
             return;
         }
 
@@ -382,8 +383,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const emotionKey = normalizeEmotion(emotion);
 
         elements.modalTitle.textContent = correct ? 'CHÍNH XÁC!' : 'SAI RỒI!';
-        elements.modalTitle.style.color = correct ? '#10b981' : '#ef4444';
-        elements.modalMsg.textContent = correct ? 'Giỏi lắm!' : `Đáp án đúng: ${correctAns}`;
+        elements.modalTitle.style.color = correct ? '#10b981' : '#fca055ff';
+        elements.modalMsg.textContent = correct ? 'Bạn làm tốt lắm, tiếp tục phát huy nhé.' : `Đáp án đúng là: ${correctAns}. Hãy cố gắng hơn ở câu tiếp theo nhé!`;
 
         elements.modalActionsContainer.innerHTML = '';
 
@@ -394,13 +395,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isForcedLearning) {
             // --- UI BẮT BUỘC HỌC LẠI (Chỉ có 1 nút) ---
-            elements.modalTitle.textContent = 'CẦN HỌC LẠI CẢM XÚC NÀY!';
-            elements.modalTitle.style.color = '#f65c80ff';
-            elements.modalMsg.textContent = `Sai nhiều lần ở cảm xúc "${emotion}". Hãy học lại để ôn tập kiến thức trước khi tiếp tục.`;
+            elements.modalTitle.textContent = 'CẦN ÔN TẬP LẠI CẢM XÚC NÀY!';
+            elements.modalTitle.style.color = '#86f8f4ff';
+            elements.modalMsg.textContent = `Bạn không đúng nhiều lần ở cảm xúc "${emotion}". Hãy học lại để ôn tập kiến thức trước khi tiếp tục.`;
 
             const learnBtn = document.createElement('button');
             learnBtn.textContent = "HỌC LẠI CẢM XÚC NÀY";
-            learnBtn.className = "modal-btn learn-btn";
+            learnBtn.className = "modal-btn learn-btn color: #5c9cf6ff";
 
             // Gán sự kiện gọi hàm showLearningCard để hiện popup thẻ học
             learnBtn.onclick = () => showLearningCard(emotion);
@@ -424,7 +425,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         elements.feedbackModal.classList.remove('hidden');
     }
+    function showSystemPopup(title, message, onClose, btnText = 'OK') {
+        const modal = document.getElementById('system-modal');
+        const titleEl = document.getElementById('system-modal-title');
+        const msgEl = document.getElementById('system-modal-message');
+        const btnEl = document.getElementById('system-modal-btn');
 
+        if (!modal || !titleEl || !msgEl || !btnEl) {
+            // Fallback nếu modal chưa sẵn sàng
+            if (window.egModal && typeof window.egModal.alert === 'function') {
+                window.egModal.alert(message, title).then(() => {
+                    if (onClose) onClose();
+                });
+                return;
+            }
+            alert(message);
+            if (onClose) onClose();
+            return;
+        }
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        btnEl.textContent = btnText;
+
+        modal.classList.remove('hidden');
+        btnEl.onclick = () => {
+            modal.classList.add('hidden');
+            if (onClose) onClose();
+        };
+    }
     function handleNextAfterPopup() {
         elements.feedbackModal.classList.add('hidden');
         currentIndex++;
