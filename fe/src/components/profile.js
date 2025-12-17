@@ -374,9 +374,57 @@ async function loadProfile() {
         $("join-date").textContent   = new Date(data.created_at ?? Date.now())
                                         .toLocaleDateString("vi-VN");
 
-        animate("games-played", data.games_played ?? 15);
-        animate("total-score",  data.total_score  ?? 1200);
-        $("play-time").textContent = (data.play_time ?? "6.2") + "h";
+        // ✅ Compute real metrics from sessions
+        let gamesPlayed = 0;
+        let totalScore = 0;
+        let playTime = 0; // in milliseconds
+
+        try {
+            const sessUrl = `${API_URL}/sessions/user/${userId}/history?limit=1000`;
+            console.log("📊 Fetching sessions from:", sessUrl);
+            const sessRes = await fetch(sessUrl, { cache: "no-store" });
+            if (sessRes.ok) {
+                const sessData = await sessRes.json();
+                console.log("📦 Sessions response:", sessData);
+                
+                const sessions = sessData.sessions || sessData || [];
+                if (Array.isArray(sessions)) {
+                    gamesPlayed = sessions.length;
+                    totalScore = sessions.reduce((sum, s) => sum + (s.score || 0), 0);
+                    
+                    // Calculate total play time from start_time and end_time
+                    playTime = sessions.reduce((sum, s) => {
+                        if (s.start_time && s.end_time) {
+                            try {
+                                const start = new Date(s.start_time).getTime();
+                                const end = new Date(s.end_time).getTime();
+                                const duration = Math.max(0, end - start);
+                                console.log(`Session ${s.session_id}: ${duration}ms`);
+                                return sum + duration;
+                            } catch (e) {
+                                console.warn("Error parsing session times:", e);
+                                return sum;
+                            }
+                        }
+                        return sum;
+                    }, 0);
+                    
+                    console.log(`✅ Calculated: ${gamesPlayed} games, ${totalScore} total score, ${playTime}ms play time`);
+                }
+            }
+        } catch (e) {
+            console.warn("❌ Could not fetch sessions, using defaults:", e);
+            gamesPlayed = 0;
+            totalScore = 0;
+            playTime = 0;
+        }
+
+        animate("games-played", gamesPlayed);
+        animate("total-score",  totalScore);
+        
+        // Convert playTime from ms to hours
+        const hours = (playTime / (1000 * 60 * 60)).toFixed(1);
+        $("play-time").textContent = hours + "h";
 
         window.currentProfile = data;
 

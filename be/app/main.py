@@ -6,7 +6,7 @@ from app.controllers.games.cv_controller import router as cv_router
 from app.controllers.assistant_controller import router as assistant_router
 from app.controllers.analytics.report_controller import router as reports_router
 from fastapi.middleware.cors import CORSMiddleware
-from app.controllers.sessions import emotion_concepts_router
+from app.controllers.sessions import emotion_concepts_router,sessions_router
 from app.controllers.tts_controller import router as tts_router
 
 
@@ -52,6 +52,7 @@ app.include_router(admin_router)
 app.include_router(reports_router)
 app.include_router(emotion_concepts_router)
 app.include_router(tts_router)
+app.include_router(sessions_router)
 # CHẠY SERVER (BỎ COMMENT)
 if __name__ == "__main__":
     import uvicorn

@@ -109,7 +109,7 @@ if (!window.egInlineConfirm) {
 function getGameHtmlFile(gameId) {
   const map = {
     "3bcb2108-721c-4a15-a585-31f3084ed000": "./recognize_emotion.html",
-    "33ecafaa-ec7e-40d2-9c67-ed0a29ac0051": "./game_click_2.html",
+    "9fd1e82c-d831-4f56-b062-e6c16bcd8d0a": "./game_click_2.html",
     "08bbffbf-d147-4556-bccb-b7621cafbf15": "./game_click_3.html",
     "aacaf79e-e15e-42a9-a3d1-a522720d919b": "./game_click_4.html",
     "e05909f3-3dee-42a6-9a75-fd985b1bdf47": "./gameCV.html",
