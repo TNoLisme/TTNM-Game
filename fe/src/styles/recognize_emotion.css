@@ -45,7 +45,7 @@ body {
 
 #game-name {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--cv-deep);
 }
 
@@ -343,9 +343,9 @@ body {
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     box-shadow: 0 10px 22px rgba(148, 163, 184, 0.28);
     display: inline-flex;
-justify-content: center;
-gap: 8px;
-color: var(--cv-deep);
+    justify-content: center;
+    gap: 8px;
+    color: var(--cv-deep);
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -416,36 +416,37 @@ color: var(--cv-deep);
 }
 
 .modal {
-	position: fixed;
-	/* BẮT BUỘC: Để nó nổi lên trên */
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.6);
-	/* Nền tối mờ */
-	display: flex;
-	/* Căn giữa nội dung */
-	align-items: center;
-	justify-content: center;
-	z-index: 9999;
-	/* Đảm bảo nằm trên cùng */
-	opacity: 1;
-	transition: opacity 0.3s ease;
+    position: fixed;
+    /* BẮT BUỘC: Để nó nổi lên trên */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    /* Nền tối mờ */
+    display: flex;
+    /* Căn giữa nội dung */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    /* Đảm bảo nằm trên cùng */
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
+
 .modal.hidden {
-	display: none !important;
-		opacity: 0;
-		pointer-events: none;
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .modal-content {
-	background: linear-gradient(145deg, #ffffff, #f5edff);
-	padding: 28px 24px;
-	border-radius: 20px;
-	text-align: center;
-	min-width: 320px;
-	box-shadow: 0 25px 60px rgba(15, 23, 42, 0.45);
+    background: linear-gradient(145deg, #ffffff, #f5edff);
+    padding: 28px 24px;
+    border-radius: 20px;
+    text-align: center;
+    min-width: 320px;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.45);
 }
 
 .modal-content.warning {
@@ -461,20 +462,20 @@ color: var(--cv-deep);
 }
 
 .modal-btn {
-	padding: 10px 22px;
-	border: none;
-	border-radius: 999px;
-	cursor: pointer;
-	font-weight: 600;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 .review-btn {
-	background-color: #e5e7eb;
+    background-color: #e5e7eb;
 }
 
 .next-btn {
-	background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-	color: white;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
 }
 
 .learn-actions {
@@ -485,10 +486,10 @@ color: var(--cv-deep);
 
 .btn-review,
 .btn-next {
-	padding: 10px 18px;
-	border: none;
-	border-radius: 999px;
-	cursor: pointer;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
 }
 
 .btn-review {
@@ -497,6 +498,6 @@ color: var(--cv-deep);
 }
 
 .btn-next {
-	background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-	color: white;
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: white;
 }

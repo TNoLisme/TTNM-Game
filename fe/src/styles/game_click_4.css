@@ -73,8 +73,8 @@ body {
 .title {
     color: var(--cv-deep);
     font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
+    font-weight: 700;
+    /*letter-spacing: 0.02em;*/
 }
 
 .subtitle {
@@ -286,7 +286,7 @@ body {
 
 .modal-title {
     font-size: 1.3rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--cv-deep);
     margin-bottom: 4px;
 }
