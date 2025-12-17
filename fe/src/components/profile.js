@@ -441,15 +441,15 @@ async function saveProfile(e) {
     }
 }
 
-// ==================== REPORT FUNCTIONS ====================
+// ==================== REPORT FUNCTIONS (FIXED) ====================
 
-async function requestReport(period) {
+async function requestReport(reportType) {
     const userId = getUserId();
     
-    console.log("%c=== REQUEST REPORT DEBUG ===", "color: yellow; font-size: 14px;");
-    console.log("Period:", period);
-    console.log("User ID:", userId);
-    console.log("Current profile:", window.currentProfile);
+    console.log("%c=== REQUEST REPORT DEBUG ===", "color: yellow; font-size: 14px; font-weight: bold;");
+    console.log("📊 Report Type:", reportType);
+    console.log("👤 User ID:", userId);
+    console.log("📧 Current profile:", window.currentProfile);
     
     if (!userId) {
         showToast("Vui lòng đăng nhập để nhận báo cáo!", "error");
@@ -466,7 +466,7 @@ async function requestReport(period) {
         }
     }
 
-    const periodText = period === "weekly" ? "tuần" : "tháng";
+    const periodText = reportType === "weekly" ? "tuần" : "tháng";
     const userEmail = window.currentProfile?.email || 'email của bạn';
 
     let ok = false;
@@ -491,9 +491,10 @@ async function requestReport(period) {
     showToast(`Đang tạo báo cáo ${periodText}... Vui lòng đợi`, "info");
 
     try {
-        // ✅ Gọi đúng endpoint với user_id trong query
-        const url = `${API_URL}/reports/request-report?period=${period}&user_id=${userId}`;
-        console.log(`🚀 Calling API: POST ${url}`);
+        // ✅ FIX: Dùng đúng tên parameter là "report_type" thay vì "period"
+        const url = `${API_URL}/reports/request-report?report_type=${reportType}&user_id=${userId}`;
+        
+        console.log(`%c🚀 Calling API: POST ${url}`, "color: lime; font-weight: bold;");
         
         const res = await fetch(url, {
             method: "POST",
@@ -521,7 +522,7 @@ async function requestReport(period) {
         }
 
         showToast(`✅ Báo cáo ${periodText} đang được gửi đến email của bạn!`, "success");
-        console.log("✅ Report requested successfully:", data);
+        console.log(`%c✅ Report ${reportType} requested successfully`, "color: green; font-weight: bold;", data);
 
     } catch (err) {
         console.error("❌ Report error:", err);
@@ -606,8 +607,8 @@ function showToast(message, type = "success") {
 // ==================== EVENT LISTENERS ====================
 
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("%c🚀 PROFILE.JS LOADED", "color: gold; font-size: 16px;");
-    console.log("User ID:", getUserId() ? "EXISTS" : "NULL");
+    console.log("%c🚀 PROFILE.JS LOADED (FIXED VERSION)", "color: gold; font-size: 16px; font-weight: bold;");
+    console.log("User ID:", getUserId() ? "EXISTS ✅" : "NULL ❌");
     
     loadProfile();
 
@@ -634,11 +635,18 @@ document.addEventListener("DOMContentLoaded", () => {
         location.href = "/src/pages/login.html";
     };
 
+    // ✅ FIX: Truyền đúng tham số "weekly" và "monthly"
     if (weeklyReportBtn) {
-        weeklyReportBtn.onclick = () => requestReport("weekly");
+        weeklyReportBtn.onclick = () => {
+            console.log("%c📊 WEEKLY REPORT BUTTON CLICKED", "color: cyan; font-weight: bold;");
+            requestReport("weekly");
+        };
     }
     if (monthlyReportBtn) {
-        monthlyReportBtn.onclick = () => requestReport("monthly");
+        monthlyReportBtn.onclick = () => {
+            console.log("%c📊 MONTHLY REPORT BUTTON CLICKED", "color: magenta; font-weight: bold;");
+            requestReport("monthly");
+        };
     }
 
     document.addEventListener("keydown", e => {

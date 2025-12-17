@@ -211,3 +211,71 @@ class GamePlayService:
             "final_score": final_score,
             "progress_level": progress.level
         }
+    def start_session_dynamic(self, game_id: str, level: int, user_id: str) -> Dict:
+        user_uuid = UUID(user_id)
+        game_uuid = UUID(game_id)
+
+        # Lấy thông tin game
+        game = self.games_service.get_by_id(game_uuid)
+        if not game:
+            raise ValueError(f"Game not found with ID: {game_id}")
+
+        # Lấy ratio user
+        ratio = self.child_progress_service.get_ratio(user_uuid, game_uuid)
+
+        # ✅ GỌI HÀM DYNAMIC (mới) để lấy đúng số câu theo level
+        questions = self.question_service.get_or_generate_questions_dynamic(
+            user_id=user_uuid,
+            game_id=game_uuid,
+            level=level,
+            ratio=ratio
+        )
+
+        formatted_questions = self.question_service.format_questions_for_frontend(
+            questions=questions,
+            game_id=game_uuid,
+            level=level
+        )
+
+        # Lấy session gần nhất để lấy emotion_errors cũ
+        latest_session = self.session_service.get_latest_session(user_uuid, game_uuid)
+        old_emotion_errors = latest_session.emotion_errors if latest_session else {
+            "sợ hãi": 0,
+            "buồn bã": 0,
+            "tức giận": 0,
+            "ghê tởm": 0,
+            "ngạc nhiên": 0,
+            "vui vẻ": 0
+        }
+
+        learning_cards = self.emotion_concepts_service.get_all_concepts()
+
+        # Tạo Session domain
+        session = Session(
+            session_id=uuid4(),
+            user_id=user_uuid,
+            game_id=game_uuid,
+            start_time=datetime.now(),
+            state=SessionStateEnum.playing,
+            score=0,
+            emotion_errors=old_emotion_errors,
+            max_errors=game.max_errors,
+            level_threshold=game.level_threshold,
+            ratio=ratio,
+            time_limit=game.time_limit,
+            questions=questions,
+            level=level
+        )
+
+        saved_session = self.session_service.create(session)
+
+        # (optional) trả thêm num_questions để FE debug dễ
+        return {
+            "session_id": str(saved_session.session_id),
+            "questions": formatted_questions,
+            "max_errors": game.max_errors,
+            "time_limit": game.time_limit,
+            "emotion_errors": old_emotion_errors,
+            "learning_cards": learning_cards,
+            "num_questions": len(formatted_questions)  # ✅ thêm mới, không ảnh hưởng FE nếu FE ignore
+        }

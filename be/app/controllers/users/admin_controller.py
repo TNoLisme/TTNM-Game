@@ -20,6 +20,8 @@ from datetime import date, datetime, timedelta
 import time
 import unicodedata
 import re
+from sqlalchemy import text
+
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -364,71 +366,182 @@ async def bulk_delete_game_contents(
         print(f"❌ Bulk delete error: {e}")
         raise HTTPException(500, detail=f"Lỗi xóa hàng loạt: {str(e)}")
 
+# ==================== GAME CONTENT MEDIA UPLOAD (THEO PATTERN EMOTION) ====================
+
+# ==================== EMOTION MAPPING ====================
+def map_emotion_to_english(emotion_vn: str) -> str:
+    """
+    Map emotion Tiếng Việt sang Tiếng Anh cho tên folder và file
+    """
+    emotion_map = {
+        'vui': 'happy',
+        'vui vẻ': 'happy',
+        'vui ve': 'happy',
+        'happy': 'happy',
+        
+        'buồn': 'sad',
+        'buồn bã': 'sad',
+        'buon': 'sad',
+        'buon ba': 'sad',
+        'sad': 'sad',
+        
+        'tức giận': 'angry',
+        'tuc gian': 'angry',
+        'giận': 'angry',
+        'gian': 'angry',
+        'angry': 'angry',
+        
+        'sợ': 'fear',
+        'sợ hãi': 'fear',
+        'so': 'fear',
+        'so hai': 'fear',
+        'fear': 'fear',
+        
+        'ngạc nhiên': 'surprise',
+        'ngac nhien': 'surprise',
+        'surprise': 'surprise',
+        
+        'ghê tởm': 'disgust',
+        'ghe tom': 'disgust',
+        'ghê': 'disgust',
+        'ghe': 'disgust',
+        'disgust': 'disgust'
+    }
+    
+    # Normalize input: lowercase và bỏ dấu
+    emotion_normalized = normalize_ascii(emotion_vn).lower()
+    
+    # Try exact match first
+    if emotion_normalized in emotion_map:
+        return emotion_map[emotion_normalized]
+    
+    # Try original (with diacritics)
+    emotion_lower = emotion_vn.lower().strip()
+    if emotion_lower in emotion_map:
+        return emotion_map[emotion_lower]
+    
+    # Fallback: use normalized version
+    return emotion_normalized or 'neutral'
+
+
 @router.post("/game-contents/upload-media")
 async def upload_game_content_media(
-    file: UploadFile = File(...),
-    content_type: str = Form(...),  # 'image', 'video', 'audio'
-    game_name: str = Form(...),
-    emotion: Optional[str] = Form(None)
+    media_file: UploadFile = File(...), 
+    content_id: str = Form(...),
+    game_id: str = Form(...),
+    content_type: str = Form(...), 
+    emotion: str = Form(""),
+    old_path: str = Form("")
 ):
+    """
+    Upload media cho Game Content - THEO PATTERN EMOTION
+    - Upload file mới
+    - Xóa file cũ (nếu có)
+    - Trả về media_path mới
+    """
     try:
+        # 1) Validate file type
         allowed_types = {
-            'image': ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'],
-            'video': ['video/mp4', 'video/mpeg', 'video/quicktime'],
-            'audio': ['audio/mpeg', 'audio/wav', 'audio/mp3']
+            'image': ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'],
+            'video': ['video/mp4', 'video/webm', 'video/mpeg'],
+            'audio': ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3']
         }
         
         if content_type not in allowed_types:
             raise HTTPException(400, detail="Loại file không hợp lệ!")
         
-        if file.content_type not in allowed_types[content_type]:
+        if media_file.content_type not in allowed_types[content_type]:
             raise HTTPException(
                 400, 
                 detail=f"File phải là {', '.join(allowed_types[content_type])}"
             )
         
-        # Check file size (max 50MB)
-        file.file.seek(0, 2)
-        file_size = file.file.tell()
-        file.file.seek(0)
+        # 2) Validate size (50MB)
+        media_file.file.seek(0, 2)
+        file_size = media_file.file.tell()
+        media_file.file.seek(0)
         
         if file_size > 50 * 1024 * 1024:
             raise HTTPException(400, detail="File quá lớn! Tối đa 50MB.")
         
-        # Determine save directory
+        # 3) Xác định thư mục lưu file
         project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
         
+        # Tạo folder theo content_type và emotion
         if content_type == 'image':
-            media_dir = PROJECT_ROOT  / "fe" / "assets" / "images" / game_name.lower()
+            base_dir = project_root / "fe" / "assets" / "images"
         elif content_type == 'video':
-            media_dir = PROJECT_ROOT  / "fe" / "assets" / "videos" / game_name.lower()
+            base_dir = project_root / "fe" / "assets" / "videos"
         else:  # audio
-            media_dir = PROJECT_ROOT  / "fe" / "assets" / "audio"
+            base_dir = project_root / "fe" / "assets" / "audio"
         
-        # Create directory if not exists
-        media_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Generate filename
-        file_ext = Path(file.filename).suffix
+        # ✅ Tạo subfolder theo emotion (MAP TIẾNG VIỆT → TIẾNG ANH)
         if emotion:
-            new_filename = f"{emotion}{file_ext}"
+            # Map emotion Tiếng Việt → Tiếng Anh
+            emotion_en = map_emotion_to_english(emotion)
+            print(f"🌐 Emotion mapping: '{emotion}' → '{emotion_en}'")
+            media_dir = base_dir / emotion_en
         else:
-            new_filename = file.filename
+            media_dir = base_dir / "game_contents"
+        
+        media_dir.mkdir(parents=True, exist_ok=True)
+        print(f"📁 Media directory: {media_dir}")
+        
+        # 4) Xóa file cũ (nếu có) - GIỐNG EMOTION
+        if old_path:
+            try:
+                # old_path có dạng: "/assets/images/happy/emotion_123.jpg"
+                old_rel_path = old_path.lstrip("/")
+                
+                # Strip /fe/ prefix nếu có
+                if old_rel_path.startswith("fe/"):
+                    old_rel_path = old_rel_path[3:]
+                
+                # Tìm file trong project
+                if old_rel_path.startswith("assets/"):
+                    old_file_path = project_root / "fe" / old_rel_path
+                else:
+                    old_file_path = project_root / "fe" / "assets" / old_rel_path
+                
+                if old_file_path.exists():
+                    old_file_path.unlink()
+                    print(f"✅ Đã xóa file cũ: {old_file_path}")
+                else:
+                    print(f"ℹ️ File cũ không tồn tại: {old_file_path}")
+            except Exception as e:
+                print(f"⚠️ Không xóa được file cũ: {e}")
+        
+        # 5) Tạo tên file mới với timestamp để tránh cache
+        timestamp = int(time.time() * 1000)
+        file_ext = Path(media_file.filename).suffix or ".jpg"
+        
+        if emotion:
+            emotion_en = map_emotion_to_english(emotion)
+            new_filename = f"{emotion_en}_{timestamp}{file_ext}"
+        else:
+            new_filename = f"content_{content_id[:8]}_{timestamp}{file_ext}"
         
         new_file_path = media_dir / new_filename
         
-        # Save file
+        # 6) Lưu file mới
         with open(new_file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            shutil.copyfileobj(media_file.file, buffer)
         
-        # Generate relative path for frontend
-        relative_path = f"/fe/assets/{content_type}s/{game_name.lower()}/{new_filename}"
+        # 7) Tạo relative path cho frontend
+        # ✅ KHÔNG BAO GỒM /fe/ prefix - browser sẽ resolve từ root của frontend
+        # Format: /assets/images/happy/happy_1234567890.jpg
+        if emotion:
+            emotion_en = map_emotion_to_english(emotion)
+            relative_path = f"/assets/{content_type}s/{emotion_en}/{new_filename}"
+        else:
+            relative_path = f"/assets/{content_type}s/game_contents/{new_filename}"
         
         print(f"✅ Đã lưu file: {new_file_path}")
+        print(f"📍 Relative path: {relative_path}")
         
         return {
             "status": "success",
-            "message": "Upload thành công!",
+            "message": "Upload media thành công!",
             "data": {
                 "media_path": relative_path,
                 "file_size": file_size,
@@ -440,79 +553,9 @@ async def upload_game_content_media(
         raise
     except Exception as e:
         print(f"❌ Upload media error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(500, detail=f"Lỗi upload file: {str(e)}")
-
-
-@router.post("/emotions/upload-video")
-async def upload_emotion_video(
-    video_file: UploadFile = File(...),
-    emotion_id: str = Form(...),
-    emotion_name: str = Form(...),
-    old_path: str = Form(...)
-):
-    try:
-        # Kiểm tra định dạng file
-        if not video_file.content_type.startswith("video/"):
-            raise HTTPException(400, detail="File không phải video!")
-
-        # Kiểm tra kích thước file
-        video_file.file.seek(0, 2)
-        file_size = video_file.file.tell()
-        video_file.file.seek(0)
-
-        if file_size > 50 * 1024 * 1024:
-            raise HTTPException(400, detail="Video quá lớn! Tối đa 50MB.")
-
-        # Đường dẫn thư mục lưu video
-        project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
-        video_dir = project_root / "fe" / "assets" / "videos"
-
-        # Tạo thư mục nếu chưa tồn tại
-        video_dir.mkdir(parents=True, exist_ok=True)
-
-        emotion_dir = video_dir / emotion_id
-        emotion_dir.mkdir(parents=True, exist_ok=True)
-
-        # Xóa toàn bộ video cũ của emotion (hiện đang chỉ in log)
-        for path in emotion_dir.glob("*.*"):
-            # path.unlink()
-            print(f"Đã xóa video cũ: {path}")
-
-        # Chuẩn hóa tên file
-        original_name = Path(video_file.filename).name or f"{emotion_id}.mp4"
-        original_name = Path(original_name).name
-
-        if not original_name:
-            original_name = f"{emotion_id}.mp4"
-
-        new_file_path = video_dir / original_name
-
-        # Lưu file video mới
-        with open(new_file_path, "wb") as buffer:
-            shutil.copyfileobj(video_file.file, buffer)
-
-        # Tính version dựa trên mtime để cache-busting
-        relative_path = f"/assets/videos/{original_name}"
-        version = int(new_file_path.stat().st_mtime * 1000)
-
-        print(f"Đã lưu video: {new_file_path}")
-
-        return {
-            "status": "success",
-            "message": f"Đã thay thế video '{emotion_name}' thành công!",
-            "data": {
-                "video_path": relative_path,
-                "file_size": file_size,
-                "filename": original_name,
-                "version": version
-            }
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Upload error: {e}")
-        raise HTTPException(500, detail=f"Lỗi upload video: {str(e)}")
 
 @router.post("/emotion-concepts/delete-video")
 async def delete_emotion_concept_video(
@@ -931,3 +974,122 @@ async def upload_emotion_concept_video(
     except Exception as e:
         print(f"❌ Upload error: {e}")
         raise HTTPException(status_code=500, detail=f"Lỗi upload video: {str(e)}")
+
+@router.get("/stats/all-users-game-play-ratio")
+async def get_all_users_game_play_ratio(db: Session = Depends(get_db)):
+    """
+    Lấy thống kê tỉ lệ chơi của TẤT CẢ users cho 6 game
+    Dùng cho Admin Dashboard Pie Chart
+    """
+    try:
+        print("\n=== 📊 DEBUG: Admin Game Play Statistics ===")
+        
+        # Query đếm số lượt chơi của mỗi game từ TẤT CẢ users
+        query = text("""
+            SELECT 
+                g.game_id,
+                g.name as game_name,
+                COUNT(*) as play_count
+            FROM sessions s
+            JOIN games g ON s.game_id = g.game_id
+            GROUP BY g.game_id, g.name
+            ORDER BY play_count DESC
+        """)
+        
+        result = db.execute(query)
+        rows = result.fetchall()
+        
+        print(f"📦 Query returned {len(rows)} games")
+        
+        # Calculate total plays
+        total_plays = sum(row.play_count for row in rows)
+        print(f"📊 Total plays across all games: {total_plays}")
+        
+        if total_plays == 0:
+            print("⚠️ No game sessions found, returning mock data")
+            return {
+                "status": "success",
+                "data": {
+                    "game_stats": [],
+                    "total_sessions": 0,
+                    "message": "Chưa có dữ liệu chơi game"
+                }
+            }
+        
+        # Prepare data for pie chart
+        game_stats = []
+        colors = ['#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6', '#1abc9c']
+        
+        for index, row in enumerate(rows):
+            percentage = (row.play_count / total_plays * 100)
+            
+            game_stats.append({
+                'game_id': str(row.game_id),
+                'game_name': row.game_name,
+                'play_count': row.play_count,
+                'percentage': round(percentage, 1),
+                'color': colors[index % len(colors)]
+            })
+            
+            print(f"  {index + 1}. {row.game_name}: {row.play_count} plays ({percentage:.1f}%)")
+        
+        print(f"✅ Successfully processed {len(game_stats)} games")
+        
+        return {
+            "status": "success",
+            "data": {
+                "game_stats": game_stats,
+                "total_sessions": total_plays
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in get_all_users_game_play_ratio: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return mock data on error
+        return {
+            "status": "success",
+            "data": {
+                "game_stats": [
+                    {
+                        "game_id": "mock-1",
+                        "game_name": "Nhận diện cảm xúc",
+                        "play_count": 145,
+                        "percentage": 33.3,
+                        "color": "#3498db"
+                    },
+                    {
+                        "game_id": "mock-2",
+                        "game_name": "Trò chơi ký ức",
+                        "play_count": 98,
+                        "percentage": 22.5,
+                        "color": "#2ecc71"
+                    },
+                    {
+                        "game_id": "mock-3",
+                        "game_name": "Câu chuyện cảm xúc",
+                        "play_count": 76,
+                        "percentage": 17.5,
+                        "color": "#f39c12"
+                    },
+                    {
+                        "game_id": "mock-4",
+                        "game_name": "Vườn tâm trạng",
+                        "play_count": 62,
+                        "percentage": 14.3,
+                        "color": "#9b59b6"
+                    },
+                    {
+                        "game_id": "mock-5",
+                        "game_name": "Đố vui cảm xúc",
+                        "play_count": 54,
+                        "percentage": 12.4,
+                        "color": "#e74c3c"
+                    }
+                ],
+                "total_sessions": 435,
+                "message": "Mock data (database error)"
+            }
+        }

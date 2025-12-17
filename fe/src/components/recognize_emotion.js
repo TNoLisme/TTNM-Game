@@ -21,13 +21,114 @@ let learnedEmotions = [];
 
 let learningCards = {};
 
+let ttsAudio = null;
+const ttsCache = new Map();
+const ttsPending = new Map();
+
+function ttsKey(text, voice = "thuminh", speed = 0) {
+    return `${voice}:${speed}:${(text || "").trim().toLowerCase()}`;
+}
+
+async function playAudioUrl(url, retries = 6, delayMs = 300) {
+    if (!ttsAudio) ttsAudio = new Audio();
+    ttsAudio.pause();
+
+    for (let i = 0; i <= retries; i++) {
+        try {
+            const tryUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+
+            await new Promise((resolve, reject) => {
+                ttsAudio.src = tryUrl;
+                ttsAudio.load();
+
+                const ok = () => {
+                    cleanup();
+                    resolve();
+                };
+                const bad = () => {
+                    cleanup();
+                    reject(new Error("audio load error"));
+                };
+                const cleanup = () => {
+                    ttsAudio.removeEventListener("canplaythrough", ok);
+                    ttsAudio.removeEventListener("error", bad);
+                };
+
+                ttsAudio.addEventListener("canplaythrough", ok, {
+                    once: true
+                });
+                ttsAudio.addEventListener("error", bad, {
+                    once: true
+                });
+            });
+
+            await ttsAudio.play();
+            return;
+        } catch (e) {
+            if (i === retries) throw e;
+            await new Promise(r => setTimeout(r, delayMs));
+        }
+    }
+}
+
+async function prefetchTTS(text, voice = "thuminh", speed = 0) {
+    const clean = (text || "").trim();
+    if (!clean) return null;
+
+    const key = ttsKey(clean, voice, speed);
+
+    if (ttsCache.has(key)) return ttsCache.get(key);
+    if (ttsPending.has(key)) return await ttsPending.get(key);
+
+    const p = (async () => {
+        const res = await fetch("http://localhost:8000/tts", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                text: clean,
+                voice,
+                speed
+            }),
+        });
+
+        if (!res.ok) {
+            const msg = await res.text().catch(() => "");
+            throw new Error(msg || "TTS error");
+        }
+
+        const {
+            audioUrl
+        } = await res.json();
+        if (!audioUrl) throw new Error("Missing audioUrl from /tts");
+        ttsCache.set(key, audioUrl);
+        return audioUrl;
+    })();
+
+    ttsPending.set(key, p);
+    try {
+        return await p;
+    } finally {
+        ttsPending.delete(key);
+    }
+}
+
+async function speakVietnamese(text, voice = "thuminh", speed = 0) {
+    const audioUrl = await prefetchTTS(text, voice, speed);
+    if (!audioUrl) return;
+    await playAudioUrl(audioUrl);
+}
+
 function normalizeEmotion(text) {
     return (text || '').trim().toLowerCase();
 }
 
 const EMOTION_ICONS = {
-    'vui vẻ': '😊', 'vui': '😊',
-    'buồn bã': '😢', 'buồn': '😢',
+    'vui vẻ': '😊',
+    'vui': '😊',
+    'buồn bã': '😢',
+    'buồn': '😢',
     'ngạc nhiên': '😲',
     'tức giận': '😠',
     'sợ hãi': '😨',
@@ -91,8 +192,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const res = await fetch(`/games/start/${gameId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: user.user_id, level })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: user.user_id,
+                level
+            })
         });
 
         if (!res.ok) throw new Error("Lỗi khởi động game");
@@ -113,7 +219,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         learningCards = normalizedLearningCards;
 
         emotionErrors = data.emotion_errors || {
-            "sợ hãi": 0, "buồn bã": 0, "tức giận": 0, "ghê tởm": 0, "ngạc nhiên": 0, "vui vẻ": 0
+            "sợ hãi": 0,
+            "buồn bã": 0,
+            "tức giận": 0,
+            "ghê tởm": 0,
+            "ngạc nhiên": 0,
+            "vui vẻ": 0
         };
 
         loadQuestion(0);
@@ -128,7 +239,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             await fetch('/games/end-level', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     session_id: sessionId,
                     results: localResults,
@@ -207,6 +320,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         answered = false;
         elements.feedbackModal.classList.add('hidden');
         elements.learningModal.classList.add('hidden');
+        prefetchTTS(q.question_text, "thuminh", 0);
+        const nextQ = questions[i + 1];
+        if (nextQ) prefetchTTS(nextQ.question_text, "thuminh", 0);
     }
 
     function onSubmitAnswer() {
@@ -345,8 +461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             Trình duyệt không hỗ trợ video.
                         </video>
                     `;
-                }
-                else if (card.image_path) {
+                } else if (card.image_path) {
                     const relativeImgPath = card.image_path.replace('/fe/', '../../');
                     if (relativeImgPath.match(/\.(mp4|webm|ogg|mov)$/i)) {
                         mediaHtml = `
@@ -394,10 +509,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.hintText.textContent = questions[currentIndex].explanation;
     };
 
-    elements.soundBtn.onclick = () => {
-        const msg = new SpeechSynthesisUtterance(questions[currentIndex].question_text);
-        msg.lang = 'vi-VN';
-        speechSynthesis.speak(msg);
+    elements.soundBtn.onclick = async () => {
+        const q = questions[currentIndex];
+        if (!q) return;
+        try {
+            if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+            await speakVietnamese(q.question_text, "thuminh", 0);
+        } catch (e) {
+            console.error("FPT TTS failed:", e);
+        }
     };
 
     if (elements.submitBtn) {
