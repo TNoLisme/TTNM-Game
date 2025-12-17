@@ -1,10 +1,17 @@
 /* KẾ THỪA STYLE CHUNG (Header/Logo) TỪ index.css (cần import hoặc copy nếu không dùng tiền xử lý) */
 
 /* ==== CẤU HÌNH CHUNG & HEADER (Copy từ index.css cho đơn giản) ==== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    overflow-x: hidden;
+        /* Ngăn cuộn ngang */
 }
 
 a {
@@ -17,19 +24,33 @@ header {
     align-items: center;
     padding: 10px 40px;
     border-bottom: 1px solid #ddd;
+    background-color: #fff;
+    /* FIX: Dùng fixed thay vì sticky để luôn cố định */
+    width: 100%;
+    position: fixed;
+        top: 0;
+    z-index: 9999;
+        /* Tăng z-index để chắc chắn nằm trên */
 }
 
+main {
+    /* FIX: Giữ padding-top 120px để bù chiều cao Header */
+    padding-top: 120px !important;
+    min-height: 100vh;
+}
 .logo {
     display: flex;
     align-items: center;
-    font-weight: bold;
+        font-weight: bold;
+        color: #333;
+    gap: 10px;
 }
 
 .logo img {
     width: 100px;
-    margin-right: 8px;
+    height: 100px;
+        object-fit: contain;
 }
-
 .buttons {
     display: flex;
     gap: 10px;
@@ -71,11 +92,15 @@ header {
 .auth-container {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    padding-top: 40px;
+    /* align-items: flex-start;  // Đã được thay đổi trong HTML thành align-items: flex-start */
+        align-items: center;
+    
+        /* FIX: Giảm padding dọc để thu hẹp khoảng cách giữa Header và Form */
+        padding: 20px 20px;
+    
+        /* Giữ min-height 100vh để bao phủ toàn bộ trang */
+        min-height: calc(100vh - 120px);
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    padding: 60px 20px;
-    min-height: 100vh;
 }
 
 .auth-box {
