@@ -218,9 +218,9 @@ def normalize_emotion(emotion_str):
     return None
 
 
-@router.get("/stats/emotion-errors/{user_id}")
-async def get_emotion_error_stats(user_id: UUID, db=Depends(get_db)):
-    """Lấy thống kê tỉ lệ sai của 6 cảm xúc - trả về correct/incorrect/accuracy"""
+@router.get("/stats/emotion-accuracy/{user_id}")
+async def get_emotion_accuracy_stats(user_id: UUID, db=Depends(get_db)):
+    """Lấy thống kê tỉ lệ đúng của 6 cảm xúc - trả về correct/incorrect/accuracy"""
     try:
         print(f"\n=== DEBUG emotion-errors for user {user_id} ===")
         
@@ -247,7 +247,7 @@ async def get_emotion_error_stats(user_id: UUID, db=Depends(get_db)):
         emotion_stats = {}
         for row in emotion_results:
             total = row.correct + row.incorrect
-            error_rate = (row.incorrect / total * 100) if total > 0 else 0
+            accuracy = (row.correct / total * 100) if total > 0 else 0
             
             # Chuẩn hóa tên emotion
             normalized = normalize_emotion(row.emotion)
@@ -256,9 +256,9 @@ async def get_emotion_error_stats(user_id: UUID, db=Depends(get_db)):
                 emotion_stats[display_name] = {
                     "correct": int(row.correct),
                     "incorrect": int(row.incorrect),
-                    "error_rate": round(error_rate, 1)
+                    "accuracy": round(accuracy, 1)
                 }
-                print(f"{display_name}: {row.incorrect}/{total} = {error_rate:.1f}%")
+                print(f"{display_name}: {row.correct}/{total} = {accuracy:.1f}%")
         
         # Đảm bảo có đầy đủ 6 cảm xúc
         for key, display_name in EMOTION_MAP.items():
@@ -266,7 +266,7 @@ async def get_emotion_error_stats(user_id: UUID, db=Depends(get_db)):
                 emotion_stats[display_name] = {
                     "correct": 0,
                     "incorrect": 0,
-                    "error_rate": 0.0
+                    "accuracy": 0.0
                 }
         
         print(f"✅ Emotions query executed: {len(emotion_stats)} emotions tracked")
@@ -275,13 +275,13 @@ async def get_emotion_error_stats(user_id: UUID, db=Depends(get_db)):
         return {"status": "success", "data": emotion_stats}
         
     except Exception as e:
-        print(f"Error in get_emotion_error_stats: {str(e)}")
+        print(f"Error in get_emotion_accuracy_stats: {str(e)}")
         import traceback
         traceback.print_exc()
         
         # Return empty stats với đúng format
         empty_stats = {
-            v: {"correct": 0, "incorrect": 0, "error_rate": 0.0} 
+            v: {"correct": 0, "incorrect": 0, "accuracy": 0.0} 
             for v in EMOTION_MAP.values()
         }
         return {"status": "success", "data": empty_stats}
