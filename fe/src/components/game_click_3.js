@@ -24,6 +24,8 @@ let roundScored = false;
 let reviewMode = false;
 let lastRoundSnapshot = null;
 let roundResults = [];
+let ttsAudio = null;
+let ttsAbortController = null;
 let gameState = {
   difficulty: "easy",
   shuffledCharacters: [],
@@ -45,6 +47,100 @@ const LEVEL_META = [
   { num: 7, icon: "🌈", name: "Siêu đẳng" },
   { num: 8, icon: "🎮", name: "Cao thủ" },
 ];
+
+const ttsCache = new Map();
+const ttsPending = new Map();
+
+function ttsKey(text, voice = "thuminh", speed = 0) {
+  return `${voice}:${speed}:${(text || "").trim().toLowerCase()}`;
+}
+
+async function playAudioUrl(url, retries = 6, delayMs = 300) {
+  if (!ttsAudio) ttsAudio = new Audio();
+  ttsAudio.pause();
+
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const tryUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+
+      await new Promise((resolve, reject) => {
+        ttsAudio.src = tryUrl;
+        ttsAudio.load();
+
+        const ok = () => {
+          cleanup();
+          resolve();
+        };
+        const bad = () => {
+          cleanup();
+          reject(new Error("audio load error"));
+        };
+        const cleanup = () => {
+          ttsAudio.removeEventListener("canplaythrough", ok);
+          ttsAudio.removeEventListener("error", bad);
+        };
+
+        ttsAudio.addEventListener("canplaythrough", ok, { once: true });
+        ttsAudio.addEventListener("error", bad, { once: true });
+      });
+
+      await ttsAudio.play();
+      return;
+    } catch (e) {
+      if (i === retries) throw e;
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
+async function prefetchTTS(text, voice = "thuminh", speed = 0) {
+  const clean = (text || "").trim();
+  if (!clean) return null;
+
+  const key = ttsKey(clean, voice, speed);
+
+  if (ttsCache.has(key)) return ttsCache.get(key);
+  if (ttsPending.has(key)) return await ttsPending.get(key);
+
+  const p = (async () => {
+    const res = await fetch("http://localhost:8000/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: clean, voice, speed }),
+    });
+
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || "TTS error");
+    }
+
+    const { audioUrl } = await res.json();
+    if (!audioUrl) throw new Error("Missing audioUrl from /tts");
+    ttsCache.set(key, audioUrl);
+    return audioUrl;
+  })();
+
+  ttsPending.set(key, p);
+  try {
+    return await p;
+  } finally {
+    ttsPending.delete(key);
+  }
+}
+
+async function speakVietnamese(
+  text,
+  fromButton = false,
+  voice = "thuminh",
+  speed = 0
+) {
+  if (isTTSManualOnly && !fromButton) return;
+
+  const audioUrl = await prefetchTTS(text, voice, speed);
+  if (!audioUrl) return;
+
+  await playAudioUrl(audioUrl);
+}
 
 function isLockedInteraction() {
   return gameState.submitted || reviewMode;
@@ -369,6 +465,21 @@ function renderGame() {
   renderButtons();
 
   document.getElementById("result-message").classList.add("hidden");
+  try {
+    const hintText = gameState.characters
+      .map((char) => {
+        const emo = char.emotion || "một cảm xúc nào đó";
+        return `${char.name} đang cảm thấy ${emo}, hãy kéo thẻ tên để biết đâu là ${char.name}`;
+      })
+      .join(". ");
+
+    prefetchTTS(hintText, "thuminh", 0);
+    gameState.characters.forEach((c) => {
+      if (c?.name) prefetchTTS(c.name, "thuminh", 0);
+    });
+    prefetchTTS("Bạn đã trả lời đúng!", "thuminh", 0);
+    prefetchTTS("Bạn đã trả lời sai!", "thuminh", 0);
+  } catch (e) {}
 }
 
 function renderHints() {
@@ -481,7 +592,6 @@ function renderNameCards() {
              ${locked ? "" : `ondragstart="handleDragStart(event, '${name}')"`}
              ${locked ? "" : `ondragend="handleDragEnd(event)"`}
              style="${locked ? "pointer-events:none; opacity:0.6;" : ""}">
-          <button class="name-speaker-btn" onclick="speak('${name}', true)">🔊</button>
           <span class="name-text">${name}</span>
         </div>
       `
@@ -557,15 +667,8 @@ function removeName(characterId) {
   renderGame();
 }
 
-function speak(text, fromButton = false) {
-  if (!("speechSynthesis" in window)) return;
-  if (isTTSManualOnly && !fromButton) return;
-
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "vi-VN";
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
+async function speak(text, fromButton = false) {
+  return speakVietnamese(text, fromButton);
 }
 
 function speakHints() {
@@ -575,7 +678,7 @@ function speakHints() {
       return `${char.name} đang cảm thấy ${emo}, hãy kéo thẻ tên để biết đâu là ${char.name}`;
     })
     .join(". ");
-  speak(hints);
+  speak(hints, true);
 }
 
 function showScoreFly(points) {
@@ -742,6 +845,7 @@ function showLearningCard(emotionKey, afterClose) {
 }
 
 // ================== POPUP KẾT QUẢ & CÁC NÚT KHÁC ==================
+let _resultPopupSpoken = false;
 function showResultPopup(allCorrect, correctCount) {
   const popup = document.getElementById("result-popup");
   const icon = document.getElementById("popup-icon");
@@ -764,6 +868,7 @@ function showResultPopup(allCorrect, correctCount) {
     replayBtn.onclick = () => {
       popup.classList.remove("show");
       setTimeout(() => popup.classList.add("hidden"), 200);
+      _resultPopupSpoken = false;
       enterReviewMode();
     };
   }
@@ -771,27 +876,38 @@ function showResultPopup(allCorrect, correctCount) {
   if (nextBtn) {
     nextBtn.style.display = "block";
     nextBtn.textContent = "Câu tiếp theo";
-    nextBtn.onclick = () => nextQuestion();
+    nextBtn.onclick = () => {
+      _resultPopupSpoken = false;
+      nextQuestion();
+    };
   }
 
   const scoreLine = `\nĐiểm hiện tại: ${score} ⭐`;
-
+  let speakText = "";
   if (allCorrect) {
     icon.textContent = "🎉";
     icon.classList.add("bounce");
     title.textContent = "Bạn đã trả lời đúng!";
     title.style.color = "#22c55e";
     message.textContent = scoreLine;
+    speakText = "Bạn đã trả lời đúng!";
   } else {
     icon.textContent = "😢";
     icon.classList.add("shake");
     title.textContent = "Bạn đã trả lời sai!";
     title.style.color = "#ef4444";
     message.textContent = scoreLine;
+    speakText = "Bạn đã trả lời sai!";
   }
 
   popup.classList.remove("hidden");
-  requestAnimationFrame(() => popup.classList.add("show"));
+  requestAnimationFrame(() => {
+    popup.classList.add("show");
+    if (!_resultPopupSpoken && typeof speakVietnamese === "function") {
+      _resultPopupSpoken = true;
+      speakVietnamese(speakText, true, "thuminh");
+    }
+  });
 }
 
 function showLevelCompletePopup(nextLevel) {
