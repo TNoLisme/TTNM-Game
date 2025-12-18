@@ -619,7 +619,7 @@ function bindControls() {
     // giữ logic next-level nếu bạn có dùng
 
     if (popupNextMode === "next-level" && nextLevelTarget) {
-      window.location.href = `./game_click_2.html?gameId=${gameId}&level=${nextLevelTarget}`;
+      window.location.href = `./level_select.html?gameId=${gameId}`;
 
       return;
     }
@@ -757,21 +757,28 @@ async function loadProgress() {
     const res = await fetch(
       `/games/progress/${gameId}?user_id=${currentUser.user_id}`
     );
-
     if (!res.ok) return;
 
     const progress = await res.json();
+    if (!progress) return;
 
-    if (progress) {
-      sessionContext.level = progress.level || sessionContext.level;
+    // ❌ đừng overwrite sessionContext.level ở đây
+    // ✅ chỉ lưu level mở khóa
+    sessionContext.unlockedLevel =
+      progress.level ?? sessionContext.unlockedLevel;
 
-      ratio =
-        Array.isArray(progress.ratio) && progress.ratio.length === 6
-          ? progress.ratio
-          : [...DEFAULT_RATIO];
-    }
-  } catch (error) {
-    console.warn("Không thể tải tiến trình, dùng giá trị mặc định", error);
+    ratio =
+      Array.isArray(progress.ratio) && progress.ratio.length === 6
+        ? progress.ratio
+        : [...DEFAULT_RATIO];
+
+    // (tuỳ backend) nếu progress có last_score/last_completed_level thì set để UI show
+    if (progress.last_completed_level != null)
+      sessionContext.lastCompletedLevel = progress.last_completed_level;
+    if (progress.last_score != null)
+      sessionContext.lastCompletedScore = progress.last_score;
+  } catch (e) {
+    console.warn("Không thể tải tiến trình", e);
   }
 }
 
@@ -842,6 +849,30 @@ async function startSession() {
 
     loadQuestionByIndex(0);
   }
+}
+function goToLevelSelectPage(completedLevel, score) {
+  // ✅ vừa lưu localStorage vừa truyền query để trang đích dễ đọc
+  saveLastCompletedResult(completedLevel, score);
+
+  window.location.href =
+    `./level_select.html?gameId=${gameId}` +
+    `&completedLevel=${encodeURIComponent(completedLevel)}` +
+    `&score=${encodeURIComponent(score)}`;
+}
+
+function saveLastCompletedResult(completedLevel, score) {
+  try {
+    const uid = currentUser?.user_id || "guest";
+    const gid = gameId || "unknown_game";
+    localStorage.setItem(
+      `last_completed:${uid}:${gid}`,
+      JSON.stringify({
+        completed_level: completedLevel,
+        score: score,
+        saved_at: Date.now(),
+      })
+    );
+  } catch {}
 }
 
 function normalizeQuestions(rawQuestions) {
@@ -1086,7 +1117,9 @@ function updateSituation() {
   }
 
   // ✅ Auto-prefetch question + instruction text (matches game_click_3.js)
-  const textToSpeak = currentQuestionData.question_text + ". Hãy xây dựng khuôn mặt cho cảm xúc này.";
+  const textToSpeak =
+    currentQuestionData.question_text +
+    ". Hãy xây dựng khuôn mặt cho cảm xúc này.";
   prefetchTTS(textToSpeak, "thuminh", 0);
 }
 
@@ -1149,12 +1182,12 @@ async function prefetchTTS(text, voice = "thuminh", speed = 0) {
     const res = await fetch("http://localhost:8000/tts", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         text: clean,
         voice,
-        speed
+        speed,
       }),
     });
 
@@ -1163,9 +1196,7 @@ async function prefetchTTS(text, voice = "thuminh", speed = 0) {
       throw new Error(msg || "TTS error");
     }
 
-    const {
-      audioUrl
-    } = await res.json();
+    const { audioUrl } = await res.json();
     if (!audioUrl) throw new Error("Missing audioUrl from /tts");
     ttsCache.set(key, audioUrl);
     return audioUrl;
@@ -1179,7 +1210,12 @@ async function prefetchTTS(text, voice = "thuminh", speed = 0) {
   }
 }
 
-async function speakVietnamese(text, fromButton = false, voice = "thuminh", speed = 0) {
+async function speakVietnamese(
+  text,
+  fromButton = false,
+  voice = "thuminh",
+  speed = 0
+) {
   try {
     const audioUrl = await prefetchTTS(text, voice, speed);
     if (!audioUrl) return;
@@ -1601,13 +1637,11 @@ function showEndGamePopup(isCorrect) {
   popupReplayBtn.style.display = "inline-block";
   popupNextBtn.style.display = "inline-block";
   popupReplayBtn.textContent = "Chơi lại level";
-  popupNextBtn.textContent = "Thoát game";
+  popupNextBtn.textContent = "Level mới";
 
   setPopupActions({
     onReplay: async () => {
       hideResultPopup();
-
-      // lưu session cũ rồi reset để chơi lại
       await finalizeSession("completed");
 
       resetLevelStateForReplay();
@@ -1617,11 +1651,13 @@ function showEndGamePopup(isCorrect) {
     onNext: async () => {
       hideResultPopup();
 
-      // lưu session trước khi chuyển trang
+      const completedLevel = sessionContext.level; // ✅ level vừa chơi xong
+      const completedScore = sessionContext.score; // ✅ điểm vừa đạt
+
       await finalizeSession("completed");
 
-      // Điều hướng về trang chọn level
-      window.location.href = "./select_game.html";
+      // ✅ sang trang chọn level, vẫn hiển thị level 2 - 40 điểm
+      goToLevelSelectPage(completedLevel, completedScore);
     },
   });
 
@@ -1631,30 +1667,32 @@ function showEndGamePopup(isCorrect) {
 function showSkipEndGamePopup() {
   if (!resultPopup) return;
 
-  // Xoá nút extraExitBtn cũ nếu có (trường hợp vừa làm câu 10 sai trước đó)
-
+  // dọn extra button nếu có
   if (extraExitBtn && extraExitBtn.parentNode) {
     extraExitBtn.parentNode.removeChild(extraExitBtn);
   }
-
   extraExitBtn = null;
 
-  // Luôn dùng 2 nút sẵn có
+  popupNextMode = "question";
+  nextLevelTarget = null;
+
+  const isWin =
+    sessionContext.score >= (sessionContext.levelThreshold || LEVEL_THRESHOLD);
+
+  popupIcon.textContent = isWin ? "🏆" : "⏭️";
+  popupTitle.textContent = isWin
+    ? `Bạn đã vượt level! — Tổng điểm: ${sessionContext.score}`
+    : `Kết thúc level — Tổng điểm: ${sessionContext.score}`;
+
+  popupMessage.textContent = isWin
+    ? "Bạn đã bỏ qua câu cuối nhưng điểm vẫn đạt ngưỡng. Bạn có thể chơi lại hoặc chọn level tiếp theo."
+    : "Bạn đã bỏ qua câu cuối. Điểm chưa đủ để qua level — bạn vẫn có thể quay lại trang chọn level.";
 
   popupReplayBtn.style.display = "inline-block";
-
   popupNextBtn.style.display = "inline-block";
 
-  popupIcon.textContent = "⏭️";
-
-  popupTitle.textContent = "Bạn đã bỏ qua câu cuối";
-
-  popupMessage.textContent = "Bạn muốn thoát game hay chơi lại level này?";
-
-  // Nút "Chơi lại level này"
-
   popupReplayBtn.textContent = "Chơi lại";
-  popupNextBtn.textContent = "Thoát game";
+  popupNextBtn.textContent = "Level tiếp";
 
   setPopupActions({
     onReplay: async () => {
@@ -1665,10 +1703,13 @@ function showSkipEndGamePopup() {
       sessionContext.sessionId = null;
       await startSession();
     },
+
     onNext: async () => {
       hideResultPopup();
       await finalizeSession("completed");
-      window.location.href = "./select_game.html";
+
+      // ✅ LUÔN sang trang chọn level, không ép chơi lại nữa
+      goToLevelSelectPage();
     },
   });
 
@@ -1871,6 +1912,12 @@ async function finalizeSession(reason, options = {}) {
   const filteredResults = questionResults.filter((r) =>
     isValidUUID(r.question_id)
   );
+  const completedLevel = sessionContext.level; // ✅ level vừa chơi xong
+  const completedScore = sessionContext.score; // ✅ điểm của level vừa chơi xong
+
+  // ✅ lưu để UI hiển thị đúng (kể cả khi progress API trả "level mới mở khóa")
+  sessionContext.lastCompletedLevel = completedLevel;
+  sessionContext.lastCompletedScore = completedScore;
 
   const payload = {
     session_id: sessionContext.sessionId,
@@ -1878,6 +1925,8 @@ async function finalizeSession(reason, options = {}) {
     results: filteredResults,
 
     review_emotions: reviewEmotions,
+    level: completedLevel,
+    score: completedScore,
   };
 
   const previousLevel = sessionContext.level;
@@ -1902,7 +1951,12 @@ async function finalizeSession(reason, options = {}) {
 
       const data = await res.json();
 
-      sessionContext.level = data.progress_level || sessionContext.level;
+      // ✅ progress_level là level mới mở khóa, KHÔNG phải level vừa chơi xong
+      sessionContext.unlockedLevel =
+        data.progress_level || sessionContext.level;
+
+      // ✅ giữ nguyên level đã chơi (previousLevel)
+      sessionContext.level = previousLevel;
     }
   } catch (error) {
     console.error("Không thể lưu session:", error);
