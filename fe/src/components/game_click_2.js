@@ -658,6 +658,7 @@ function showConfirmSkipPopup() {
       hideResultPopup();
 
       applySkipCurrentQuestion(); // Có -> thực sự bỏ qua
+      //lỗi sai cảm xúc đó + 1  sessionContext.emotionErrors[emotionName] += 1;
     },
   });
 
@@ -667,8 +668,7 @@ function showConfirmSkipPopup() {
 // tách logic bỏ qua thật sự ra 1 hàm để dùng lại
 
 function applySkipCurrentQuestion(force = false) {
-  if (skipInProgress) return; // ✅ chống nhảy 2 câu do bấm liên tiếp
-
+  if (skipInProgress) return;
   skipInProgress = true;
 
   try {
@@ -679,19 +679,24 @@ function applySkipCurrentQuestion(force = false) {
     )
       return;
 
+    // ✅ ĐÃ bấm kiểm tra rồi: sai/đúng đã được tính vào emotionErrors trong recordAnswer()
+    // => skip chỉ để chuyển câu, KHÔNG cộng thêm lần sai nữa
+    if (hasCheckedThisQuestion) {
+      if (!isLastStep()) advanceToNextQuestion();
+      else showSkipEndGamePopup(); // (tuỳ bạn: câu cuối đã có popup endgame từ checkAnswer rồi)
+      return;
+    }
+
+    // ✅ CHƯA bấm kiểm tra mà bỏ qua: tính là 1 lần sai để đếm tới 3 -> bật thẻ học
     const responseTime = questionStartTime
       ? Math.round(performance.now() - questionStartTime)
       : 0;
 
     questionResults.push({
       question_id: currentQuestionData.questionId,
-
       answer: "Bỏ qua",
-
       is_correct: false,
-
       response_time_ms: responseTime,
-
       used_hint: false,
     });
 
@@ -701,7 +706,6 @@ function applySkipCurrentQuestion(force = false) {
       return;
     }
 
-    // ✅ không phải câu cuối: skip là auto-advance
     recordAnswer(false, "Bỏ qua", responseTime, { autoAdvance: true });
   } finally {
     setTimeout(() => (skipInProgress = false), 250);
@@ -1844,7 +1848,7 @@ function showResultPopup(isCorrect) {
   popupTitle.textContent = "Sai rồi!";
 
   popupMessage.textContent =
-    "Bạn không được chơi lại câu này. Hãy xem đáp án, sau đó bấm nút Bỏ qua (ở dưới) để sang câu tiếp theo.";
+    "Hãy xem đáp án, sau đó bấm nút Bỏ qua (ở dưới) để sang câu tiếp theo.";
 
   popupReplayBtn.style.display = "inline-block";
 
