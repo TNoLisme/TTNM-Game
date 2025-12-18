@@ -1084,27 +1084,106 @@ function updateSituation() {
 
     situationEmoji.classList.add("fade-in");
   }
+
+  // ✅ Auto-prefetch question + instruction text (matches game_click_3.js)
+  const textToSpeak = currentQuestionData.question_text + ". Hãy xây dựng khuôn mặt cho cảm xúc này.";
+  prefetchTTS(textToSpeak, "thuminh", 0);
 }
 
-// ===== TTS: speakVietnamese (copied from learn.js) =====
-async function speakVietnamese(text) {
-  try {
-    const res = await fetch("https://api.fpt.ai/hmi/tts/v5", {
+// ===== TTS: speakVietnamese (matches game_click_3.js) =====
+const ttsCache = new Map();
+const ttsPending = new Map();
+
+function ttsKey(text, voice = "thuminh", speed = 0) {
+  return `${voice}:${speed}:${(text || "").trim().toLowerCase()}`;
+}
+
+async function playAudioUrl(url, retries = 6, delayMs = 300) {
+  let ttsAudio = new Audio();
+  ttsAudio.pause();
+
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const tryUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+
+      await new Promise((resolve, reject) => {
+        ttsAudio.src = tryUrl;
+        ttsAudio.load();
+
+        const ok = () => {
+          cleanup();
+          resolve();
+        };
+        const bad = () => {
+          cleanup();
+          reject(new Error("audio load error"));
+        };
+        const cleanup = () => {
+          ttsAudio.removeEventListener("canplaythrough", ok);
+          ttsAudio.removeEventListener("error", bad);
+        };
+
+        ttsAudio.addEventListener("canplaythrough", ok, { once: true });
+        ttsAudio.addEventListener("error", bad, { once: true });
+      });
+
+      await ttsAudio.play();
+      return;
+    } catch (e) {
+      if (i === retries) throw e;
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
+async function prefetchTTS(text, voice = "thuminh", speed = 0) {
+  const clean = (text || "").trim();
+  if (!clean) return null;
+
+  const key = ttsKey(clean, voice, speed);
+
+  if (ttsCache.has(key)) return ttsCache.get(key);
+  if (ttsPending.has(key)) return await ttsPending.get(key);
+
+  const p = (async () => {
+    const res = await fetch("http://localhost:8000/tts", {
       method: "POST",
       headers: {
-        "api-key": "OXvPopJqIJgON0AglCE0KPkBvOovWSoy",
-        speed: "",
-        voice: "banmai",
+        "Content-Type": "application/json"
       },
-      body: text,
+      body: JSON.stringify({
+        text: clean,
+        voice,
+        speed
+      }),
     });
 
-    const data = await res.json();
-    const audioUrl = data.async;
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.play();
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || "TTS error");
     }
+
+    const {
+      audioUrl
+    } = await res.json();
+    if (!audioUrl) throw new Error("Missing audioUrl from /tts");
+    ttsCache.set(key, audioUrl);
+    return audioUrl;
+  })();
+
+  ttsPending.set(key, p);
+  try {
+    return await p;
+  } finally {
+    ttsPending.delete(key);
+  }
+}
+
+async function speakVietnamese(text, fromButton = false, voice = "thuminh", speed = 0) {
+  try {
+    const audioUrl = await prefetchTTS(text, voice, speed);
+    if (!audioUrl) return;
+    await playAudioUrl(audioUrl);
   } catch (e) {
     console.warn("TTS failed:", e);
   }
