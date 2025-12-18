@@ -36,9 +36,9 @@ const CV_GAME_CONFIG = {
 
 // Map game_id từ database sang key nội bộ GV1/GV2
 const DB_GAME_CV_SCENARIO_ID =
-  "e05909f3-3dee-42a6-9a75-fd985b1bdf47".toLowerCase(); // Câu chuyện trên khuôn mặt (GV1)
+  "1c7a0065-7652-4f1f-bdf4-fdcb07cd4fc9".toLowerCase(); // Câu chuyện trên khuôn mặt (GV1) d9f34ee9-583c-453f-89ff-50f24aaa663b
 const DB_GAME_CV_REQUEST_ID =
-  "61f5e09e-eefa-44c1-86e1-87dfceac3b8e".toLowerCase(); // Thử thách cảm xúc (GV2)
+  "d9f34ee9-583c-453f-89ff-50f24aaa663b".toLowerCase(); // Thử thách cảm xúc (GV2)
 
 // Game state
 let gameState = {
@@ -1507,16 +1507,16 @@ let vietnameseVoiceCache = null;
 let ttsFallbackTimer = null;
 let currentFptAudio = null;
 
-// function stopFptAudio() {
-//     if (!currentFptAudio) return;
-//     try {
-//         currentFptAudio.pause();
-//         currentFptAudio.currentTime = 0;
-//     } catch (e) {
-//         // ignore
-//     }
-//     currentFptAudio = null;
-// }
+function stopFptAudio() {
+  if (!currentFptAudio) return;
+  try {
+    currentFptAudio.pause();
+    currentFptAudio.currentTime = 0;
+  } catch (e) {
+    // ignore
+  }
+  currentFptAudio = null;
+}
 
 // Check if Vietnamese voice is available
 function checkVietnameseVoice() {
@@ -1754,7 +1754,7 @@ async function endGame() {
   }
 
   // Invalidate any in-flight async TTS (especially FPT audio fetch) to avoid voice being "chèn"
-  ttsRequestId++;
+  // ttsRequestId++;
   if (ttsFallbackTimer) {
     clearTimeout(ttsFallbackTimer);
     ttsFallbackTimer = null;
@@ -1787,7 +1787,7 @@ function showSummary() {
   // Show modal UI thay vì alert
   setTimeout(() => {
     showGameCompleteModal();
-  }, 2000);
+  }, 500);
 }
 
 // Show game complete modal
