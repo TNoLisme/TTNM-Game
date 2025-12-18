@@ -36,9 +36,9 @@ const CV_GAME_CONFIG = {
 
 // Map game_id từ database sang key nội bộ GV1/GV2
 const DB_GAME_CV_SCENARIO_ID =
-  "1c7a0065-7652-4f1f-bdf4-fdcb07cd4fc9".toLowerCase(); // Câu chuyện trên khuôn mặt (GV1) d9f34ee9-583c-453f-89ff-50f24aaa663b
+  "e05909f3-3dee-42a6-9a75-fd985b1bdf47".toLowerCase(); // Câu chuyện trên khuôn mặt (GV1)
 const DB_GAME_CV_REQUEST_ID =
-  "d9f34ee9-583c-453f-89ff-50f24aaa663b".toLowerCase(); // Thử thách cảm xúc (GV2)
+  "61f5e09e-eefa-44c1-86e1-87dfceac3b8e".toLowerCase(); // Thử thách cảm xúc (GV2)
 
 // Game state
 let gameState = {
@@ -418,7 +418,7 @@ async function initGame() {
     if (!selectedEmotion) {
       showError("Vui lòng chọn cảm xúc trước khi chơi game nhé!");
       setTimeout(() => {
-        window.location.href = "/src/pages/level_select.html?gameId=GV2";
+        window.location.href = `/src/pages/level_select.html?gameId=${DB_GAME_CV_REQUEST_ID}`;
       }, 2500);
       return;
     }
@@ -451,6 +451,11 @@ async function initGame() {
       `Filtered scenarios: ${originalCount} total -> ${gameState.scenarios.length} cho cảm xúc ${emotionKey}`
     );
   }
+  // GV1: mỗi level chỉ chơi tối đa 5 màn
+  if (gameState.gameId === "GV1" && Array.isArray(gameState.scenarios)) {
+    gameState.scenarios = gameState.scenarios.slice(0, CV_MAX_SCENARIOS_PER_LEVEL);
+  }
+
   // For GV1, scenarios are already filtered and randomized by backend, no need to filter again
 
   if (gameState.scenarios.length === 0) {
@@ -629,16 +634,7 @@ function updateScenarioUI() {
     }
   }
 
-  // Update progress indicator (Màn X/10)
-  const progressIndicator = document.getElementById("progress-indicator");
-  if (progressIndicator) {
-    const currentScenario = gameState.currentScenarioIndex + 1;
-    const totalScenarios = gameState.scenarios.length;
-    progressIndicator.textContent =
-      gameState.gameId === "GV1"
-        ? `Màn ${currentScenario}/${totalScenarios}`
-        : `Lượt ${currentScenario}/${totalScenarios}`;
-  }
+  updateProgressIndicator();
 
   // Hiển thị ảnh minh họa nếu có
   const scenarioImage = $("scenario-image");
@@ -678,6 +674,29 @@ function updateScenarioUI() {
 
   // Lưu hint vào state để dùng khi bấm "Gợi ý"
   gameState.currentHint = gameState.currentScenario.hint || "";
+}
+
+function updateProgressIndicator(currentScenarioIndexOverride) {
+  const progressIndicator = document.getElementById("progress-indicator");
+  const progressFill = document.getElementById("cv-level-progress-fill");
+  const totalScenarios = (gameState.scenarios && gameState.scenarios.length) || 0;
+  const idx =
+    typeof currentScenarioIndexOverride === "number"
+      ? currentScenarioIndexOverride
+      : gameState.currentScenarioIndex;
+  const currentScenario = Math.max(0, Math.min(totalScenarios, idx + 1));
+
+  if (progressIndicator) {
+    progressIndicator.textContent =
+      gameState.gameId === "GV1"
+        ? `Màn ${currentScenario}/${totalScenarios}`
+        : `Lượt ${currentScenario}/${totalScenarios}`;
+  }
+
+  if (progressFill) {
+    const pct = totalScenarios > 0 ? (currentScenario / totalScenarios) * 100 : 0;
+    progressFill.style.width = `${pct}%`;
+  }
 }
 
 // Start countdown
@@ -1227,12 +1246,15 @@ async function handleSuccess() {
 
   // Move to next scenario after delay
   const nextIndex = gameState.currentScenarioIndex + 1;
+  const isLastTurn = nextIndex >= (gameState.scenarios ? gameState.scenarios.length : 0);
   console.log(
     `Moving to next scenario: ${nextIndex} (total: ${gameState.scenarios.length})`
   );
+  // Update progress immediately so UI feels responsive
+  updateProgressIndicator(nextIndex);
   setTimeout(() => {
     startScenario(nextIndex);
-  }, 3000);
+  }, isLastTurn ? 0 : 250);
 }
 
 // Handle timeout
@@ -1287,9 +1309,11 @@ async function handleTimeout() {
   console.log(
     `Moving to next scenario: ${nextIndex} (total: ${gameState.scenarios.length})`
   );
+  // Update progress immediately so UI feels responsive
+  updateProgressIndicator(nextIndex);
   setTimeout(() => {
     startScenario(nextIndex);
-  }, 3000);
+  }, isLastTurn ? 0 : 250);
 }
 
 // Show success animation
@@ -1311,7 +1335,7 @@ function showSuccessAnimation() {
 
   setTimeout(() => {
     successEl.style.display = "none";
-  }, 2500);
+  }, 900);
 }
 
 // Save result
@@ -1494,6 +1518,8 @@ async function endSession() {
     } catch (e) {
       console.warn("Could not save to localStorage:", e);
     }
+
+    return data;
   } catch (error) {
     console.error("Error ending session:", error);
   }
@@ -1767,10 +1793,13 @@ async function endGame() {
 
   // End session in backend
   console.log("Calling endSession()...");
-  await endSession();
+  const endSessionPromise = endSession();
 
-  // Show summary
+  // Show summary as soon as possible (score can be updated after endSession finishes)
   showSummary();
+
+  await endSessionPromise;
+  showGameCompleteModal();
 }
 
 // Show summary
@@ -1785,9 +1814,7 @@ function showSummary() {
   speakText(summaryText);
 
   // Show modal UI thay vì alert
-  setTimeout(() => {
-    showGameCompleteModal();
-  }, 500);
+  showGameCompleteModal();
 }
 
 // Show game complete modal
@@ -1860,10 +1887,21 @@ function showGameCompleteModal() {
   if (playAgainBtn) {
     playAgainBtn.onclick = () => {
       modal.style.display = "none";
-      // Quay về trang chọn level/cảm xúc để chơi lại
-      const urlParams = new URLSearchParams(window.location.search);
-      const gameId = urlParams.get("gameId") || gameState.gameId || "GV1";
-      window.location.href = `/src/pages/level_select.html?gameId=${gameId}`;
+      try {
+        sessionStorage.removeItem("gameCV_active_session");
+      } catch (e) {
+        // ignore
+      }
+
+      const nextUrl = new URL(window.location.href);
+      if (
+        gameState.config?.requiresEmotion &&
+        !nextUrl.searchParams.get("emotion") &&
+        gameState.selectedEmotion
+      ) {
+        nextUrl.searchParams.set("emotion", gameState.selectedEmotion);
+      }
+      window.location.href = nextUrl.toString();
     };
   }
 

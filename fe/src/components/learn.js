@@ -360,7 +360,7 @@ function buildMediaUrl(path) {
 
   // Chuẩn hóa các đường dẫn trong DB đang lưu dạng "/fe/assets/..."
   if (/^\/fe\/assets\//i.test(path)) {
-    return path.replace(/^\/fe\/assets\//i, "../../assets/");
+    return path.replace(/^\/fe\/assets\//i, "../../assets/")+ ".mp4";
   }
 
   // Nếu path bắt đầu bằng '/' hoặc '../' thì để nguyên để FE tự resolve

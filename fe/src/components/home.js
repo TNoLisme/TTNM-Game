@@ -13,12 +13,12 @@ const EMOTION_ICONS = {
 
 // Game type mapping
 const GAME_TYPE_MAP = {
-    'recognize_emotion': { name: 'Chiếc hộp cảm xúc', url: '/src/pages/level_select.html?gameId=ea2b5c7e-aec8-4f6e-a8bf-99d7b6a05dd8' },
-    'game_click_2': { name: 'Xưởng lắp ghép cảm xúc', url: '/src/pages/level_select.html?gameId=ecefa8d8-b9f5-4d41-abf9-316e6b6cf25b' },
-    'game_click_3': { name: 'Cảm xúc đúng chỗ', url: '/src/pages/level_select.html?gameId=e7b4826b-57ba-4569-953e-723da913d47c' },
-    'game_click_4': { name: 'Thám tử cảm xúc', url: '/src/pages/level_select.html?gameId=8573ebd6-23be-4ad9-bd4c-3794b1c4a4fa' },
-    'gameCV': { name: 'Game CV', url: '/src/pages/level_select.html?gameId=9b56e632-dd86-4868-9d74-e0c93125430a' },
-    'game_cv_2': { name: 'Thử thách cảm xúc', url: '/src/pages/level_select.html?gameId=bbd1597f-02b1-4e20-b39b-31d27335d385' }
+    'recognize_emotion': { name: 'Chiếc hộp cảm xúc', url: '/src/pages/level_select.html?gameId=3bcb2108-721c-4a15-a585-31f3084ed000' },
+    'game_click_2': { name: 'Xưởng lắp ghép cảm xúc', url: '/src/pages/level_select.html?gameId=33ecafaa-ec7e-40d2-9c67-ed0a29ac0051' },
+    'game_click_3': { name: 'Cảm xúc đúng chỗ', url: '/src/pages/level_select.html?gameId=08bbffbf-d147-4556-bccb-b7621cafbf15' },
+    'game_click_4': { name: 'Thám tử cảm xúc', url: '/src/pages/level_select.html?gameId=aacaf79e-e15e-42a9-a3d1-a522720d919b' },
+    'gameCV': { name: 'Game CV', url: '/src/pages/level_select.html?gameId=e05909f3-3dee-42a6-9a75-fd985b1bdf47' },
+    'game_cv_2': { name: 'Thử thách cảm xúc', url: '/src/pages/level_select.html?gameId=61f5e09e-eefa-44c1-86e1-87dfceac3b8e' }
 };
 
 // Helper function to determine game type from name
